@@ -70,8 +70,8 @@ MonoBehaviour:
       - rid: 2282978927238709313
       - rid: 2282978927238709314
       - rid: 2282978927238709315
-      - rid: 3180874207708315651
-      - rid: 3180874207708315652
+      - rid: 3180874207708315653
+      - rid: 3180874207708315654
     m_RuntimeSettings:
       m_List: []
   m_AssetVersion: 11
@@ -215,7 +215,7 @@ MonoBehaviour:
         _skyBoxMesh: {fileID: 4300000, guid: 0529e6c5f6dea8c4a8c2835ed7de57cb, type: 2}
         _sixFaceSkyBoxMesh: {fileID: 4300000, guid: a80925ceebd011741b42509226cefc74, type: 2}
         _buildLightGridShader: {fileID: 7200000, guid: 16e47c1641bd0104e92b624601457bb0, type: 3}
-    - rid: 3180874207708315651
+    - rid: 3180874207708315653
       type: {class: ScreenSpaceAmbientOcclusionDynamicResources, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.Runtime}
       data:
         m_BlueNoise256Textures:
@@ -227,7 +227,7 @@ MonoBehaviour:
         - {fileID: 2800000, guid: 3302065f671a8450b82c9ddf07426f3a, type: 3}
         - {fileID: 2800000, guid: 56a77a3e8d64f47b6afe9e3c95cb57d5, type: 3}
         m_Version: 0
-    - rid: 3180874207708315652
+    - rid: 3180874207708315654
       type: {class: ScreenSpaceAmbientOcclusionPersistentResources, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.Runtime}
       data:
         m_Shader: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
