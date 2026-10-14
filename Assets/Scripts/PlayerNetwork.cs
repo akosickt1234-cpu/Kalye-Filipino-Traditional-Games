@@ -6,16 +6,16 @@ public class PlayerNetwork : NetworkBehaviour
     [SerializeField] private Transform cameraPivot; // Player Camera's Position
     [SerializeField] private Rigidbody rb;
     [SerializeField] private float moveSpeed = 1f;
+    [SerializeField] private float sprintSpeedMult = 2f;
     private float xRotation;
-
     [SerializeField] private float mouseSensitivity = 2f;
-
     [SerializeField] private float jumpForce = 5f;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private LayerMask groundLayer;
 
     private bool jumpRequested;
+    private bool sprintRequested;
 
     public override void OnNetworkSpawn()
     {
@@ -53,6 +53,14 @@ public class PlayerNetwork : NetworkBehaviour
         {
             jumpRequested = true;
         }
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            sprintRequested = true;
+        }
+        if (Input.GetKeyUp(KeyCode.LeftShift))
+        {
+            sprintRequested = false;
+        }
 
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
@@ -72,6 +80,8 @@ public class PlayerNetwork : NetworkBehaviour
     {
         if (!IsOwner) return;
 
+        float speed;
+
         float horizontal = Input.GetAxisRaw("Horizontal"); // A/D
         float vertical = Input.GetAxisRaw("Vertical");     // W/S
 
@@ -86,9 +96,18 @@ public class PlayerNetwork : NetworkBehaviour
         forward.Normalize();
         right.Normalize();
 
+        if (sprintRequested)
+        {
+            speed = moveSpeed * sprintSpeedMult;
+        }
+        else
+        {
+            speed = moveSpeed;
+        }
+
         Vector3 movement = (forward * vertical + right * horizontal).normalized;
 
-        rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+        rb.MovePosition(rb.position + movement * speed * Time.fixedDeltaTime);
 
         bool isGrounded = Physics.CheckSphere(
         groundCheck.position,
@@ -100,6 +119,8 @@ public class PlayerNetwork : NetworkBehaviour
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
+
+        
 
         jumpRequested = false;
     }
