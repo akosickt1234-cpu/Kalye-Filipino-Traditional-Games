@@ -39,6 +39,6 @@ Run with a throwaway script in `backend/tmp/` (git ignored) against a local Post
 
 ## Notes for integration
 
-- `/leaderboard/*` uses `require_auth`. Change to `require_registered` if guests should not see it.
+- `/leaderboard/*` uses `require_auth` on purpose, so guests can see the leaderboard. Keep it.
 - The leaderboard joins `users`, so a deleted user drops off it. Their match rows stay.
 - No requests for other phases were needed, so there is no file in `docs/requests/`.
