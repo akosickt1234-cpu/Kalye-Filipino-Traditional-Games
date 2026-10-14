@@ -43,7 +43,7 @@ async function main(): Promise<void> {
     force_exit.unref()
     try {
       await stop_jobs()
-      await new Promise<void>((resolve) => {
+      const server_closed = new Promise<void>((resolve) => {
         http_server.close(() => resolve())
         http_server.closeIdleConnections()
       })
@@ -54,6 +54,7 @@ async function main(): Promise<void> {
           log.error({ err: error, module: definition.name }, "module stop failed")
         }
       }
+      await server_closed
       await close_database()
       log.info("shutdown complete")
       process.exit(0)

@@ -166,7 +166,7 @@ export default definition
 | `middleware` | global middleware sorted by `order` (10 to 19 foundation, 20 to 39 hardening, 40 and up other modules) |
 | `jobs` | interval jobs `{ name, interval_ms, run }`. Runs never overlap, errors are logged |
 | `on_start` | runs before the server listens |
-| `on_stop` | runs on graceful shutdown, in reverse module order |
+| `on_stop` | runs on graceful shutdown, in reverse module order. The http server is already closing, so release held requests here |
 
 The loader scans `modules/*/index.ts`, so `app.ts` is never edited. Rules:
 
@@ -195,7 +195,7 @@ A game is config only, because the rules run in Unity. `games/placeholder_game/`
 - Match results come from the host client and cannot be checked. A modified host can report a fake winner or score. Fine for casual play. Later options: all players confirm the result, or a dedicated server runs the game.
 - The real game list and rules are not decided. Everything uses the placeholder game (2 to 6 players, 1 team).
 - Friends presence and invites are checked about every 30 seconds, so they can be that late.
-- Held requests are not idle, so on shutdown they end on their own or at the forced exit.
+- A saved match reaches `/me/matches` and `/me/stats` through the event bus, so it can show up a few milliseconds after the result request answers.
 
 ## Credits
 
