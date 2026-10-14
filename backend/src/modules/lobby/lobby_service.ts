@@ -226,6 +226,7 @@ export function update_lobby(player: PlayerIdentity, code: string, input: Update
   }
 
   let started = false
+  let cancelled = false
   if (input.status === "in_game" && lobby.status === "waiting") {
     const game = get_game(lobby.game_type)
     if (lobby.members.size < game.config.min_players) {
@@ -244,9 +245,11 @@ export function update_lobby(player: PlayerIdentity, code: string, input: Update
     lobby.status = "waiting"
     lobby.snapshot = new Map()
     changed = true
+    cancelled = true
   }
 
   if (changed) bump(lobby)
+  if (cancelled) event_bus.emit(EVENT_NAMES.GAME_CANCELLED, { lobby_code: lobby.code })
   if (started) {
     event_bus.emit(EVENT_NAMES.GAME_STARTED, {
       lobby_code: lobby.code,
