@@ -90,6 +90,7 @@ Run after the rework, on Linux with a local PostgreSQL 16 (user `kftg`, password
 - `require_auth` and `require_registered`: no token gives `UNAUTHENTICATED` (401), a bad token `INVALID_TOKEN` (401), a guest on a registered route `FORBIDDEN` (403), a registered user passes.
 - An unexpected thrown error returns `INTERNAL_ERROR` (500) with empty details and no internals. An unknown route returns `NOT_FOUND` in the same shape.
 - SIGTERM on `dist/server.js` ran the job, then `on_stop`, and logged `shutdown complete`.
+- Production mode refuses the default `JWT_ACCESS_SECRET` and starts with a real one. An invalid env value (`PORT=abc`) exits with a clear message.
 - Throwaway modules and scripts were removed afterwards.
 - A grep of `package.json`, `package-lock.json`, `src`, `docs`, `.env.example`, `docker-compose.yml` and `tsconfig.json` finds no colyseus, websocket, room, monitor or `ws` reference, except in this file.
 
@@ -98,5 +99,5 @@ Run after the rework, on Linux with a local PostgreSQL 16 (user `kftg`, password
 - `docker compose up -d`. The sandbox had no Docker daemon.
 - Windows paths. The migration runner and loaders use `path`, but only Linux was run.
 - Behavior of `npm run dev` on SIGTERM. Only the `/health` response was checked there.
-- Production mode refusal with the default `JWT_ACCESS_SECRET`, token expiry, rate limiter and code utils were checked in the first version of this branch and not re-run after the rework. Their code was not changed.
-- The only checks of held requests were by reasoning. No held request exists in this phase.
+- Token expiry, rate limiter and code utils were checked in the first version of this branch and not re-run after the rework. Their code was not changed.
+- Held long poll requests. None exist in this phase.
