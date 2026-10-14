@@ -8,7 +8,13 @@ export function request_logger(req: Request, res: Response, next: NextFunction):
   res.on("finish", () => {
     const duration_ms = Number(process.hrtime.bigint() - started_at) / 1_000_000
     log.info(
-      { method: req.method, path: req.path, status: res.statusCode, duration_ms: Math.round(duration_ms) },
+      {
+        request_id: res.locals.request_id,
+        method: req.method,
+        path: req.path,
+        status: res.statusCode,
+        duration_ms: Math.round(duration_ms)
+      },
       "request"
     )
   })

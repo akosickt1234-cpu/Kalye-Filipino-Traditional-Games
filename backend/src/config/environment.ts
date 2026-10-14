@@ -27,6 +27,7 @@ const environment_schema = z.object({
   DEFAULT_GAME_TYPE: z.string().min(1).default("placeholder_game"),
   PRESENCE_TIMEOUT_SECONDS: positive_int.default(60),
   LONG_POLL_MAX_SECONDS: positive_int.default(25),
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
   CHAT_MAX_LENGTH: positive_int.default(200),
   CHAT_RATE_MESSAGES: positive_int.default(5),
   CHAT_RATE_WINDOW_SECONDS: positive_int.default(10),
