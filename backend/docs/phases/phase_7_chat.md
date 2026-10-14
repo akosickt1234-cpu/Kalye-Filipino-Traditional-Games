@@ -34,7 +34,7 @@ Order of checks: lobby exists, caller is a member, body is valid, text is cleane
 
 ## Verified
 
-Run with a throwaway script in `backend/tmp/` (git ignored). It loads only the chat module into the real express app and drives it with fake lobby events:
+Two throwaway scripts in `backend/tmp/` (git ignored). The first loads only the chat module and drives it with fake lobby events. The second runs on a temporary merge of this branch and `backend_lobby` (not pushed), with both real modules in the express app and no fake events:
 
 - `npm run typecheck` and `npm run build` pass.
 - send trims and strips control characters, ids rise, case insensitive code, history without `after`, `after` filter in order, no `wait` answers at once.
@@ -44,10 +44,11 @@ Run with a throwaway script in `backend/tmp/` (git ignored). It loads only the c
 - a client disconnect leaves no held request. History is cleared after the lobby closes. History keeps only the last 30 messages.
 - the rate limit allows 5 messages per window and then returns `CHAT_RATE_LIMITED`.
 - `on_stop` removes all four event listeners.
+- with the real lobby module: create, the host chats at once, a player who has not joined is `FORBIDDEN`, join then read history, a held poll is woken by a message, a kick releases the held request with `FORBIDDEN` and blocks read and send, a late joiner continues the ids, a player who left is blocked, the last member leaving closes the lobby and releases the held request, no held requests are left, and a private lobby works with a lowercase code.
 
 ## Not verified
 
-- The full flow with the real lobby module (`LOBBY_*` events came from the test script, not from lobby routes). The lobby phase is on another branch.
+- A member removed by the lobby heartbeat timeout job (the event path is the same as leave and kick, but the job itself was not run).
 - A server start with the database through `npm run dev` and docker.
 - A Unity client, many concurrent players, or load.
 - The global rate limit for held requests, which belongs to phase 8.
