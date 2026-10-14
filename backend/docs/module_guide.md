@@ -26,9 +26,7 @@ Every field except `name` is optional:
 |---|---|
 | `routes(app)` | register express routes under your own prefix (section 7.10 of the plan) |
 | `middleware` | global middleware, sorted by `order` (10 to 19 foundation, 20 to 39 hardening, 40 and up other modules) |
-| `rooms` | colyseus rooms to define, `{ name, room_class, options? }` |
 | `jobs` | interval jobs, `{ name, interval_ms, run }`. Runs never overlap, errors are logged |
-| `room_features` | `{ room_names, attach(room) }`, runs in `BaseRoom.onCreate` for matching rooms |
 | `on_start` | runs before the server listens |
 | `on_stop` | runs on graceful shutdown, in reverse module order |
 
@@ -47,29 +45,28 @@ Rules:
 
 Put plain `.sql` files in `src/modules/<module_name>/migrations/`. The runner collects `infrastructure/database/migrations/*.sql` and `modules/*/migrations/*.sql`, sorts all by filename, and applies each once (recorded in `schema_migrations`). Use only the number range reserved for your phase. Run with `npm run migrate`.
 
-### Rooms
+### Long polling
 
-Extend `BaseRoom` from `core/rooms/base_room.ts` and call `super.onCreate(options)` first.
+Lobby heartbeat and lobby chat use long polling (section 7.5 of the plan). The backend is REST only. Rules for every held request:
 
-- `onAuth` reads `options.token`, verifies it and returns a `PlayerIdentity`. Read it with `this.get_identity(client)`.
-- Auth failures throw a `ServerError` whose message is the error code (`UNAUTHENTICATED`, `INVALID_TOKEN`, `TOKEN_EXPIRED`).
-- To add checks after the token is valid, override `authorize_identity(identity, options)` and throw to reject. Do not override `onAuth`.
-- Send room errors with `this.send_error(client, code, message?)`.
+- Keep held requests in memory per lobby. Wake them when the lobby changes or a message arrives. Remove them when the client disconnects or `wait` ends.
+- The client sends a version (`since` for the lobby, `after` for chat). If the current version is already newer, answer at once. Otherwise hold the request until the version changes or `wait` ends, then answer.
+- `wait` is capped at `application_config.long_poll_max_seconds` (`LONG_POLL_MAX_SECONDS`). Larger values are clamped.
+- A held request counts as a heartbeat. A member with an open held request is never timed out.
+- A held request counts once for the global rate limit, when it arrives.
+- Clients call again as soon as a request answers.
 
 ## Add a game
 
 1. Create `src/games/<game_id>/index.ts`. The folder name must equal the game `id`.
-2. Default export a `GameModule` (see `src/shared/types/game_types.ts`).
-3. Keep settings in one file, `game_config.ts`, exporting a `GameConfig`.
-4. Keep rules in `game_logic.ts`. `index.ts` only wires them together.
+2. Default export a `GameModule` (see `src/shared/types/game_types.ts`): `{ id, config }`.
+3. Keep settings in `game_config.ts`, exporting a `GameConfig`: `display_name`, `min_players`, `max_players`, `team_count`.
 
-`games/placeholder_game/` is the reference. `game_logic.ts` exports `create_state`, `on_player_input`, `on_player_action`, `on_tick`, `is_finished`, `get_results` and `on_player_leave`. `index.ts` imports those names, so keep them when replacing the logic.
+A game is config only. The rules run in Unity, so the backend only uses the game list and its limits. The loader checks that `id` equals the folder name and that `min_players <= max_players`.
 
-State classes extend `BaseGameState` and `BaseGamePlayer` from `shared/schemas/base_game_state.ts`. Use `@type` decorators from `@colyseus/schema`.
+`games/placeholder_game/` is the reference.
 
-The game module validates its own input shape. The game room drops anything that throws.
-
-`game_registry.get(game_id)` and `game_registry.list()` come from `core/loaders/game_loader.ts`. The lobby and the game room use them, so a new game folder is available everywhere after a restart.
+`game_registry.get(game_id)` and `game_registry.list()` come from `core/loaders/game_loader.ts`. The lobby uses them, so a new game folder is available after a restart.
 
 ## Scripts
 
