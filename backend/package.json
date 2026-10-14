@@ -14,10 +14,6 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "@colyseus/core": "0.16.26",
-    "@colyseus/monitor": "0.16.7",
-    "@colyseus/schema": "3.0.76",
-    "@colyseus/ws-transport": "0.16.5",
     "argon2": "^0.44.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
@@ -34,7 +30,6 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.10.0",
     "@types/pg": "^8.11.10",
-    "colyseus.js": "0.16.22",
     "tsx": "^4.19.2",
     "typescript": "~5.9.3"
   }
