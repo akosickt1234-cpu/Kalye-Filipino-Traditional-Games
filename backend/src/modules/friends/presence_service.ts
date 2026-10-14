@@ -80,6 +80,9 @@ export function start_presence_tracking(on_lobby_closed: (code: string) => void,
     event_bus.on(EVENT_NAMES.GAME_STARTED, ({ lobby_code }) => {
       if (players_of_lobby.has(lobby_code)) in_game_lobbies.add(lobby_code)
     }),
+    event_bus.on(EVENT_NAMES.GAME_CANCELLED, ({ lobby_code }) => {
+      in_game_lobbies.delete(lobby_code)
+    }),
     event_bus.on(EVENT_NAMES.MATCH_FINISHED, ({ lobby_code }) => {
       if (lobby_code) in_game_lobbies.delete(lobby_code)
     }),
