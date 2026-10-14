@@ -1,4 +1,5 @@
 import express, { type Express } from "express"
+import { application_config } from "./config/application_config"
 import { error_handler, not_found_handler } from "./core/middleware/error_middleware"
 import { request_logger } from "./core/middleware/request_logger"
 import { register_health_route } from "./core/lifecycle/health"
@@ -10,6 +11,9 @@ const FOUNDATION_JSON_LIMIT = "10kb"
 export function create_app(modules: ModuleDefinition[]): Express {
   const app = express()
   app.disable("x-powered-by")
+  if (application_config.trust_proxy_hops > 0) {
+    app.set("trust proxy", application_config.trust_proxy_hops)
+  }
 
   const middleware = [
     { order: 10, handler: request_logger },
