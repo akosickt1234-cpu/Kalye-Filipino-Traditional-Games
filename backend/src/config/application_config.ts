@@ -5,10 +5,8 @@ export const application_config = {
   is_production: environment.NODE_ENV === "production",
   port: environment.PORT,
   log_level: environment.LOG_LEVEL,
-  ws_max_payload_bytes: environment.WS_MAX_PAYLOAD_BYTES,
+  long_poll_max_seconds: environment.LONG_POLL_MAX_SECONDS,
   cors_origins: environment.CORS_ORIGINS.split(",")
     .map((origin) => origin.trim())
-    .filter((origin) => origin.length > 0),
-  monitor_user: environment.MONITOR_USER,
-  monitor_password: environment.MONITOR_PASSWORD
+    .filter((origin) => origin.length > 0)
 } as const
