@@ -13,7 +13,17 @@ function validate_game(folder: string, game: GameModule): void {
     throw new Error(`game in folder ${folder} must default export a GameModule with id "${folder}"`)
   }
   const { config } = game
-  if (!config || config.min_players < 1 || config.max_players < config.min_players) {
+  const valid_config =
+    config &&
+    typeof config.display_name === "string" &&
+    config.display_name.length > 0 &&
+    Number.isInteger(config.min_players) &&
+    Number.isInteger(config.max_players) &&
+    Number.isInteger(config.team_count) &&
+    config.min_players >= 1 &&
+    config.min_players <= config.max_players &&
+    config.team_count >= 1
+  if (!valid_config) {
     throw new Error(`game ${folder} has an invalid config`)
   }
 }
