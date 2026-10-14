@@ -55,6 +55,9 @@ export function error_handler(error: unknown, req: Request, res: Response, next:
     res.status(parser_error.status).json(to_error_body(parser_error.code, parser_error.message))
     return
   }
-  log.error({ err: error, method: req.method, path: req.path }, "unhandled request error")
+  log.error(
+    { err: error, request_id: res.locals.request_id, method: req.method, path: req.path },
+    "unhandled request error"
+  )
   res.status(500).json(INTERNAL_ERROR_BODY)
 }
