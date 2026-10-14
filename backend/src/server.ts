@@ -1,6 +1,4 @@
 import { createServer } from "node:http"
-import { Server } from "@colyseus/core"
-import { WebSocketTransport } from "@colyseus/ws-transport"
 import { create_app } from "./app"
 import { application_config } from "./config/application_config"
 import { start_jobs, stop_jobs } from "./core/lifecycle/job_runner"
@@ -17,21 +15,6 @@ async function main(): Promise<void> {
 
   const app = create_app(modules)
   const http_server = createServer(app)
-  const game_server = new Server({
-    transport: new WebSocketTransport({
-      server: http_server,
-      maxPayload: application_config.ws_max_payload_bytes
-    }),
-    gracefullyShutdown: false,
-    greet: false
-  })
-
-  for (const definition of modules) {
-    for (const room of definition.rooms ?? []) {
-      game_server.define(room.name, room.room_class, room.options)
-      log.info({ module: definition.name, room: room.name }, "room defined")
-    }
-  }
 
   if (!(await check_database())) {
     log.warn("database is not reachable, /health will report db down")
@@ -41,7 +24,13 @@ async function main(): Promise<void> {
     await definition.on_start?.()
   }
 
-  await game_server.listen(application_config.port)
+  await new Promise<void>((resolve, reject) => {
+    http_server.once("error", reject)
+    http_server.listen(application_config.port, () => {
+      http_server.off("error", reject)
+      resolve()
+    })
+  })
   start_jobs(modules)
   log.info({ port: application_config.port, env: application_config.node_env }, "server started")
 
@@ -54,7 +43,10 @@ async function main(): Promise<void> {
     force_exit.unref()
     try {
       await stop_jobs()
-      await game_server.gracefullyShutdown(false)
+      await new Promise<void>((resolve) => {
+        http_server.close(() => resolve())
+        http_server.closeIdleConnections()
+      })
       for (const definition of [...modules].reverse()) {
         try {
           await definition.on_stop?.()

@@ -1,6 +1,5 @@
 import { existsSync, readdirSync } from "node:fs"
 import path from "node:path"
-import type { Room } from "@colyseus/core"
 import type { ModuleDefinition } from "../../shared/types/module_types"
 import { child_logger } from "../logging/logger"
 
@@ -8,8 +7,6 @@ const log = child_logger("module_loader")
 
 const MODULES_ROOT = path.resolve(__dirname, "..", "..", "modules")
 const ENTRY_NAMES = ["index.ts", "index.js"]
-
-type RoomFeature = NonNullable<ModuleDefinition["room_features"]>[number]
 
 class ModuleRegistry {
   private modules: ModuleDefinition[] = []
@@ -43,18 +40,6 @@ class ModuleRegistry {
 
   list(): ModuleDefinition[] {
     return this.modules
-  }
-
-  get_room_features(room_name: string): RoomFeature[] {
-    return this.modules
-      .flatMap((definition) => definition.room_features ?? [])
-      .filter((feature) => feature.room_names.includes(room_name))
-  }
-
-  attach_room_features(room: Room): void {
-    for (const feature of this.get_room_features(room.roomName)) {
-      feature.attach(room)
-    }
   }
 }
 
