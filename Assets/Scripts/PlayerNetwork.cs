@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using System.Collections;
 using UnityEngine.UI;
 using Unity.VisualScripting;
 public class PlayerNetwork : NetworkBehaviour
@@ -69,17 +70,6 @@ public class PlayerNetwork : NetworkBehaviour
         {
             
             jumpRequested = true;
-        }
-
-        if (animator.GetCurrentAnimatorStateInfo(0).IsName("Jump") && isGrounded == true)
-        {
-            AnimatorStateInfo stateInfo =
-                animator.GetCurrentAnimatorStateInfo(0);
-
-            if (stateInfo.normalizedTime >= 1f)
-            {
-                animator.SetBool("isJump", false);
-            }
         }
 
         if (Input.GetKeyDown(KeyCode.LeftShift))
@@ -182,6 +172,7 @@ public class PlayerNetwork : NetworkBehaviour
         {
             isJumping = true;
             animator.SetBool("isJump", true);
+            StartCoroutine(DisableJump());
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
 
@@ -215,25 +206,25 @@ public class PlayerNetwork : NetworkBehaviour
             animator.SetBool("isWalk", false);
         }
 
-        /*if (rb.linearVelocity.y == 0)
-        {
-            animator.SetBool("isJump", false);
-        }*/
-
         if (isGrounded)
         {
             isJumping = false;
         }
 
         highJumpRequested = false;
-        //animator.SetBool("isJump", false);
 
         Vector3 movement = (forward * vertical + right * horizontal).normalized;
 
         rb.MovePosition(rb.position + movement * speed * Time.fixedDeltaTime);
-
-        
     }
 
-    
+    IEnumerator DisableJump()
+    {
+        yield return new WaitForSeconds(1.0f);
+        if (isJumping == false)
+        {
+           
+            animator.SetBool("isJump", false);
+        }
+    }
 }
