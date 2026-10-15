@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.UI;
+using Unity.VisualScripting;
 public class PlayerNetwork : NetworkBehaviour
 {
     [SerializeField] private Image foreground;
@@ -30,6 +31,7 @@ public class PlayerNetwork : NetworkBehaviour
     private bool sprintRequested;
     private bool highJumpRequested;
     private bool isGrounded = false;
+    private bool isJumping = false;
 
     public override void OnNetworkSpawn()
     {
@@ -63,25 +65,32 @@ public class PlayerNetwork : NetworkBehaviour
     {
         if (!IsOwner || !IsClient) return;
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
-            animator.SetBool("isJump", true);
+            
             jumpRequested = true;
         }
-        if (Input.GetKeyUp(KeyCode.Space))
+
+        if (animator.GetCurrentAnimatorStateInfo(0).IsName("Jump") && isGrounded == true)
         {
-           // animator.SetBool("isJump", false);
+            AnimatorStateInfo stateInfo =
+                animator.GetCurrentAnimatorStateInfo(0);
+
+            if (stateInfo.normalizedTime >= 1f)
+            {
+                animator.SetBool("isJump", false);
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
             sprintRequested = true;
-            animator.SetBool("isRun", true);
+            
         }
         if (Input.GetKeyUp(KeyCode.LeftShift))
         {
             sprintRequested = false;
-            animator.SetBool("isRun", false);
+            
         }
 
         if (sprintRequested == true && stamina >= 0 && isGrounded)
@@ -167,22 +176,21 @@ public class PlayerNetwork : NetworkBehaviour
         groundCheck.position,
         groundCheckRadius,
         groundLayer
-    );
+        );
 
         if (jumpRequested && isGrounded)
         {
-            //animator.SetBool("isJump", true);
+            isJumping = true;
+            animator.SetBool("isJump", true);
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
 
         jumpRequested = false;
 
-        
-
-        
-
-        if (sprintRequested && stamina >= 0.1 && isGrounded)
+        if (sprintRequested && stamina >= 0.1 && isGrounded && isJumping == false)
         {
+            animator.SetBool("isRun", true);
+            animator.SetBool("isWalk", false);
             speed = moveSpeed * sprintSpeedMult;
             if (highJumpRequested && isGrounded)
             {
@@ -192,7 +200,29 @@ public class PlayerNetwork : NetworkBehaviour
         }
         else
         {
+            if (sprintRequested == false && isGrounded && isJumping == false) 
+            {
+                animator.SetBool("isWalk", true);
+                animator.SetBool("isRun", false);
+            }
+            
             speed = moveSpeed;
+        }
+
+        if (vertical == 0 && horizontal == 0) // Idle type shi
+        {
+            animator.SetBool("isRun", false);
+            animator.SetBool("isWalk", false);
+        }
+
+        /*if (rb.linearVelocity.y == 0)
+        {
+            animator.SetBool("isJump", false);
+        }*/
+
+        if (isGrounded)
+        {
+            isJumping = false;
         }
 
         highJumpRequested = false;

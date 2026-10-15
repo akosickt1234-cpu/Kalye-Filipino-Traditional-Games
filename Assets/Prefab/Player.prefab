@@ -625,7 +625,7 @@ MonoBehaviour:
   moveSpeed: 3
   sprintSpeedMult: 2
   mouseSensitivity: 2
-  jumpForce: 3
+  jumpForce: 4
   highJumpForce: 4
   groundCheck: {fileID: 8695106233402994032}
   groundCheckRadius: 0.2
