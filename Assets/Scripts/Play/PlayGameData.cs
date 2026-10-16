@@ -19,8 +19,8 @@ public class PlayGameData
                 description = "Work with your team to block the runners and prevent them from reaching the base. Be quick, be smart, be the last one standing!",
                 thumb_path = "Cards/Play/CardThumbPatintero",
                 bg_path = "Background/Play/BgPatintero2K",
-                min_players = 4,
-                max_players = 8
+                min_players = 10,
+                max_players = 12
             },
             new PlayGameData
             {
@@ -29,8 +29,8 @@ public class PlayGameData
                 description = "Jump over the rising rubber band without touching it. Clear every height to win the round.",
                 thumb_path = "Cards/Play/CardThumbChineseGarter",
                 bg_path = "Background/Play/BgChineseGarter2K",
-                min_players = 3,
-                max_players = 6
+                min_players = 2,
+                max_players = 10
             },
             new PlayGameData
             {
@@ -40,7 +40,7 @@ public class PlayGameData
                 thumb_path = "Cards/Play/CardThumbSipa",
                 bg_path = "Background/Play/BgSipa2K",
                 min_players = 2,
-                max_players = 6
+                max_players = 2
             },
             new PlayGameData
             {
@@ -50,7 +50,7 @@ public class PlayGameData
                 thumb_path = "Cards/Play/CardThumbTumbangPreso",
                 bg_path = "Background/Play/BgTumbangPreso2K",
                 min_players = 4,
-                max_players = 8
+                max_players = 12
             }
         };
     }
