@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public static class PlayGameCards
@@ -20,21 +19,27 @@ public static class PlayGameCards
     const float HEADING_Y = 715f;
     const float HEADING_HEIGHT = 64f;
     const int HEADING_SIZE = 42;
-    const float HEADING_ORNAMENT_SIZE = 16f;
-    const float HEADING_LEFT_ORNAMENT_X = 80f;
-    const float HEADING_ORNAMENT_GAP = 28f;
-    const float HEADING_LINE_GAP = 22f;
-    const float HEADING_LINE_THICKNESS = 2f;
-    const float HEADING_LINE_ALPHA = 0.7f;
+    const float HEADING_ARROW_SIZE = 36f;
+    const float HEADING_LEFT_ARROW_X = 84f;
+    const float HEADING_ARROW_GAP = 14f;
+    const float HEADING_LINE_GAP = 12f;
+    const float HEADING_LINE_THICKNESS = 3f;
     const float HEADING_FALLBACK_WIDTH = 330f;
     const int NAME_MAX_SIZE = 26;
     const int NAME_MIN_SIZE = 12;
     const float MARKER_SIZE = 16f;
     const float OUTLINE_PAD = 3f;
     const float OUTLINE_THICKNESS = 3f;
-    static readonly float[] GLOW_PADS = { 6f, 11f, 16f };
-    static readonly float[] GLOW_ALPHAS = { 0.6f, 0.4f, 0.22f };
-    const float HOVER_OVERLAY_ALPHA = 0.5f;
+    const float AURA_OUTER_PAD_X = 80f;
+    const float AURA_OUTER_PAD_Y = 64f;
+    const float AURA_INNER_PAD_X = 34f;
+    const float AURA_INNER_PAD_Y = 28f;
+    const float SHIMMER_SIZE = 64f;
+    const float SPARK_MIN_SIZE = 8f;
+    const float SPARK_MAX_SIZE = 16f;
+    const int SHIMMER_COUNT = 3;
+    const int SPARK_COUNT = 5;
+    const float HOVER_OVERLAY_ALPHA = 0.18f;
 
     public static void build(RectTransform root)
     {
@@ -55,15 +60,17 @@ public static class PlayGameCards
         if (text_width < 1f) text_width = HEADING_FALLBACK_WIDTH;
         place_top_left(label.rectTransform, HEADING_X, HEADING_Y - HEADING_HEIGHT * 0.5f, text_width, HEADING_HEIGHT);
 
-        var right_x = HEADING_X + text_width + HEADING_ORNAMENT_GAP;
-        build_diamond("heading_diamond_left", parent, HEADING_LEFT_ORNAMENT_X, HEADING_Y, HEADING_ORNAMENT_SIZE, PlayTheme.gold);
-        build_diamond("heading_diamond_right", parent, right_x, HEADING_Y, HEADING_ORNAMENT_SIZE, PlayTheme.gold);
+        var left_arrow = PlayOrnament.arrow(parent, "heading_arrow_left", HEADING_ARROW_SIZE, true, PlayTheme.gold);
+        place_center(left_arrow.rectTransform, HEADING_LEFT_ARROW_X, HEADING_Y, HEADING_ARROW_SIZE, HEADING_ARROW_SIZE);
 
-        var line_x = right_x + HEADING_LINE_GAP;
-        var line_end = ROW_X + row_width();
-        var line = PlayUi.image("heading_line", parent, null);
-        line.color = PlayTheme.with_alpha(PlayTheme.gold, HEADING_LINE_ALPHA);
-        place_top_left(line.rectTransform, line_x, HEADING_Y - HEADING_LINE_THICKNESS * 0.5f, Mathf.Max(0f, line_end - line_x), HEADING_LINE_THICKNESS);
+        var right_arrow_x = HEADING_X + text_width + HEADING_ARROW_GAP + HEADING_ARROW_SIZE * 0.5f;
+        var right_arrow = PlayOrnament.arrow(parent, "heading_arrow_right", HEADING_ARROW_SIZE, false, PlayTheme.gold);
+        place_center(right_arrow.rectTransform, right_arrow_x, HEADING_Y, HEADING_ARROW_SIZE, HEADING_ARROW_SIZE);
+
+        var line_x = right_arrow_x + HEADING_ARROW_SIZE * 0.5f + HEADING_LINE_GAP;
+        var line_width = Mathf.Max(0f, ROW_X + row_width() - line_x);
+        var line = PlayOrnament.line(parent, "heading_line", line_width, HEADING_LINE_THICKNESS, PlayTheme.gold, false, true);
+        PlayUi.place(line.rectTransform, Vector2.zero, Vector2.zero, new Vector2(0f, 0.5f), new Vector2(line_x, REF_HEIGHT - HEADING_Y), new Vector2(line_width, HEADING_LINE_THICKNESS));
     }
 
     static void build_row(RectTransform parent)
@@ -88,9 +95,6 @@ public static class PlayGameCards
             navigation.selectOnRight = i < cards.Length - 1 ? cards[i + 1] : null;
             cards[i].navigation = navigation;
         }
-
-        var row = parent.gameObject.AddComponent<PlayGameCardsFocus>();
-        row.cards = cards;
     }
 
     static PlayGameCardItem build_card(RectTransform parent, int index, PlayGameData game, Sprite frame_sprite, float x, float y, float width, float height)
@@ -105,16 +109,15 @@ public static class PlayGameCards
         var visual = PlayUi.rect("visual", card_rect);
         PlayUi.stretch(visual);
 
-        var selected_group = PlayUi.rect("selected_look", visual);
-        PlayUi.stretch(selected_group);
-        for (var i = 0; i < GLOW_PADS.Length; i++)
-        {
-            var layer = PlayUi.image("glow_" + i, selected_group, null);
-            layer.color = PlayTheme.with_alpha(PlayTheme.glow, GLOW_ALPHAS[i]);
-            stretch_padded(layer.rectTransform, GLOW_PADS[i]);
-        }
-
-        build_outline(selected_group);
+        var back_group = PlayUi.rect("selected_back", visual);
+        PlayUi.stretch(back_group);
+        var aura_outer = PlayUi.image("aura_outer", back_group, PlayUi.radial_glow());
+        aura_outer.color = PlayTheme.magic_glow;
+        stretch_padded(aura_outer.rectTransform, AURA_OUTER_PAD_X, AURA_OUTER_PAD_Y);
+        var aura_inner = PlayUi.image("aura_inner", back_group, PlayUi.radial_glow());
+        aura_inner.color = PlayTheme.glow;
+        stretch_padded(aura_inner.rectTransform, AURA_INNER_PAD_X, AURA_INNER_PAD_Y);
+        build_outline(back_group);
 
         var thumb_sprite = game != null ? PlayUi.sprite(game.thumb_path) : null;
         var thumb = PlayUi.image("thumbnail", visual, thumb_sprite);
@@ -124,7 +127,7 @@ public static class PlayGameCards
         PlayUi.stretch(frame.rectTransform);
 
         var overlay = PlayUi.image("hover_overlay", visual, null);
-        overlay.color = PlayTheme.with_alpha(PlayTheme.glow, HOVER_OVERLAY_ALPHA);
+        overlay.color = PlayTheme.with_alpha(PlayTheme.magic_glow, HOVER_OVERLAY_ALPHA);
         PlayUi.stretch(overlay.rectTransform);
 
         var name_value = game != null ? game.display_name : string.Empty;
@@ -139,20 +142,46 @@ public static class PlayGameCards
         name_rect.offsetMin = Vector2.zero;
         name_rect.offsetMax = Vector2.zero;
 
-        var marker = build_diamond("selected_marker", visual, 0f, 0f, MARKER_SIZE, PlayTheme.gold);
+        var front_group = PlayUi.rect("selected_front", visual);
+        PlayUi.stretch(front_group);
+
+        var shimmers = new Image[SHIMMER_COUNT];
+        for (var i = 0; i < SHIMMER_COUNT; i++)
+        {
+            shimmers[i] = PlayUi.image("shimmer_" + i, front_group, PlayUi.radial_glow());
+            shimmers[i].color = PlayTheme.magic_glow;
+            place_bottom_left_center(shimmers[i].rectTransform, SHIMMER_SIZE);
+        }
+
+        var sparks = new Image[SPARK_COUNT];
+        for (var i = 0; i < SPARK_COUNT; i++)
+        {
+            sparks[i] = PlayUi.image("spark_" + i, front_group, PlayUi.radial_glow());
+            sparks[i].color = PlayTheme.magic_spark;
+            place_bottom_left_center(sparks[i].rectTransform, Mathf.Lerp(SPARK_MIN_SIZE, SPARK_MAX_SIZE, spark_seed(index, i, 3)));
+        }
+
+        var marker = build_diamond("selected_marker", front_group, 0f, 0f, MARKER_SIZE, PlayTheme.gold);
         marker.anchorMin = new Vector2(0.5f, 1f);
         marker.anchorMax = new Vector2(0.5f, 1f);
         marker.anchoredPosition = Vector2.zero;
 
         var item = card_rect.gameObject.AddComponent<PlayGameCardItem>();
         item.index = index;
+        item.card_width = width;
+        item.card_height = height;
         item.visual = visual;
-        item.selected_group = selected_group.gameObject;
-        item.marker = marker.gameObject;
+        item.back_group = back_group.gameObject;
+        item.front_group = front_group.gameObject;
         item.overlay = overlay;
         item.name_label = name_label;
+        item.aura_outer = aura_outer;
+        item.aura_inner = aura_inner;
+        item.shimmers = shimmers;
+        item.sparks = sparks;
         item.targetGraphic = hit;
         item.transition = Selectable.Transition.None;
+        item.initialize();
         return item;
     }
 
@@ -203,11 +232,27 @@ public static class PlayGameCards
         r.sizeDelta = new Vector2(0f, height);
     }
 
-    static void stretch_padded(RectTransform r, float pad)
+    static void stretch_padded(RectTransform r, float pad_x, float pad_y)
     {
         PlayUi.stretch(r);
-        r.offsetMin = new Vector2(-pad, -pad);
-        r.offsetMax = new Vector2(pad, pad);
+        r.offsetMin = new Vector2(-pad_x, -pad_y);
+        r.offsetMax = new Vector2(pad_x, pad_y);
+    }
+
+    static void place_center(RectTransform r, float center_x, float center_y, float width, float height)
+    {
+        PlayUi.place(r, Vector2.zero, Vector2.zero, new Vector2(0.5f, 0.5f), new Vector2(center_x, REF_HEIGHT - center_y), new Vector2(width, height));
+    }
+
+    static void place_bottom_left_center(RectTransform r, float size)
+    {
+        PlayUi.place(r, Vector2.zero, Vector2.zero, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(size, size));
+    }
+
+    public static float spark_seed(int card_index, int spark_index, int salt)
+    {
+        var value = Mathf.Sin((card_index * 7 + spark_index * 13 + salt * 29) * 12.9898f) * 43758.5453f;
+        return value - Mathf.Floor(value);
     }
 
     static float row_width()
@@ -223,29 +268,59 @@ public class PlayGameCardItem : Selectable, IPointerClickHandler, ISubmitHandler
     const float LIFT_PIXELS = 6f;
     const float LERP_SPEED = 18f;
     const float SNAP_EPSILON = 0.01f;
+    const float HOVER_ALPHA = 0.18f;
+    const float BREATHE_SPEED = 1.8f;
+    const float AURA_OUTER_MIN = 0.3f;
+    const float AURA_OUTER_MAX = 0.7f;
+    const float AURA_INNER_MIN = 0.3f;
+    const float AURA_INNER_MAX = 0.55f;
+    const float AURA_SCALE_GAIN = 0.04f;
+    const float SHIMMER_PERIOD = 4.5f;
+    const float SHIMMER_TRAIL = 0.025f;
+    const float SHIMMER_INSET = 4f;
+    const float SHIMMER_TRAIL_FADE = 0.3f;
+    const float SPARK_RISE = 150f;
+    const float SPARK_START = 0.25f;
+    const float SPARK_DRIFT = 9f;
+    const float SPARK_MIN_SPEED = 0.18f;
+    const float SPARK_MAX_SPEED = 0.34f;
 
     public int index;
+    public float card_width;
+    public float card_height;
     public RectTransform visual;
-    public GameObject selected_group;
-    public GameObject marker;
+    public GameObject back_group;
+    public GameObject front_group;
     public Image overlay;
     public Text name_label;
+    public Image aura_outer;
+    public Image aura_inner;
+    public Image[] shimmers;
+    public Image[] sparks;
 
-    bool active_state;
+    bool hovered;
+    bool is_selected;
     float lift_current;
     float overlay_current;
+
+    public void initialize()
+    {
+        refresh_selected();
+        apply_visual(true);
+    }
 
     protected override void OnEnable()
     {
         base.OnEnable();
         PlayState.selection_changed += on_selection_changed;
-        refresh_selected();
-        apply_visual(true);
+        hovered = false;
+        initialize();
     }
 
     protected override void OnDisable()
     {
         PlayState.selection_changed -= on_selection_changed;
+        hovered = false;
         base.OnDisable();
     }
 
@@ -257,14 +332,25 @@ public class PlayGameCardItem : Selectable, IPointerClickHandler, ISubmitHandler
 
     protected override void DoStateTransition(SelectionState state, bool instant)
     {
-        active_state = state == SelectionState.Highlighted || state == SelectionState.Selected || state == SelectionState.Pressed;
-        if (instant) apply_visual(true);
+    }
+
+    public override void OnPointerEnter(PointerEventData event_data)
+    {
+        base.OnPointerEnter(event_data);
+        hovered = true;
+    }
+
+    public override void OnPointerExit(PointerEventData event_data)
+    {
+        base.OnPointerExit(event_data);
+        hovered = false;
     }
 
     public void OnPointerClick(PointerEventData event_data)
     {
         if (event_data != null && event_data.button != PointerEventData.InputButton.Left) return;
         PlayState.select(index);
+        PlayFocus.clear_selection();
     }
 
     public void OnSubmit(BaseEventData event_data)
@@ -275,6 +361,7 @@ public class PlayGameCardItem : Selectable, IPointerClickHandler, ISubmitHandler
     void Update()
     {
         apply_visual(false);
+        if (is_selected) animate_magic();
     }
 
     void on_selection_changed(int selected_index)
@@ -282,18 +369,26 @@ public class PlayGameCardItem : Selectable, IPointerClickHandler, ISubmitHandler
         refresh_selected();
     }
 
+    bool is_focused()
+    {
+        var event_system = EventSystem.current;
+        return event_system != null && event_system.currentSelectedGameObject == gameObject;
+    }
+
     void refresh_selected()
     {
-        var is_selected = PlayState.selected_index == index;
-        if (selected_group != null) selected_group.SetActive(is_selected);
-        if (marker != null) marker.SetActive(is_selected);
+        is_selected = PlayState.selected_index == index;
+        if (back_group != null) back_group.SetActive(is_selected);
+        if (front_group != null) front_group.SetActive(is_selected);
         if (name_label != null) name_label.color = is_selected ? PlayTheme.gold_soft : PlayTheme.text;
+        if (is_selected) PlayFocus.default_target = gameObject;
     }
 
     void apply_visual(bool instant)
     {
-        var lift_target = active_state ? LIFT_PIXELS : 0f;
-        var overlay_target = active_state ? 1f : 0f;
+        var lit = PlayFocus.lit(hovered, is_focused());
+        var lift_target = lit ? LIFT_PIXELS : 0f;
+        var overlay_target = lit ? 1f : 0f;
 
         if (instant)
         {
@@ -312,32 +407,78 @@ public class PlayGameCardItem : Selectable, IPointerClickHandler, ISubmitHandler
         if (overlay != null)
         {
             overlay.enabled = overlay_current > SNAP_EPSILON;
-            overlay.canvasRenderer.SetAlpha(overlay_current);
+            overlay.color = PlayTheme.with_alpha(PlayTheme.magic_glow, HOVER_ALPHA * overlay_current);
         }
     }
-}
 
-public class PlayGameCardsFocus : MonoBehaviour
-{
-    public PlayGameCardItem[] cards;
-
-    void Update()
+    void animate_magic()
     {
-        if (cards == null || cards.Length == 0) return;
-        var event_system = EventSystem.current;
-        if (event_system == null || event_system.currentSelectedGameObject != null) return;
-        if (!direction_pressed()) return;
+        var time = Time.unscaledTime;
+        var breathe = 0.5f + 0.5f * Mathf.Sin(time * BREATHE_SPEED + index);
 
-        var target = cards[Mathf.Clamp(PlayState.selected_index, 0, cards.Length - 1)];
-        if (target != null) event_system.SetSelectedGameObject(target.gameObject);
+        if (aura_outer != null)
+        {
+            aura_outer.color = PlayTheme.with_alpha(PlayTheme.magic_glow, Mathf.Lerp(AURA_OUTER_MIN, AURA_OUTER_MAX, breathe));
+            var scale = 1f + AURA_SCALE_GAIN * breathe;
+            aura_outer.rectTransform.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        if (aura_inner != null)
+        {
+            aura_inner.color = PlayTheme.with_alpha(PlayTheme.glow, Mathf.Lerp(AURA_INNER_MIN, AURA_INNER_MAX, 1f - breathe));
+        }
+
+        animate_shimmer(time);
+        animate_sparks(time);
     }
 
-    static bool direction_pressed()
+    void animate_shimmer(float time)
     {
-        var keyboard = Keyboard.current;
-        if (keyboard != null && (keyboard.leftArrowKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame)) return true;
+        if (shimmers == null) return;
 
-        var gamepad = Gamepad.current;
-        return gamepad != null && (gamepad.dpad.left.wasPressedThisFrame || gamepad.dpad.right.wasPressedThisFrame);
+        var head = time / SHIMMER_PERIOD + index * 0.25f;
+        for (var i = 0; i < shimmers.Length; i++)
+        {
+            if (shimmers[i] == null) continue;
+            var progress = head - i * SHIMMER_TRAIL;
+            progress -= Mathf.Floor(progress);
+            shimmers[i].rectTransform.anchoredPosition = perimeter_point(progress);
+            var fade = 1f - i * SHIMMER_TRAIL_FADE;
+            shimmers[i].color = PlayTheme.with_alpha(PlayTheme.magic_glow, PlayTheme.magic_glow.a * fade);
+        }
+    }
+
+    void animate_sparks(float time)
+    {
+        if (sparks == null) return;
+
+        for (var i = 0; i < sparks.Length; i++)
+        {
+            if (sparks[i] == null) continue;
+            var speed = Mathf.Lerp(SPARK_MIN_SPEED, SPARK_MAX_SPEED, PlayGameCards.spark_seed(index, i, 1));
+            var phase = time * speed + PlayGameCards.spark_seed(index, i, 2);
+            phase -= Mathf.Floor(phase);
+
+            var base_x = card_width * Mathf.Lerp(0.1f, 0.9f, PlayGameCards.spark_seed(index, i, 4));
+            var x = base_x + Mathf.Sin(time * 1.7f + i * 2.1f) * SPARK_DRIFT;
+            var y = card_height * SPARK_START + phase * SPARK_RISE;
+            sparks[i].rectTransform.anchoredPosition = new Vector2(x, y);
+            sparks[i].color = PlayTheme.with_alpha(PlayTheme.magic_spark, Mathf.Sin(phase * Mathf.PI));
+        }
+    }
+
+    Vector2 perimeter_point(float progress)
+    {
+        var inner_width = Mathf.Max(1f, card_width - SHIMMER_INSET * 2f);
+        var inner_height = Mathf.Max(1f, card_height - SHIMMER_INSET * 2f);
+        var distance = progress * 2f * (inner_width + inner_height);
+
+        if (distance < inner_width) return new Vector2(SHIMMER_INSET + distance, card_height - SHIMMER_INSET);
+        distance -= inner_width;
+        if (distance < inner_height) return new Vector2(card_width - SHIMMER_INSET, card_height - SHIMMER_INSET - distance);
+        distance -= inner_height;
+        if (distance < inner_width) return new Vector2(card_width - SHIMMER_INSET - distance, SHIMMER_INSET);
+        distance -= inner_width;
+        return new Vector2(SHIMMER_INSET, SHIMMER_INSET + distance);
     }
 }

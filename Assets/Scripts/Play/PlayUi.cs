@@ -10,10 +10,15 @@ public static class PlayUi
     const string FALLBACK_OS_FONT = "Arial";
     const int FALLBACK_FONT_SIZE = 16;
     const int DEFAULT_LAYER = 5;
+    const int FADE_STEPS = 64;
+    const int GLOW_SIZE = 128;
+    const float GLOW_FALLOFF = 2f;
 
     static readonly Dictionary<string, Sprite> sprite_cache = new Dictionary<string, Sprite>();
     static readonly HashSet<string> missing_paths = new HashSet<string>();
     static Font font_value;
+    static Sprite vertical_fade_sprite;
+    static Sprite radial_glow_sprite;
 
     public static Font font
     {
@@ -110,6 +115,53 @@ public static class PlayUi
         r.pivot = pivot;
         r.anchoredPosition = anchored_pos;
         r.sizeDelta = size;
+    }
+
+    public static Sprite vertical_fade()
+    {
+        if (vertical_fade_sprite != null) return vertical_fade_sprite;
+
+        var texture = new Texture2D(1, FADE_STEPS, TextureFormat.RGBA32, false);
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+
+        var pixels = new Color[FADE_STEPS];
+        for (var i = 0; i < FADE_STEPS; i++)
+        {
+            var alpha = 1f - i / (float)(FADE_STEPS - 1);
+            pixels[i] = PlayTheme.with_alpha(PlayTheme.white, alpha);
+        }
+
+        texture.SetPixels(pixels);
+        texture.Apply(false, true);
+        vertical_fade_sprite = Sprite.Create(texture, new Rect(0f, 0f, 1f, FADE_STEPS), new Vector2(0.5f, 0.5f), 100f);
+        return vertical_fade_sprite;
+    }
+
+    public static Sprite radial_glow()
+    {
+        if (radial_glow_sprite != null) return radial_glow_sprite;
+
+        var texture = new Texture2D(GLOW_SIZE, GLOW_SIZE, TextureFormat.RGBA32, false);
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+
+        var pixels = new Color[GLOW_SIZE * GLOW_SIZE];
+        var center = (GLOW_SIZE - 1) * 0.5f;
+        for (var y = 0; y < GLOW_SIZE; y++)
+        {
+            for (var x = 0; x < GLOW_SIZE; x++)
+            {
+                var distance = Mathf.Sqrt((x - center) * (x - center) + (y - center) * (y - center)) / center;
+                var alpha = Mathf.Pow(Mathf.Clamp01(1f - distance), GLOW_FALLOFF);
+                pixels[y * GLOW_SIZE + x] = PlayTheme.with_alpha(PlayTheme.white, alpha);
+            }
+        }
+
+        texture.SetPixels(pixels);
+        texture.Apply(false, true);
+        radial_glow_sprite = Sprite.Create(texture, new Rect(0f, 0f, GLOW_SIZE, GLOW_SIZE), new Vector2(0.5f, 0.5f), 100f);
+        return radial_glow_sprite;
     }
 
     public static void go_to_scene(string scene_name)

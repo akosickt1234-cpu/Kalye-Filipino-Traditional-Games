@@ -20,21 +20,19 @@ public static class PlayTopBar
     private const float NAME_HEIGHT = 44f;
     private const int NAME_TEXT_SIZE = 32;
     private const int NAME_TEXT_MIN_SIZE = 18;
-    private const float NAME_LINE_Y = 70f;
-    private const float NAME_LINE_WIDTH = 240f;
-    private const float NAME_LINE_HEIGHT = 2f;
+    private const float NAME_LINE_CENTER_Y = 82f;
+    private const float NAME_LINE_WIDTH = 260f;
     private const float ICON_X = 450f;
     private const float ICON_Y = 25f;
     private const float ICON_SIZE = 64f;
     private const float ICON_GAP = 24f;
     private const float GLOW_SIZE = 150f;
-    private const float LINE_GAP = 8f;
+    private const float LINE_GAP = 4f;
     private const float LINE_HEIGHT = 3f;
-    private const string DEFAULT_NAME = "Player";
+    private const string DEFAULT_NAME = "Guest";
 
     private static Sprite circle_sprite;
     private static Sprite glow_sprite;
-    private static Sprite fade_line_sprite;
     private static Sprite center_line_sprite;
 
     public static void build(RectTransform root)
@@ -87,7 +85,7 @@ public static class PlayTopBar
     {
         string value = string.IsNullOrWhiteSpace(PlayState.player_name) ? DEFAULT_NAME : PlayState.player_name;
 
-        Text name_text = PlayUi.text("PlayerName", bar, value, NAME_TEXT_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
+        Text name_text = PlayUi.text("PlayerName", bar, value, NAME_TEXT_SIZE, PlayTheme.text, TextAnchor.MiddleCenter);
         name_text.raycastTarget = false;
         name_text.horizontalOverflow = HorizontalWrapMode.Wrap;
         name_text.verticalOverflow = VerticalWrapMode.Truncate;
@@ -96,9 +94,8 @@ public static class PlayTopBar
         name_text.resizeTextMaxSize = NAME_TEXT_SIZE;
         place_top_left(name_text.rectTransform, NAME_X, NAME_Y, NAME_WIDTH, NAME_HEIGHT);
 
-        Image line = PlayUi.image("PlayerNameLine", bar, get_fade_line_sprite());
-        line.color = PlayTheme.gold;
-        place_top_left(line.rectTransform, NAME_X, NAME_LINE_Y, NAME_LINE_WIDTH, NAME_LINE_HEIGHT);
+        RectTransform line = PlayOrnament.arrow_line(bar, "PlayerNameLine", NAME_LINE_WIDTH, PlayTheme.gold);
+        PlayUi.place(line, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(NAME_X + NAME_WIDTH * 0.5f, -NAME_LINE_CENTER_Y), new Vector2(NAME_LINE_WIDTH, line.sizeDelta.y));
     }
 
     private static void build_icons(RectTransform bar)
@@ -134,7 +131,11 @@ public static class PlayTopBar
         Button button = hit.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
         button.transition = Selectable.Transition.None;
-        button.onClick.AddListener(() => PlayUi.go_to_scene(scene_name));
+        button.onClick.AddListener(() =>
+        {
+            PlayUi.go_to_scene(scene_name);
+            PlayFocus.clear_selection();
+        });
 
         Image glow = PlayUi.image("Glow", hit.rectTransform, get_glow_sprite());
         glow.color = PlayTheme.clear;
@@ -191,15 +192,6 @@ public static class PlayTopBar
         return glow_sprite;
     }
 
-    private static Sprite get_fade_line_sprite()
-    {
-        if (fade_line_sprite == null)
-        {
-            fade_line_sprite = make_sprite(256, 2, (u, v) => 1f - u);
-        }
-        return fade_line_sprite;
-    }
-
     private static Sprite get_center_line_sprite()
     {
         if (center_line_sprite == null)
@@ -239,7 +231,8 @@ public static class PlayTopBar
 [RequireComponent(typeof(Selectable))]
 public class PlayTopBarIconHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
-    private const float FADE_SECONDS = 0.15f;
+    private const float FADE_IN_SECONDS = 0.15f;
+    private const float FADE_OUT_SECONDS = 0.1f;
     private const float ACTIVE_SCALE = 1.08f;
     private const float LINE_WIDTH = 44f;
 
@@ -274,7 +267,7 @@ public class PlayTopBarIconHover : MonoBehaviour, IPointerEnterHandler, IPointer
 
     private void Update()
     {
-        bool active = (pointer_over || focused) && selectable != null && selectable.IsInteractable();
+        bool active = PlayFocus.lit(pointer_over, focused) && selectable != null && selectable.IsInteractable();
         float target = active ? 1f : 0f;
 
         if (Mathf.Approximately(amount, target))
@@ -282,7 +275,8 @@ public class PlayTopBarIconHover : MonoBehaviour, IPointerEnterHandler, IPointer
             return;
         }
 
-        amount = Mathf.MoveTowards(amount, target, Time.unscaledDeltaTime / FADE_SECONDS);
+        float seconds = active ? FADE_IN_SECONDS : FADE_OUT_SECONDS;
+        amount = Mathf.MoveTowards(amount, target, Time.unscaledDeltaTime / seconds);
         apply(amount);
     }
 
