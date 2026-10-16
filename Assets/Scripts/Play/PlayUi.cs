@@ -13,12 +13,17 @@ public static class PlayUi
     const int FADE_STEPS = 64;
     const int GLOW_SIZE = 128;
     const float GLOW_FALLOFF = 2f;
+    const int PILL_SIZE = 64;
+    const float PILL_RADIUS = 32f;
+    const float PILL_BORDER = 31f;
 
     static readonly Dictionary<string, Sprite> sprite_cache = new Dictionary<string, Sprite>();
     static readonly HashSet<string> missing_paths = new HashSet<string>();
+    static readonly List<Shadow> shadow_buffer = new List<Shadow>();
     static Font font_value;
     static Sprite vertical_fade_sprite;
     static Sprite radial_glow_sprite;
+    static Sprite pill_sprite;
 
     public static Font font
     {
@@ -162,6 +167,56 @@ public static class PlayUi
         texture.Apply(false, true);
         radial_glow_sprite = Sprite.Create(texture, new Rect(0f, 0f, GLOW_SIZE, GLOW_SIZE), new Vector2(0.5f, 0.5f), 100f);
         return radial_glow_sprite;
+    }
+
+    public static Sprite pill()
+    {
+        if (pill_sprite != null) return pill_sprite;
+
+        var texture = new Texture2D(PILL_SIZE, PILL_SIZE, TextureFormat.RGBA32, false);
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+
+        var pixels = new Color[PILL_SIZE * PILL_SIZE];
+        var center = (PILL_SIZE - 1) * 0.5f;
+        var inner = center - PILL_RADIUS + 0.5f;
+        for (var y = 0; y < PILL_SIZE; y++)
+        {
+            for (var x = 0; x < PILL_SIZE; x++)
+            {
+                var dx = Mathf.Max(Mathf.Abs(x - center) - inner, 0f);
+                var dy = Mathf.Max(Mathf.Abs(y - center) - inner, 0f);
+                var distance = Mathf.Sqrt(dx * dx + dy * dy);
+                var alpha = Mathf.Clamp01(PILL_RADIUS - distance + 0.5f);
+                pixels[y * PILL_SIZE + x] = PlayTheme.with_alpha(PlayTheme.white, alpha);
+            }
+        }
+
+        texture.SetPixels(pixels);
+        texture.Apply(false, true);
+        var border = new Vector4(PILL_BORDER, PILL_BORDER, PILL_BORDER, PILL_BORDER);
+        pill_sprite = Sprite.Create(texture, new Rect(0f, 0f, PILL_SIZE, PILL_SIZE), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, border);
+        return pill_sprite;
+    }
+
+    public static void add_shadow(Graphic g, float distance = 4f)
+    {
+        if (g == null) return;
+
+        g.GetComponents(shadow_buffer);
+        Shadow target = null;
+        for (var i = 0; i < shadow_buffer.Count; i++)
+        {
+            if (shadow_buffer[i].GetType() != typeof(Shadow)) continue;
+            target = shadow_buffer[i];
+            break;
+        }
+        shadow_buffer.Clear();
+
+        if (target == null) target = g.gameObject.AddComponent<Shadow>();
+        target.effectColor = PlayTheme.shadow;
+        target.effectDistance = new Vector2(distance, -distance);
+        target.useGraphicAlpha = true;
     }
 
     public static void go_to_scene(string scene_name)
