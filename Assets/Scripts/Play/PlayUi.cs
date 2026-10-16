@@ -1,0 +1,136 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+
+public static class PlayTheme
+{
+    public static readonly Color gold = new Color(0.914f, 0.761f, 0.478f, 1f);
+    public static readonly Color gold_soft = new Color(0.965f, 0.824f, 0.596f, 1f);
+    public static readonly Color glow = new Color(0.945f, 0.788f, 0.510f, 0.35f);
+    public static readonly Color text = new Color(0.961f, 0.937f, 0.890f, 1f);
+    public static readonly Color text_muted = new Color(0.639f, 0.643f, 0.682f, 1f);
+    public static readonly Color panel_dark = new Color(0.114f, 0.125f, 0.200f, 1f);
+    public static readonly Color clear = new Color(0f, 0f, 0f, 0f);
+}
+
+public static class PlayUi
+{
+    const string FONT_PATH = "Fonts/MatchaSalt";
+    const string BUILTIN_FONT = "LegacyRuntime.ttf";
+    const string FALLBACK_OS_FONT = "Arial";
+    const int FALLBACK_FONT_SIZE = 16;
+    const int DEFAULT_LAYER = 5;
+
+    static readonly Dictionary<string, Sprite> sprite_cache = new Dictionary<string, Sprite>();
+    static readonly HashSet<string> missing_paths = new HashSet<string>();
+    static Font font_value;
+
+    public static Font font
+    {
+        get
+        {
+            if (font_value == null) font_value = load_font();
+            return font_value;
+        }
+        set { font_value = value; }
+    }
+
+    public static Font load_font()
+    {
+        var loaded = Resources.Load<Font>(FONT_PATH);
+        if (loaded != null) return loaded;
+
+        Debug.LogWarning($"font '{FONT_PATH}' was not found in Resources, using the built-in font");
+        loaded = Resources.GetBuiltinResource<Font>(BUILTIN_FONT);
+        if (loaded != null) return loaded;
+
+        return Font.CreateDynamicFontFromOSFont(FALLBACK_OS_FONT, FALLBACK_FONT_SIZE);
+    }
+
+    public static Sprite sprite(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return null;
+        if (sprite_cache.TryGetValue(path, out var cached) && cached != null) return cached;
+        if (missing_paths.Contains(path)) return null;
+
+        var loaded = Resources.Load<Sprite>(path);
+        if (loaded == null)
+        {
+            missing_paths.Add(path);
+            Debug.LogWarning($"sprite '{path}' was not found in Resources");
+            return null;
+        }
+
+        sprite_cache[path] = loaded;
+        return loaded;
+    }
+
+    public static RectTransform rect(string name, Transform parent)
+    {
+        var holder = new GameObject(string.IsNullOrEmpty(name) ? "rect" : name, typeof(RectTransform));
+        holder.layer = parent != null ? parent.gameObject.layer : DEFAULT_LAYER;
+
+        var holder_rect = holder.GetComponent<RectTransform>();
+        holder_rect.SetParent(parent, false);
+        return holder_rect;
+    }
+
+    public static Image image(string name, Transform parent, Sprite sprite, bool raycast = false)
+    {
+        var holder = rect(name, parent);
+        var picture = holder.gameObject.AddComponent<Image>();
+        picture.sprite = sprite;
+        picture.raycastTarget = raycast;
+        if (sprite == null) picture.color = PlayTheme.clear;
+        return picture;
+    }
+
+    public static Text text(string name, Transform parent, string value, int size, Color color, TextAnchor anchor)
+    {
+        var holder = rect(name, parent);
+        var label = holder.gameObject.AddComponent<Text>();
+        label.font = font;
+        label.text = value ?? string.Empty;
+        label.fontSize = size;
+        label.color = color;
+        label.alignment = anchor;
+        label.horizontalOverflow = HorizontalWrapMode.Wrap;
+        label.verticalOverflow = VerticalWrapMode.Overflow;
+        label.raycastTarget = false;
+        return label;
+    }
+
+    public static void stretch(RectTransform r)
+    {
+        if (r == null) return;
+
+        r.anchorMin = Vector2.zero;
+        r.anchorMax = Vector2.one;
+        r.pivot = new Vector2(0.5f, 0.5f);
+        r.offsetMin = Vector2.zero;
+        r.offsetMax = Vector2.zero;
+    }
+
+    public static void place(RectTransform r, Vector2 anchor_min, Vector2 anchor_max, Vector2 pivot, Vector2 anchored_pos, Vector2 size)
+    {
+        if (r == null) return;
+
+        r.anchorMin = anchor_min;
+        r.anchorMax = anchor_max;
+        r.pivot = pivot;
+        r.anchoredPosition = anchored_pos;
+        r.sizeDelta = size;
+    }
+
+    public static void go_to_scene(string scene_name)
+    {
+        if (string.IsNullOrEmpty(scene_name) || !Application.CanStreamedLevelBeLoaded(scene_name))
+        {
+            Debug.LogWarning($"scene '{scene_name}' is not in the build settings yet");
+            return;
+        }
+
+        SceneManager.LoadScene(scene_name);
+    }
+}
