@@ -236,6 +236,7 @@ GameObject:
   - component: {fileID: 1009}
   - component: {fileID: 1008}
   - component: {fileID: 1010}
+  - component: {fileID: 9001}
   m_Layer: 5
   m_Name: background
   m_TagString: Untagged
@@ -325,6 +326,7 @@ GameObject:
   - component: {fileID: 1012}
   - component: {fileID: 1014}
   - component: {fileID: 1013}
+  - component: {fileID: 9002}
   m_Layer: 5
   m_Name: logo
   m_TagString: Untagged
@@ -2306,3 +2308,41 @@ SceneRoots:
   - {fileID: 765133091}
   - {fileID: 1743808726}
   - {fileID: 1019}
+--- !u!114 &9001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1006}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e8b5d1a7c2f4094b6a0d8e1f5c72a96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  count: 30
+  size: 6
+  color: {r: 1, g: 0.86, b: 0.45, a: 1}
+  rise_speed: {x: 0.01, y: 0.03}
+  pulse_speed: {x: 0.6, y: 1.6}
+  sway: 24
+  min_height: 0.05
+  max_height: 0.8
+  edge_fade: 0.1
+--- !u!114 &9002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d80043267e24b48b51d9c096dd21011, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sweep_duration: 1.6
+  idle_gap: 2.5
+  slant_angle: 20
+  bar_width_ratio: 0.18
+  bar_alpha: 0.7
