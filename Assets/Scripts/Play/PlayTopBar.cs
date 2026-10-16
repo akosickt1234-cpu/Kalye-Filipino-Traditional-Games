@@ -89,7 +89,7 @@ public static class PlayTopBar
 
         Text name_text = PlayUi.text("PlayerName", bar, value, NAME_TEXT_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
         name_text.raycastTarget = false;
-        name_text.horizontalOverflow = HorizontalWrapMode.Truncate;
+        name_text.horizontalOverflow = HorizontalWrapMode.Wrap;
         name_text.verticalOverflow = VerticalWrapMode.Truncate;
         name_text.resizeTextForBestFit = true;
         name_text.resizeTextMinSize = NAME_TEXT_MIN_SIZE;
