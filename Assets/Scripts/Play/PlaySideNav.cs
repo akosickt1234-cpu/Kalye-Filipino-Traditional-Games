@@ -7,11 +7,12 @@ public static class PlaySideNav
     const string NAV_NAME = "SideNav";
     const string TAB_PATH = "Buttons/Play/TabSelectedGold";
     const float LEFT = 35f;
-    const float ROW_WIDTH = 290f;
+    const float ROW_WIDTH = 326f;
     const float ROW_HEIGHT = 63f;
+    const float FRAME_HEIGHT = 71f;
     const float ICON_SIZE = 44f;
-    const float ICON_CENTER_X = 36f;
-    const float LABEL_LEFT = 76f;
+    const float ICON_CENTER_X = 72f;
+    const float LABEL_LEFT = 112f;
     const int LABEL_SIZE = 30;
 
     static readonly string[] LABELS = { "Mode", "Customize", "Inventory", "Shop" };
@@ -32,12 +33,19 @@ public static class PlaySideNav
         var nav = PlayUi.rect(NAV_NAME, root);
         PlayUi.stretch(nav);
 
+        var frame = PlayUi.image("SelectionFrame", nav, PlayUi.sprite(TAB_PATH));
+        frame.preserveAspect = false;
+        PlayUi.place(frame.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(LEFT, -ROW_Y[0]), new Vector2(ROW_WIDTH, FRAME_HEIGHT));
+
+        var frame_mover = nav.gameObject.AddComponent<PlaySideNavFrame>();
+        frame_mover.setup(frame.rectTransform, ROW_Y);
+
         int count = LABELS.Length;
         var buttons = new Button[count];
 
         for (int i = 0; i < count; i++)
         {
-            buttons[i] = build_row(nav, i);
+            buttons[i] = build_row(nav, i, frame_mover);
         }
 
         for (int i = 0; i < count; i++)
@@ -50,11 +58,12 @@ public static class PlaySideNav
             };
             buttons[i].navigation = navigation;
         }
+
+        PlayFocus.default_target = buttons[0].gameObject;
     }
 
-    static Button build_row(RectTransform parent, int index)
+    static Button build_row(RectTransform parent, int index, PlaySideNavFrame frame_mover)
     {
-        bool active = index == 0;
         string label_value = LABELS[index];
 
         var row = PlayUi.rect("Nav" + label_value, parent);
@@ -64,13 +73,6 @@ public static class PlaySideNav
         hit.color = PlayTheme.clear;
         hit.raycastTarget = true;
 
-        if (active)
-        {
-            var tab = PlayUi.image("TabBackground", row, PlayUi.sprite(TAB_PATH));
-            PlayUi.stretch(tab.rectTransform);
-            tab.preserveAspect = false;
-        }
-
         var content = PlayUi.rect("Content", row);
         PlayUi.stretch(content);
 
@@ -78,8 +80,7 @@ public static class PlaySideNav
         PlayUi.place(icon.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(ICON_CENTER_X, 0f), new Vector2(ICON_SIZE, ICON_SIZE));
         icon.preserveAspect = true;
 
-        var label_color = active ? PlayTheme.text : PlayTheme.text_muted;
-        var label = PlayUi.text("Label" + label_value, content, label_value, LABEL_SIZE, label_color, TextAnchor.MiddleLeft);
+        var label = PlayUi.text("Label" + label_value, content, label_value, LABEL_SIZE, PlayTheme.text_muted, TextAnchor.MiddleLeft);
         PlayUi.place(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(LABEL_LEFT, 0f), new Vector2(ROW_WIDTH - LABEL_LEFT, ROW_HEIGHT));
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
 
@@ -87,74 +88,155 @@ public static class PlaySideNav
         button.targetGraphic = hit;
         button.transition = Selectable.Transition.None;
 
-        if (active) return button;
-
         var item = row.gameObject.AddComponent<PlaySideNavItem>();
-        item.setup(content, icon, label);
+        item.setup(index, SCENES[index], frame_mover, content, icon, label);
 
-        string scene_name = SCENES[index];
-        button.onClick.AddListener(() => PlayUi.go_to_scene(scene_name));
+        button.onClick.AddListener(item.activate);
         return button;
     }
 }
 
-public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, ISelectHandler, IDeselectHandler
+public class PlaySideNavFrame : MonoBehaviour
+{
+    const float DURATION = 0.2f;
+
+    RectTransform frame;
+    float[] rows_y;
+    float from_y;
+    float to_y;
+    float progress = 1f;
+
+    public int selected_index { get; private set; }
+
+    public void setup(RectTransform frame_rect, float[] row_positions)
+    {
+        frame = frame_rect;
+        rows_y = row_positions;
+        selected_index = 0;
+        progress = 1f;
+        if (rows_y != null && rows_y.Length > 0)
+        {
+            from_y = to_y = -rows_y[0];
+        }
+    }
+
+    public void select(int index)
+    {
+        if (rows_y == null || index < 0 || index >= rows_y.Length || index == selected_index) return;
+
+        selected_index = index;
+        from_y = current_y();
+        to_y = -rows_y[index];
+        progress = 0f;
+    }
+
+    void Update()
+    {
+        if (frame == null || progress >= 1f) return;
+
+        progress = Mathf.Min(1f, progress + Time.unscaledDeltaTime / DURATION);
+        apply();
+    }
+
+    float current_y()
+    {
+        return frame != null ? frame.anchoredPosition.y : to_y;
+    }
+
+    void apply()
+    {
+        float eased = Mathf.SmoothStep(0f, 1f, progress);
+        var position = frame.anchoredPosition;
+        position.y = Mathf.Lerp(from_y, to_y, eased);
+        frame.anchoredPosition = position;
+    }
+}
+
+public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
     const float SHIFT = 12f;
     const float SPEED = 14f;
 
+    int index;
+    string scene_name;
+    PlaySideNavFrame frame_mover;
     RectTransform content;
     Image icon;
     Text label;
-    Selectable selectable;
-    bool selected;
+    bool hovered;
+    bool focused;
     float amount;
 
-    public void setup(RectTransform content_rect, Image icon_image, Text label_text)
+    public void setup(int item_index, string target_scene, PlaySideNavFrame mover, RectTransform content_rect, Image icon_image, Text label_text)
     {
+        index = item_index;
+        scene_name = target_scene;
+        frame_mover = mover;
         content = content_rect;
         icon = icon_image;
         label = label_text;
-        selectable = GetComponent<Selectable>();
         apply(0f);
     }
 
     void OnDisable()
     {
-        selected = false;
+        hovered = false;
+        focused = false;
         amount = 0f;
         apply(0f);
     }
 
     void Update()
     {
-        float target = selected && selectable != null && selectable.IsInteractable() ? 1f : 0f;
+        float target = PlayFocus.lit(hovered, focused) ? 1f : 0f;
         amount = Mathf.Lerp(amount, target, 1f - Mathf.Exp(-SPEED * Time.unscaledDeltaTime));
         apply(amount);
     }
 
+    bool is_current()
+    {
+        return frame_mover != null && frame_mover.selected_index == index;
+    }
+
     void apply(float t)
     {
+        var base_color = is_current() ? PlayTheme.text : PlayTheme.text_muted;
         if (content != null) content.anchoredPosition = Vector2.right * (SHIFT * t);
-        if (label != null) label.color = Color.Lerp(PlayTheme.text_muted, PlayTheme.gold, t);
-        if (icon != null) icon.color = Color.Lerp(PlayTheme.white, PlayTheme.gold, t);
+        if (label != null) label.color = Color.Lerp(base_color, PlayTheme.gold, t);
+        if (icon != null) icon.color = Color.Lerp(base_color, PlayTheme.gold, t);
+    }
+
+    public void activate()
+    {
+        if (!string.IsNullOrEmpty(scene_name) && !is_current())
+        {
+            if (Application.CanStreamedLevelBeLoaded(scene_name) && frame_mover != null)
+            {
+                frame_mover.select(index);
+            }
+            PlayUi.go_to_scene(scene_name);
+        }
+
+        if (!PlayFocus.show_focus) PlayFocus.clear_selection();
     }
 
     public void OnPointerEnter(PointerEventData event_data)
     {
-        if (EventSystem.current != null && selectable != null && selectable.IsInteractable())
-        {
-            EventSystem.current.SetSelectedGameObject(gameObject);
-        }
+        hovered = true;
+    }
+
+    public void OnPointerExit(PointerEventData event_data)
+    {
+        hovered = false;
     }
 
     public void OnSelect(BaseEventData event_data)
     {
-        selected = true;
+        focused = true;
     }
 
     public void OnDeselect(BaseEventData event_data)
     {
-        selected = false;
+        focused = false;
     }
 }
