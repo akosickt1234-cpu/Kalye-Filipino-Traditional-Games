@@ -18,6 +18,7 @@ public class PlayScreen : MonoBehaviour
     {
         PlayUi.font = PlayUi.load_font();
         PlayState.reset();
+        PlayFocus.reset();
 
         var root = create_canvas();
         ensure_event_system();
@@ -33,6 +34,8 @@ public class PlayScreen : MonoBehaviour
 
     void Update()
     {
+        PlayFocus.tick();
+
         var keyboard = Keyboard.current;
         if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) PlayUi.go_to_scene(MENU_SCENE);
     }
