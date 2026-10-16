@@ -57,7 +57,7 @@ public class PlayScreen : MonoBehaviour
 
     void ensure_event_system()
     {
-        if (FindFirstObjectByType<EventSystem>() != null) return;
+        if (FindAnyObjectByType<EventSystem>() != null) return;
 
         var event_system_object = new GameObject(EVENT_SYSTEM_NAME, typeof(EventSystem));
         var input_module = event_system_object.AddComponent<InputSystemUIInputModule>();
