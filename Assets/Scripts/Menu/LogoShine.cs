@@ -13,6 +13,8 @@ public class LogoShine : MonoBehaviour
     [SerializeField] private float slant_angle = 20f;
     [SerializeField] private float bar_width_ratio = 0.18f;
     [SerializeField] private float bar_alpha = 0.7f;
+    [SerializeField, Range(0f, 1f)] private float alpha_threshold = 0.9f;
+    [SerializeField, Range(0f, 1f)] private float min_luma = 0.5f;
 
     private static readonly float[] TIME_SHARES = { 0.15f, 0.35f, 0.35f, 0.15f };
 
@@ -21,6 +23,8 @@ public class LogoShine : MonoBehaviour
     private Image bar_image;
     private Texture2D gradient_texture;
     private Sprite gradient_sprite;
+    private Texture2D core_texture;
+    private Sprite core_sprite;
     private float clock;
 
     private void Start()
@@ -42,7 +46,8 @@ public class LogoShine : MonoBehaviour
         mask_rect.offsetMax = Vector2.zero;
 
         var mask_image = mask_object.GetComponent<Image>();
-        mask_image.sprite = logo_image.sprite;
+        core_sprite = build_core_sprite(logo_image.sprite);
+        mask_image.sprite = core_sprite != null ? core_sprite : logo_image.sprite;
         mask_image.preserveAspect = logo_image.preserveAspect;
         mask_image.raycastTarget = false;
         mask_object.GetComponent<Mask>().showMaskGraphic = false;
@@ -75,6 +80,14 @@ public class LogoShine : MonoBehaviour
         if (gradient_texture != null)
         {
             Destroy(gradient_texture);
+        }
+        if (core_sprite != null)
+        {
+            Destroy(core_sprite);
+        }
+        if (core_texture != null)
+        {
+            Destroy(core_texture);
         }
     }
 
@@ -133,6 +146,58 @@ public class LogoShine : MonoBehaviour
         }
 
         return 1f;
+    }
+
+    private Sprite build_core_sprite(Sprite source)
+    {
+        var source_texture = source.texture;
+        var rect = source.textureRect;
+        int width = Mathf.RoundToInt(rect.width);
+        int height = Mathf.RoundToInt(rect.height);
+        if (source_texture == null || width <= 0 || height <= 0)
+        {
+            return null;
+        }
+
+        var render_texture = RenderTexture.GetTemporary(source_texture.width, source_texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+        var previous = RenderTexture.active;
+        var readable = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        Color32[] pixels;
+
+        try
+        {
+            Graphics.Blit(source_texture, render_texture);
+            RenderTexture.active = render_texture;
+            readable.ReadPixels(new Rect(rect.x, rect.y, width, height), 0, 0);
+            pixels = readable.GetPixels32();
+        }
+        finally
+        {
+            RenderTexture.active = previous;
+            RenderTexture.ReleaseTemporary(render_texture);
+            Destroy(readable);
+        }
+
+        int alpha_min = Mathf.RoundToInt(alpha_threshold * 255f);
+        int luma_min = Mathf.RoundToInt(min_luma * 255f) * 1000;
+        var kept = new Color32(255, 255, 255, 255);
+        var cleared = new Color32(255, 255, 255, 0);
+
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            var pixel = pixels[i];
+            int luma = 299 * pixel.r + 587 * pixel.g + 114 * pixel.b;
+            pixels[i] = pixel.a >= alpha_min && luma >= luma_min ? kept : cleared;
+        }
+
+        core_texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        core_texture.wrapMode = TextureWrapMode.Clamp;
+        core_texture.filterMode = FilterMode.Bilinear;
+        core_texture.SetPixels32(pixels);
+        core_texture.Apply();
+
+        var pivot = new Vector2(source.pivot.x / source.rect.width, source.pivot.y / source.rect.height);
+        return Sprite.Create(core_texture, new Rect(0f, 0f, width, height), pivot, source.pixelsPerUnit);
     }
 
     private Sprite build_gradient_sprite()
