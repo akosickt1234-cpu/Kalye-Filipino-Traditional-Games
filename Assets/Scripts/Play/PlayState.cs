@@ -4,7 +4,7 @@ using UnityEngine;
 public static class PlayState
 {
     const string PLAYER_NAME_KEY = "player_name";
-    const string DEFAULT_PLAYER_NAME = "Bayanihan";
+    const string DEFAULT_PLAYER_NAME = "Guest";
     const int DEFAULT_PLAYER_LEVEL = 12;
 
     public static PlayGameData[] games = PlayGameData.create_defaults();

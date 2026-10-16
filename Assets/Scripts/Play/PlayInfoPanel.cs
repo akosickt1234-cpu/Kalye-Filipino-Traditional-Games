@@ -7,23 +7,23 @@ public static class PlayInfoPanel
 {
     const string PANEL_PATH = "Panels/Play/PanelInfoRight";
     const string BUTTON_PATH = "Buttons/Play/BtnPlayGold";
+    const string PLAYERS_ICON_PATH = "Icons/Play/IconPlayers";
     const string PLAY_LABEL = "Play";
     const float REFERENCE_WIDTH = 1920f;
     const float REFERENCE_HEIGHT = 1080f;
     const float TEXT_CENTER_X = 1686f;
-    const float TITLE_Y = 373f;
-    const float PLAYERS_Y = 458f;
+    const float ARCH_WIDTH = 340f;
+    const float TITLE_TOP_Y = 330f;
+    const float PLAYERS_ROW_HEIGHT = 44f;
+    const float CREST_WIDTH = 300f;
     const float DESCRIPTION_X = 1509f;
-    const float DESCRIPTION_TOP_Y = 540f;
-    const float DESCRIPTION_HEIGHT = 150f;
     const float DESCRIPTION_WIDTH = 345f;
+    const float BOTTOM_GRADIENT_HEIGHT = 420f;
     const float BUTTON_Y = 786f;
     const float BUTTON_WIDTH = 380f;
     const float BUTTON_ASPECT = 768f / 217f;
     const int TITLE_MAX_SIZE = 72;
-    const int TITLE_MIN_SIZE = 36;
-    const int PLAYERS_MAX_SIZE = 30;
-    const int PLAYERS_MIN_SIZE = 20;
+    const int PLAYERS_FONT_SIZE = 30;
     const int DESCRIPTION_MAX_SIZE = 25;
     const int DESCRIPTION_MIN_SIZE = 16;
     const int BUTTON_LABEL_SIZE = 46;
@@ -39,29 +39,52 @@ public static class PlayInfoPanel
         var panel = PlayUi.image("info_panel_art", holder, PlayUi.sprite(PANEL_PATH), false);
         PlayUi.stretch(panel.rectTransform);
 
+        build_bottom_gradient(holder);
+
         var text_group = PlayUi.rect("info_text_group", holder);
         PlayUi.stretch(text_group);
         var group = text_group.gameObject.AddComponent<CanvasGroup>();
         group.blocksRaycasts = false;
         group.interactable = false;
 
-        var title = PlayUi.text("info_title", text_group, string.Empty, TITLE_MAX_SIZE, PlayTheme.text, TextAnchor.MiddleCenter);
-        anchor_at(title.rectTransform, TEXT_CENTER_X, TITLE_Y, new Vector2(520f, 100f), new Vector2(0.5f, 0.5f));
-        fit_text(title, TITLE_MIN_SIZE, TITLE_MAX_SIZE);
+        var title = PlayUi.text("info_title", text_group, string.Empty, TITLE_MAX_SIZE, PlayTheme.text, TextAnchor.UpperCenter);
+        anchor_at(title.rectTransform, TEXT_CENTER_X, TITLE_TOP_Y, new Vector2(ARCH_WIDTH, 0f), new Vector2(0.5f, 1f));
 
-        var players = PlayUi.text("info_players", text_group, string.Empty, PLAYERS_MAX_SIZE, PlayTheme.text, TextAnchor.MiddleCenter);
-        anchor_at(players.rectTransform, TEXT_CENTER_X, PLAYERS_Y, new Vector2(340f, 44f), new Vector2(0.5f, 0.5f));
-        fit_text(players, PLAYERS_MIN_SIZE, PLAYERS_MAX_SIZE);
+        var players_row = PlayUi.rect("info_players_row", text_group);
+        anchor_at(players_row, TEXT_CENTER_X, TITLE_TOP_Y, new Vector2(ARCH_WIDTH, PLAYERS_ROW_HEIGHT), new Vector2(0.5f, 0.5f));
+
+        var players_icon_sprite = PlayUi.sprite(PLAYERS_ICON_PATH);
+        var players_icon = PlayUi.image("info_players_icon", players_row, players_icon_sprite, false);
+        players_icon.preserveAspect = true;
+        if (players_icon_sprite != null) players_icon.color = PlayTheme.text;
+
+        var players = PlayUi.text("info_players", players_row, string.Empty, PLAYERS_FONT_SIZE, PlayTheme.text, TextAnchor.MiddleCenter);
+        players.horizontalOverflow = HorizontalWrapMode.Overflow;
+
+        var crest = PlayOrnament.crest_line(text_group, "info_crest_line", CREST_WIDTH, PlayTheme.gold);
 
         var description = PlayUi.text("info_description", text_group, string.Empty, DESCRIPTION_MAX_SIZE, PlayTheme.text_muted, TextAnchor.UpperLeft);
-        anchor_at(description.rectTransform, DESCRIPTION_X, DESCRIPTION_TOP_Y, new Vector2(DESCRIPTION_WIDTH, DESCRIPTION_HEIGHT), new Vector2(0f, 1f));
+        anchor_at(description.rectTransform, DESCRIPTION_X, TITLE_TOP_Y, new Vector2(DESCRIPTION_WIDTH, 0f), new Vector2(0f, 1f));
         description.lineSpacing = DESCRIPTION_LINE_SPACING;
         fit_text(description, DESCRIPTION_MIN_SIZE, DESCRIPTION_MAX_SIZE);
 
         var view = holder.gameObject.AddComponent<PlayInfoPanelView>();
-        view.setup(group, title, players, description);
+        view.setup(group, title, players_row, players_icon, players, crest, description);
 
         build_play_button(holder);
+    }
+
+    static void build_bottom_gradient(RectTransform parent)
+    {
+        var gradient = PlayUi.image("info_bottom_gradient", parent, PlayUi.vertical_fade(), false);
+        gradient.color = PlayTheme.panel_blue;
+
+        var rect = gradient.rectTransform;
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = new Vector2(1f, BOTTOM_GRADIENT_HEIGHT / REFERENCE_HEIGHT);
+        rect.pivot = new Vector2(0.5f, 0f);
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
     }
 
     static void build_play_button(RectTransform parent)
@@ -107,7 +130,7 @@ public static class PlayInfoPanel
         label.verticalOverflow = VerticalWrapMode.Truncate;
     }
 
-    static void anchor_at(RectTransform rect, float x, float y, Vector2 size, Vector2 pivot)
+    internal static void anchor_at(RectTransform rect, float x, float y, Vector2 size, Vector2 pivot)
     {
         var anchor = new Vector2(x / REFERENCE_WIDTH, 1f - y / REFERENCE_HEIGHT);
         PlayUi.place(rect, anchor, anchor, pivot, Vector2.zero, size);
@@ -117,19 +140,45 @@ public static class PlayInfoPanel
 public class PlayInfoPanelView : MonoBehaviour
 {
     const float HALF_FADE_SECONDS = 0.1f;
+    const float TEXT_CENTER_X = 1686f;
+    const float ARCH_WIDTH = 340f;
+    const float TITLE_TOP_Y = 330f;
+    const float DESCRIPTION_X = 1509f;
+    const float DESCRIPTION_WIDTH = 345f;
+    const float DESCRIPTION_BOTTOM_Y = 716f;
+    const float DESCRIPTION_MIN_HEIGHT = 110f;
+    const float DESCRIPTION_MAX_HEIGHT = 150f;
+    const float PLAYERS_OFFSET = 42f;
+    const float CREST_OFFSET = 38f;
+    const float DESCRIPTION_OFFSET = 44f;
+    const float PLAYERS_ROW_HEIGHT = 44f;
+    const float PLAYERS_ICON_SIZE = 34f;
+    const float PLAYERS_ICON_GAP = 10f;
+    const float TITLE_LINE_RATIO = 1.2f;
+    const int TITLE_MAX_SIZE = 72;
+    const int TITLE_MIN_SIZE = 40;
+    const int TITLE_SIZE_STEP = 2;
+
+    static readonly Vector2 CENTER = new Vector2(0.5f, 0.5f);
 
     CanvasGroup group;
     Text title_label;
+    RectTransform players_row;
+    Image players_icon;
     Text players_label;
+    RectTransform crest_rect;
     Text description_label;
     string shown_id;
     Coroutine fade_routine;
 
-    public void setup(CanvasGroup text_group, Text title, Text players, Text description)
+    public void setup(CanvasGroup text_group, Text title, RectTransform row, Image icon, Text players, RectTransform crest, Text description)
     {
         group = text_group;
         title_label = title;
+        players_row = row;
+        players_icon = icon;
         players_label = players;
+        crest_rect = crest;
         description_label = description;
         refresh();
     }
@@ -197,17 +246,79 @@ public class PlayInfoPanelView : MonoBehaviour
         if (title_label != null) title_label.text = game != null && game.display_name != null ? game.display_name : string.Empty;
         if (players_label != null) players_label.text = format_players(game);
         if (description_label != null) description_label.text = game != null && game.description != null ? game.description : string.Empty;
+
+        layout();
+    }
+
+    void layout()
+    {
+        if (title_label == null || players_label == null || description_label == null) return;
+
+        var tail_height = PLAYERS_OFFSET + CREST_OFFSET + DESCRIPTION_OFFSET + DESCRIPTION_MIN_HEIGHT;
+        var title_limit_y = DESCRIPTION_BOTTOM_Y - tail_height;
+
+        var title_rect = title_label.rectTransform;
+        PlayInfoPanel.anchor_at(title_rect, TEXT_CENTER_X, TITLE_TOP_Y, new Vector2(ARCH_WIDTH, title_rect.sizeDelta.y), new Vector2(0.5f, 1f));
+
+        var title_height = 0f;
+        for (var size = TITLE_MAX_SIZE; size >= TITLE_MIN_SIZE; size -= TITLE_SIZE_STEP)
+        {
+            title_label.fontSize = size;
+            title_height = Mathf.Max(title_label.preferredHeight, size * TITLE_LINE_RATIO);
+            if (TITLE_TOP_Y + title_height <= title_limit_y) break;
+        }
+
+        PlayInfoPanel.anchor_at(title_rect, TEXT_CENTER_X, TITLE_TOP_Y, new Vector2(ARCH_WIDTH, title_height), new Vector2(0.5f, 1f));
+
+        var players_y = TITLE_TOP_Y + title_height + PLAYERS_OFFSET;
+        var crest_y = players_y + CREST_OFFSET;
+        var description_top_y = crest_y + DESCRIPTION_OFFSET;
+
+        layout_players(players_y);
+
+        if (crest_rect != null) PlayInfoPanel.anchor_at(crest_rect, TEXT_CENTER_X, crest_y, crest_rect.sizeDelta, CENTER);
+
+        var description_height = Mathf.Clamp(DESCRIPTION_BOTTOM_Y - description_top_y, 0f, DESCRIPTION_MAX_HEIGHT);
+        PlayInfoPanel.anchor_at(description_label.rectTransform, DESCRIPTION_X, description_top_y, new Vector2(DESCRIPTION_WIDTH, description_height), new Vector2(0f, 1f));
+    }
+
+    void layout_players(float players_y)
+    {
+        if (players_row == null) return;
+
+        PlayInfoPanel.anchor_at(players_row, TEXT_CENTER_X, players_y, new Vector2(ARCH_WIDTH, PLAYERS_ROW_HEIGHT), CENTER);
+
+        var has_text = !string.IsNullOrEmpty(players_label.text);
+        var has_icon = has_text && players_icon != null && players_icon.sprite != null;
+        if (players_icon != null) players_icon.enabled = has_icon;
+
+        var text_width = has_text ? players_label.preferredWidth : 0f;
+        var icon_block = has_icon ? PLAYERS_ICON_SIZE + PLAYERS_ICON_GAP : 0f;
+        var left_edge = -(icon_block + text_width) * 0.5f;
+
+        if (has_icon)
+        {
+            var icon_x = left_edge + PLAYERS_ICON_SIZE * 0.5f;
+            PlayUi.place(players_icon.rectTransform, CENTER, CENTER, CENTER, new Vector2(icon_x, 0f), new Vector2(PLAYERS_ICON_SIZE, PLAYERS_ICON_SIZE));
+        }
+
+        var text_x = left_edge + icon_block + text_width * 0.5f;
+        PlayUi.place(players_label.rectTransform, CENTER, CENTER, CENTER, new Vector2(text_x, 0f), new Vector2(text_width, PLAYERS_ROW_HEIGHT));
     }
 
     static string format_players(PlayGameData game)
     {
         if (game == null || game.max_players <= 0) return string.Empty;
-        if (game.min_players <= 0 || game.min_players == game.max_players) return $"{game.max_players} Players";
+        if (game.min_players <= 0 || game.min_players == game.max_players)
+        {
+            return game.max_players == 1 ? "1 Player" : $"{game.max_players} Players";
+        }
+
         return $"{game.min_players} - {game.max_players} Players";
     }
 }
 
-public class PlayButtonFx : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, ISelectHandler, IDeselectHandler
+public class PlayButtonFx : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler, ISelectHandler, IDeselectHandler
 {
     const string LOBBY_SCENE = "Lobby";
     const float HOVER_SCALE = 1.03f;
@@ -238,6 +349,7 @@ public class PlayButtonFx : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     public void OnPointerExit(PointerEventData event_data) { hovered = false; pressed = false; }
     public void OnPointerDown(PointerEventData event_data) { pressed = true; }
     public void OnPointerUp(PointerEventData event_data) { pressed = false; }
+    public void OnPointerClick(PointerEventData event_data) { PlayFocus.clear_selection(); }
     public void OnSelect(BaseEventData event_data) { focused = true; }
     public void OnDeselect(BaseEventData event_data) { focused = false; pressed = false; }
 
@@ -254,7 +366,7 @@ public class PlayButtonFx : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     {
         if (target == null) return;
 
-        var active = hovered || focused;
+        var active = PlayFocus.lit(hovered, focused);
         var scale_goal = pressed ? PRESS_SCALE : active ? HOVER_SCALE : 1f;
         var glow_goal = active || pressed ? 1f : 0f;
         var blend = 1f - Mathf.Exp(-SMOOTH_SPEED * Time.unscaledDeltaTime);
