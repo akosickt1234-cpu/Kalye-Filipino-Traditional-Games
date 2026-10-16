@@ -22,7 +22,7 @@ Stack: Node.js 22 or newer, TypeScript, Express 4, PostgreSQL, zod, jsonwebtoken
 Needs Node.js, Docker and git.
 
 ```
-cd backend
+cd Backend
 cp .env.example .env
 docker compose up -d
 npm install
@@ -131,7 +131,7 @@ Rate limit: one global limit per `RATE_LIMIT_WINDOW_SECONDS`, keyed by player id
 ### Project layout
 
 ```
-backend/
+Backend/
   src/
     server.ts, app.ts
     config/            one typed slice per area
