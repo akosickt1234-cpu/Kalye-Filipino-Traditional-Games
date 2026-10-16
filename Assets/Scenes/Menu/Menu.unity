@@ -2347,6 +2347,8 @@ MonoBehaviour:
   slant_angle: 20
   bar_width_ratio: 0.18
   bar_alpha: 0.7
+  alpha_threshold: 0.9
+  min_luma: 0.5
 --- !u!114 &9003
 MonoBehaviour:
   m_ObjectHideFlags: 0
