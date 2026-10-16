@@ -26,7 +26,7 @@ public class PlayGameData
             {
                 id = "chinese_garter",
                 display_name = "Chinese Garter",
-                description = "Jump over the rising rubber band without touching it. Clear every height to win the round.",
+                description = "Clear the rising garter across seven rounds, from Super Easy to Impossible. Land clean jumps to score the most points.",
                 thumb_path = "Cards/Play/CardThumbChineseGarter",
                 bg_path = "Background/Play/BgChineseGarter2K",
                 min_players = 2,
@@ -36,7 +36,7 @@ public class PlayGameData
             {
                 id = "sipa",
                 display_name = "Sipa",
-                description = "Keep the sipa in the air using only your feet. Do not let it drop!",
+                description = "Face one opponent and keep the sipa in the air. Kick it where they cannot reach it and win the best of three rounds.",
                 thumb_path = "Cards/Play/CardThumbSipa",
                 bg_path = "Background/Play/BgSipa2K",
                 min_players = 2,
@@ -46,7 +46,7 @@ public class PlayGameData
             {
                 id = "tumbang_preso",
                 display_name = "Tumbang Preso",
-                description = "Knock down the can, then run for cover before the guard tags you.",
+                description = "Knock down the lata for 15 points and get back to base safely for 6. The Taya wins by tagging everyone, or the top scorer wins after 300 seconds.",
                 thumb_path = "Cards/Play/CardThumbTumbangPreso",
                 bg_path = "Background/Play/BgTumbangPreso2K",
                 min_players = 4,
