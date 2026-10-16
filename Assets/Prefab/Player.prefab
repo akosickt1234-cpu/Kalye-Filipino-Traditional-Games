@@ -546,6 +546,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3655970382047427021}
   - component: {fileID: 3892131382726245627}
+  - component: {fileID: 4474454662825356929}
   - component: {fileID: 5632647675497591742}
   - component: {fileID: -1798745715432377660}
   - component: {fileID: -1220638832653085774}
@@ -604,6 +605,20 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &4474454662825356929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9191364300320882001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2aba49758bfaf0419e4d11ccece0809, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationController
+  animator: {fileID: 4000862811475512006}
+  playerNetwork: {fileID: 5632647675497591742}
 --- !u!114 &5632647675497591742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -635,7 +650,10 @@ MonoBehaviour:
   stamina: 100
   addOrDeductStamina: 0.5
   maxWidth: 200
-  animator: {fileID: 4000862811475512006}
+  animatorController: {fileID: 4474454662825356929}
+  isJump: 0
+  isRunning: 0
+  isWalking: 0
 --- !u!114 &-1798745715432377660
 MonoBehaviour:
   m_ObjectHideFlags: 0

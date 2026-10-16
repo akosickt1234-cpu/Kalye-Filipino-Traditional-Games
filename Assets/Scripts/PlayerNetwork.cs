@@ -1,38 +1,49 @@
+
 using UnityEngine;
 using Unity.Netcode;
-using System.Collections;
 using UnityEngine.UI;
-using Unity.VisualScripting;
+
 public class PlayerNetwork : NetworkBehaviour
 {
-    [SerializeField] private Image foreground;
-    [SerializeField] private Image background; 
-    [SerializeField] private Camera camera; // Player Camera
-    [SerializeField] private Transform cameraPivot; // Player Camera's Position
+    [Header("Camera")]
+    [SerializeField] private Camera camera;
+    [SerializeField] private Transform cameraPivot;
+    [SerializeField] private float mouseSensitivity = 2f;
+    private float xRotation;
+
+    [Header("Movement")]
     [SerializeField] private Rigidbody rb;
     [SerializeField] private float moveSpeed = 0.5f;
     [SerializeField] private float sprintSpeedMult = 1.2f;
-    private float xRotation;
-    [SerializeField] private float mouseSensitivity = 2f;
+
+    [Header("Jump")]
     [SerializeField] private float jumpForce = 2f;
     [SerializeField] private float highJumpForce = 4f;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private LayerMask groundLayer;
 
-    private float _MAXSTAMINA = 100f;
+    [Header("Stamina")]
+    [SerializeField] private Image foreground;
+    [SerializeField] private Image background;
     [SerializeField] private float stamina = 100f;
     [SerializeField] private float addOrDeductStamina = 0.5f;
     [SerializeField] private float maxWidth = 200f;
+    [SerializeField] private float colorTransitionSpeed = 5f;
 
-    [SerializeField] private Animator animator;
+    private const float MaxStamina = 100f;
 
-    private float colorTransitionSpeed = 5f;
+    [Header("Animation")]
+    [SerializeField] private AnimationController animatorController;
+
     private bool jumpRequested;
     private bool sprintRequested;
     private bool highJumpRequested;
-    private bool isGrounded = false;
-    private bool isJumping = false;
+    private bool isGrounded;
+    private bool isJumping;
+
+    //[Header("GameMode")]
+    //public bool qForGrabOR
 
     public override void OnNetworkSpawn()
     {
@@ -40,8 +51,8 @@ public class PlayerNetwork : NetworkBehaviour
         {
             cameraPivot.gameObject.SetActive(true);
 
-            // Disable the separate camera in the scene
-            GameObject sceneCam = GameObject.FindWithTag("SceneCamera");
+            GameObject sceneCam =
+                GameObject.FindWithTag("SceneCamera");
 
             if (sceneCam != null)
             {
@@ -50,74 +61,77 @@ public class PlayerNetwork : NetworkBehaviour
         }
         else
         {
-            // Disable cameras belonging to other players
             cameraPivot.gameObject.SetActive(false);
         }
     }
 
     private void Start()
     {
+        if (!IsOwner) return;
+
         Cursor.lockState = CursorLockMode.Locked;
-        //Cursor.visible = false;
         rb = GetComponent<Rigidbody>();
     }
 
-    void Update()
+    private void Update()
     {
         if (!IsOwner || !IsClient) return;
 
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        // Taya or Capture animation
+        if (Input.GetKeyDown(KeyCode.Q))
         {
-            
-            jumpRequested = true;
+            animatorController.SetPickUp();
         }
 
+        // Pick up animation for slippers
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            animatorController.SetThrow();
+        }
+
+        // Jump input
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        {
+            jumpRequested = true;
+            highJumpRequested = sprintRequested;
+        }
+
+        // Sprint input
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
             sprintRequested = true;
-            
         }
+
         if (Input.GetKeyUp(KeyCode.LeftShift))
         {
             sprintRequested = false;
-            
         }
 
-        if (sprintRequested == true && stamina >= 0 && isGrounded)
+        // Stamina
+        if (sprintRequested && isGrounded)
         {
-            
-
             stamina -= addOrDeductStamina;
-            
-
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                highJumpRequested = true;
-            }
         }
-        else if (sprintRequested == false && stamina <= 100) 
+        else if (!sprintRequested)
         {
             stamina += addOrDeductStamina;
-
         }
 
-        if (stamina < 100.5f)
-        {
-            background.gameObject.SetActive(true);
-        }
-        else
-        {
-            background.gameObject.SetActive(false);
-        }
+        stamina = Mathf.Clamp(stamina, 0f, MaxStamina);
 
-        float percentage = stamina / _MAXSTAMINA;
-        foreground.rectTransform.sizeDelta = new Vector2(maxWidth * percentage, 5f);
+        // Stamina UI
+        float percentage = stamina / MaxStamina;
+
+        background.gameObject.SetActive(stamina < MaxStamina);
+
+        foreground.rectTransform.sizeDelta =
+            new Vector2(maxWidth * percentage, 5f);
+
         Color targetColor = Color.Lerp(
             Color.red,
             Color.green,
             percentage
         );
-
 
         foreground.color = Color.Lerp(
             foreground.color,
@@ -125,106 +139,111 @@ public class PlayerNetwork : NetworkBehaviour
             Time.deltaTime * colorTransitionSpeed
         );
 
+        
 
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+        // Camera rotation
+        float mouseX =
+            Input.GetAxis("Mouse X") * mouseSensitivity;
 
-        // Rotate player horizontally
+        float mouseY =
+            Input.GetAxis("Mouse Y") * mouseSensitivity;
+
         transform.Rotate(Vector3.up * mouseX);
 
-        // Rotate camera vertically
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
-        cameraPivot.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        cameraPivot.localRotation =
+            Quaternion.Euler(xRotation, 0f, 0f);
     }
-
 
     private void FixedUpdate()
     {
         if (!IsOwner) return;
 
-        float speed;
+        float horizontal = Input.GetAxisRaw("Horizontal");
+        float vertical = Input.GetAxisRaw("Vertical");
 
-        float horizontal = Input.GetAxisRaw("Horizontal"); // A/D
-        float vertical = Input.GetAxisRaw("Vertical");     // W/S
-
-        bool jump = Input.GetKeyDown(KeyCode.Space);
-
-        Vector3 forward = camera.transform.forward;
-        Vector3 right = camera.transform.right;
-
-        forward.y = 0;
-        right.y = 0;
-
-        forward.Normalize();
-        right.Normalize();
-
-        
-
+        // Ground check
         isGrounded = Physics.CheckSphere(
-        groundCheck.position,
-        groundCheckRadius,
-        groundLayer
+            groundCheck.position,
+            groundCheckRadius,
+            groundLayer
         );
 
-        if (jumpRequested && isGrounded)
+        // Jump
+        bool doJump = jumpRequested && isGrounded;
+        bool doHighJump = doJump
+            && highJumpRequested
+            && stamina >= 15f;
+
+        if (doJump)
         {
             isJumping = true;
-            animator.SetBool("isJump", true);
-            StartCoroutine(DisableJump());
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+
+            float force = doHighJump
+                ? highJumpForce
+                : jumpForce;
+
+            if (doHighJump)
+            {
+                stamina = Mathf.Clamp(
+                    stamina - 15f,
+                    0f,
+                    MaxStamina
+                );
+            }
+
+            rb.AddForce(
+                Vector3.up * force,
+                ForceMode.Impulse
+            );
         }
 
         jumpRequested = false;
+        highJumpRequested = false;
 
-        if (sprintRequested && stamina >= 0.1 && isGrounded && isJumping == false)
-        {
-            animator.SetBool("isRun", true);
-            animator.SetBool("isWalk", false);
-            speed = moveSpeed * sprintSpeedMult;
-            if (highJumpRequested && isGrounded)
-            {
-                stamina -= 15f;
-                rb.AddForce(Vector3.up * highJumpForce, ForceMode.Impulse);
-            }
-        }
-        else
-        {
-            if (sprintRequested == false && isGrounded && isJumping == false) 
-            {
-                animator.SetBool("isWalk", true);
-                animator.SetBool("isRun", false);
-            }
-            
-            speed = moveSpeed;
-        }
-
-        if (vertical == 0 && horizontal == 0) // Idle type shi
-        {
-            animator.SetBool("isRun", false);
-            animator.SetBool("isWalk", false);
-        }
-
-        if (isGrounded)
+        // Reset jump state after landing
+        if (isGrounded && !doJump && rb.linearVelocity.y <= 0.05f)
         {
             isJumping = false;
         }
 
-        highJumpRequested = false;
+        // Movement
+        bool hasMovementInput =
+            horizontal != 0f || vertical != 0f;
 
-        Vector3 movement = (forward * vertical + right * horizontal).normalized;
+        bool isSprinting =
+            sprintRequested &&
+            stamina > 0.1f &&
+            isGrounded &&
+            !isJumping;
 
-        rb.MovePosition(rb.position + movement * speed * Time.fixedDeltaTime);
-    }
+        float speed = isSprinting
+            ? moveSpeed * sprintSpeedMult
+            : moveSpeed;
 
-    IEnumerator DisableJump()
-    {
-        yield return new WaitForSeconds(1.0f);
-        if (isJumping == false)
-        {
-           
-            animator.SetBool("isJump", false);
-        }
+        Vector3 forward = camera.transform.forward;
+        Vector3 right = camera.transform.right;
+
+        forward.y = 0f;
+        right.y = 0f;
+
+        forward.Normalize();
+        right.Normalize();
+
+        Vector3 movement =
+            (forward * vertical + right * horizontal).normalized;
+
+        rb.MovePosition(
+            rb.position + movement * speed * Time.fixedDeltaTime
+        );
+
+        // Animation
+        animatorController.SetLocomotion(
+            hasMovementInput && !isSprinting && !isJumping,
+            hasMovementInput && isSprinting && !isJumping,
+            isJumping
+        );
     }
 }
