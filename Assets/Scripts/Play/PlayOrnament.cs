@@ -6,6 +6,7 @@ public static class PlayOrnament
     const string ARROW_PATH = "Icons/Play/IconPlayArrow";
     const int LINE_TEXTURE_WIDTH = 64;
     const float LINE_FADE_RATIO = 0.35f;
+    const float ARROW_LINE_EDGE_FADE_RATIO = 0.08f;
     const float ARROW_LINE_HEIGHT = 26f;
     const float ARROW_LINE_THICKNESS = 2f;
     const float CREST_ARROW_SIZE = 22f;
@@ -17,6 +18,7 @@ public static class PlayOrnament
     static readonly Vector2 LEFT_MIDDLE = new Vector2(0f, 0.5f);
     static readonly Vector2 RIGHT_MIDDLE = new Vector2(1f, 0.5f);
     static readonly Sprite[] line_sprites = new Sprite[4];
+    static Sprite edge_line_sprite_value;
 
     public static Image arrow(Transform parent, string name, float size, bool point_right, Color color)
     {
@@ -58,13 +60,9 @@ public static class PlayOrnament
         var right_arrow = arrow(holder, "arrow_right", ARROW_LINE_HEIGHT, true, color);
         PlayUi.place(right_arrow.rectTransform, RIGHT_MIDDLE, RIGHT_MIDDLE, CENTER, new Vector2(-ARROW_LINE_HEIGHT * 0.5f, 0f), new Vector2(ARROW_LINE_HEIGHT, ARROW_LINE_HEIGHT));
 
-        var segment_width = (safe_width - ARROW_LINE_HEIGHT * 2f) * 0.5f;
-
-        var left_line = line(holder, "line_left", segment_width, ARROW_LINE_THICKNESS, color, false, true);
-        PlayUi.place(left_line.rectTransform, LEFT_MIDDLE, LEFT_MIDDLE, LEFT_MIDDLE, new Vector2(ARROW_LINE_HEIGHT, 0f), new Vector2(segment_width, ARROW_LINE_THICKNESS));
-
-        var right_line = line(holder, "line_right", segment_width, ARROW_LINE_THICKNESS, color, true, false);
-        PlayUi.place(right_line.rectTransform, RIGHT_MIDDLE, RIGHT_MIDDLE, RIGHT_MIDDLE, new Vector2(-ARROW_LINE_HEIGHT, 0f), new Vector2(segment_width, ARROW_LINE_THICKNESS));
+        var joint_line = PlayUi.image("line_joint", holder, edge_line_sprite());
+        joint_line.color = color;
+        PlayUi.place(joint_line.rectTransform, LEFT_MIDDLE, RIGHT_MIDDLE, CENTER, Vector2.zero, new Vector2(-ARROW_LINE_HEIGHT * 2f, ARROW_LINE_THICKNESS));
 
         return holder;
     }
@@ -92,8 +90,18 @@ public static class PlayOrnament
     static Sprite line_sprite(bool fade_start, bool fade_end)
     {
         var index = (fade_start ? 1 : 0) | (fade_end ? 2 : 0);
-        if (line_sprites[index] != null) return line_sprites[index];
+        if (line_sprites[index] == null) line_sprites[index] = make_line_sprite(fade_start, fade_end, LINE_FADE_RATIO);
+        return line_sprites[index];
+    }
 
+    static Sprite edge_line_sprite()
+    {
+        if (edge_line_sprite_value == null) edge_line_sprite_value = make_line_sprite(true, true, ARROW_LINE_EDGE_FADE_RATIO);
+        return edge_line_sprite_value;
+    }
+
+    static Sprite make_line_sprite(bool fade_start, bool fade_end, float fade_ratio)
+    {
         var texture = new Texture2D(LINE_TEXTURE_WIDTH, 1, TextureFormat.RGBA32, false);
         texture.wrapMode = TextureWrapMode.Clamp;
         texture.filterMode = FilterMode.Bilinear;
@@ -102,14 +110,13 @@ public static class PlayOrnament
         for (var i = 0; i < LINE_TEXTURE_WIDTH; i++)
         {
             var t = i / (float)(LINE_TEXTURE_WIDTH - 1);
-            var start_alpha = fade_start ? Mathf.Clamp01(t / LINE_FADE_RATIO) : 1f;
-            var end_alpha = fade_end ? Mathf.Clamp01((1f - t) / LINE_FADE_RATIO) : 1f;
+            var start_alpha = fade_start ? Mathf.Clamp01(t / fade_ratio) : 1f;
+            var end_alpha = fade_end ? Mathf.Clamp01((1f - t) / fade_ratio) : 1f;
             pixels[i] = PlayTheme.with_alpha(PlayTheme.white, Mathf.Min(start_alpha, end_alpha));
         }
 
         texture.SetPixels(pixels);
         texture.Apply(false, true);
-        line_sprites[index] = Sprite.Create(texture, new Rect(0f, 0f, LINE_TEXTURE_WIDTH, 1f), new Vector2(0.5f, 0.5f), 100f);
-        return line_sprites[index];
+        return Sprite.Create(texture, new Rect(0f, 0f, LINE_TEXTURE_WIDTH, 1f), new Vector2(0.5f, 0.5f), 100f);
     }
 }
