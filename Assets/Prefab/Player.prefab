@@ -617,6 +617,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b85ac7e44edc5a6458f5660588ea8f3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationController
+  ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 4000862811475512006}
 --- !u!114 &5632647675497591742
 MonoBehaviour:
@@ -633,6 +634,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   camera: {fileID: 699735224918613356}
   cameraPivot: {fileID: 1231403767601668922}
+  defaultCameraPivot: {fileID: 0}
   mouseSensitivity: 2
   rb: {fileID: -1220638832653085774}
   moveSpeed: 3
@@ -857,7 +859,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkAnimator
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkAnimatorExpanded: 0
-  AuthorityMode: 0
+  AuthorityMode: 1
   m_Animator: {fileID: 4000862811475512006}
   TransitionStateInfoList: []
   AnimatorParameterEntries:
