@@ -28,9 +28,6 @@ public static class PlayInfoPanel
     const int DESCRIPTION_MIN_SIZE = 16;
     const int BUTTON_LABEL_SIZE = 46;
     const float DESCRIPTION_LINE_SPACING = 1.15f;
-    const float LABEL_BROWN_RED = 0.3f;
-    const float LABEL_BROWN_GREEN = 0.2f;
-    const float LABEL_BROWN_BLUE = 0.1f;
 
     public static void build(RectTransform root)
     {
@@ -94,18 +91,12 @@ public static class PlayInfoPanel
         glow_group.blocksRaycasts = false;
         glow_group.interactable = false;
 
-        var label = PlayUi.text("play_button_label", button_rect, PLAY_LABEL, BUTTON_LABEL_SIZE, label_color(), TextAnchor.MiddleCenter);
+        var label = PlayUi.text("play_button_label", button_rect, PLAY_LABEL, BUTTON_LABEL_SIZE, PlayTheme.label_brown, TextAnchor.MiddleCenter);
         PlayUi.stretch(label.rectTransform);
 
         var fx = button_rect.gameObject.AddComponent<PlayButtonFx>();
         fx.setup(button_rect, glow_group);
         button.onClick.AddListener(fx.open_lobby);
-    }
-
-    static Color label_color()
-    {
-        var gold = PlayTheme.gold;
-        return new Color(gold.r * LABEL_BROWN_RED, gold.g * LABEL_BROWN_GREEN, gold.b * LABEL_BROWN_BLUE, 1f);
     }
 
     static void fit_text(Text label, int min_size, int max_size)

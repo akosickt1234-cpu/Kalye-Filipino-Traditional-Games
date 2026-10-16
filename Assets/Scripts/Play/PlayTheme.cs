@@ -9,4 +9,12 @@ public static class PlayTheme
     public static readonly Color text_muted = new Color(0.639f, 0.643f, 0.682f, 1f);
     public static readonly Color panel_dark = new Color(0.114f, 0.125f, 0.200f, 1f);
     public static readonly Color clear = new Color(0f, 0f, 0f, 0f);
+    public static readonly Color white = new Color(1f, 1f, 1f, 1f);
+    public static readonly Color overlay_dark = new Color(0.034f, 0.038f, 0.060f, 1f);
+    public static readonly Color label_brown = new Color(0.274f, 0.152f, 0.048f, 1f);
+
+    public static Color with_alpha(Color color, float alpha)
+    {
+        return new Color(color.r, color.g, color.b, Mathf.Clamp01(alpha));
+    }
 }

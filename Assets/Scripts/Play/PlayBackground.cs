@@ -10,7 +10,6 @@ public static class PlayBackground
     const float BOTTOM_HEIGHT_RATIO = 0.42f;
     const float BOTTOM_MAX_ALPHA = 0.75f;
     const float GRADIENT_FALLOFF = 2f;
-    const float GRADIENT_DARKNESS = 0.3f;
 
     public static void build(RectTransform root)
     {
@@ -70,13 +69,12 @@ public static class PlayBackground
         texture.wrapMode = TextureWrapMode.Clamp;
         texture.filterMode = FilterMode.Bilinear;
 
-        var dark = PlayTheme.panel_dark;
         var pixels = new Color[GRADIENT_STEPS];
         for (var i = 0; i < GRADIENT_STEPS; i++)
         {
             var t = i / (float)(GRADIENT_STEPS - 1);
             var alpha = max_alpha * Mathf.Pow(1f - t, GRADIENT_FALLOFF);
-            pixels[i] = new Color(dark.r * GRADIENT_DARKNESS, dark.g * GRADIENT_DARKNESS, dark.b * GRADIENT_DARKNESS, alpha);
+            pixels[i] = PlayTheme.with_alpha(PlayTheme.overlay_dark, alpha);
         }
 
         texture.SetPixels(pixels);
