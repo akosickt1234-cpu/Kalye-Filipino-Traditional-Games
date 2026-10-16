@@ -56,15 +56,16 @@ public static class PlayGameCards
     {
         var label = PlayUi.text("heading_text", parent, "CHOOSE A GAME", HEADING_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
+        PlayUi.add_shadow(label);
         var text_width = label.preferredWidth;
         if (text_width < 1f) text_width = HEADING_FALLBACK_WIDTH;
         place_top_left(label.rectTransform, HEADING_X, HEADING_Y - HEADING_HEIGHT * 0.5f, text_width, HEADING_HEIGHT);
 
-        var left_arrow = PlayOrnament.arrow(parent, "heading_arrow_left", HEADING_ARROW_SIZE, true, PlayTheme.gold);
+        var left_arrow = PlayOrnament.arrow(parent, "heading_arrow_left", HEADING_ARROW_SIZE, true, PlayTheme.icon);
         place_center(left_arrow.rectTransform, HEADING_LEFT_ARROW_X, HEADING_Y, HEADING_ARROW_SIZE, HEADING_ARROW_SIZE);
 
         var right_arrow_x = HEADING_X + text_width + HEADING_ARROW_GAP + HEADING_ARROW_SIZE * 0.5f;
-        var right_arrow = PlayOrnament.arrow(parent, "heading_arrow_right", HEADING_ARROW_SIZE, false, PlayTheme.gold);
+        var right_arrow = PlayOrnament.arrow(parent, "heading_arrow_right", HEADING_ARROW_SIZE, false, PlayTheme.icon);
         place_center(right_arrow.rectTransform, right_arrow_x, HEADING_Y, HEADING_ARROW_SIZE, HEADING_ARROW_SIZE);
 
         var line_x = right_arrow_x + HEADING_ARROW_SIZE * 0.5f + HEADING_LINE_GAP;
@@ -136,6 +137,7 @@ public static class PlayGameCards
         name_label.resizeTextMinSize = NAME_MIN_SIZE;
         name_label.resizeTextMaxSize = NAME_MAX_SIZE;
         name_label.horizontalOverflow = HorizontalWrapMode.Wrap;
+        PlayUi.add_shadow(name_label);
         var name_rect = name_label.rectTransform;
         name_rect.anchorMin = new Vector2(0f, 1f - PLATE_BOTTOM_RATIO);
         name_rect.anchorMax = new Vector2(1f, 1f - PLATE_TOP_RATIO);
