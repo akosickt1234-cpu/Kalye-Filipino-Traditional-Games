@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Selectable))]
-public class MenuItemHover : MonoBehaviour, IPointerEnterHandler, ISelectHandler, IDeselectHandler
+public class MenuItemHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
     [SerializeField] private RectTransform diamond;
     [SerializeField] private RectTransform label;
@@ -58,6 +58,14 @@ public class MenuItemHover : MonoBehaviour, IPointerEnterHandler, ISelectHandler
         if (EventSystem.current != null && selectable.IsInteractable())
         {
             EventSystem.current.SetSelectedGameObject(gameObject);
+        }
+    }
+
+    public void OnPointerExit(PointerEventData event_data)
+    {
+        if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == gameObject)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
         }
     }
 
