@@ -10,24 +10,30 @@ public static class PlayTopBar
     private const float AVATAR_Y = 12f;
     private const float AVATAR_SIZE = 100f;
     private const float AVATAR_FILL_SIZE = 88f;
-    private const float BADGE_X = 43f;
-    private const float BADGE_Y = 72f;
+    private const float BADGE_X = 114f;
+    private const float BADGE_Y = 80f;
     private const float BADGE_SIZE = 36f;
     private const int BADGE_TEXT_SIZE = 18;
-    private const float NAME_X = 170f;
+    private const float CONTAINER_X = AVATAR_X + AVATAR_SIZE * 0.5f;
+    private const float CONTAINER_END_X = 430f;
+    private const float CONTAINER_HEIGHT = AVATAR_SIZE;
+    private const float NAME_FIELD_X = AVATAR_X + AVATAR_SIZE;
+    private const float NAME_PADDING = 16f;
+    private const float NAME_X = NAME_FIELD_X + NAME_PADDING;
     private const float NAME_Y = 24f;
-    private const float NAME_WIDTH = 260f;
+    private const float NAME_WIDTH = CONTAINER_END_X - NAME_FIELD_X - NAME_PADDING * 2f;
     private const float NAME_HEIGHT = 44f;
     private const int NAME_TEXT_SIZE = 32;
-    private const int NAME_TEXT_MIN_SIZE = 18;
     private const float NAME_LINE_CENTER_Y = 82f;
-    private const float NAME_LINE_WIDTH = 260f;
+    private const float NAME_LINE_WIDTH = NAME_WIDTH;
     private const float ICON_X = 450f;
     private const float ICON_Y = 25f;
     private const float ICON_SIZE = 64f;
     private const float ICON_GAP = 24f;
+    private const float ICON_SHADOW_DISTANCE = 3f;
+    private const float CONTAINER_SHADOW_DISTANCE = 4f;
     private const float GLOW_SIZE = 150f;
-    private const float LINE_GAP = 4f;
+    private const float LINE_GAP = 8f;
     private const float LINE_HEIGHT = 3f;
     private const string DEFAULT_NAME = "Guest";
 
@@ -45,9 +51,20 @@ public static class PlayTopBar
         RectTransform bar = PlayUi.rect("TopBar", root);
         place_top_left(bar, 0f, 0f, BAR_WIDTH, BAR_HEIGHT);
 
+        build_container(bar);
         build_avatar(bar);
         build_name(bar);
         build_icons(bar);
+    }
+
+    private static void build_container(RectTransform bar)
+    {
+        Image container = PlayUi.image("ProfileContainer", bar, PlayUi.pill());
+        container.type = Image.Type.Sliced;
+        container.color = PlayTheme.panel_blue;
+        container.raycastTarget = false;
+        place_top_left(container.rectTransform, CONTAINER_X, AVATAR_Y, CONTAINER_END_X - CONTAINER_X, CONTAINER_HEIGHT);
+        PlayUi.add_shadow(container, CONTAINER_SHADOW_DISTANCE);
     }
 
     private static void build_avatar(RectTransform bar)
@@ -85,14 +102,9 @@ public static class PlayTopBar
     {
         string value = string.IsNullOrWhiteSpace(PlayState.player_name) ? DEFAULT_NAME : PlayState.player_name;
 
-        Text name_text = PlayUi.text("PlayerName", bar, value, NAME_TEXT_SIZE, PlayTheme.text, TextAnchor.MiddleCenter);
-        name_text.raycastTarget = false;
-        name_text.horizontalOverflow = HorizontalWrapMode.Wrap;
-        name_text.verticalOverflow = VerticalWrapMode.Truncate;
-        name_text.resizeTextForBestFit = true;
-        name_text.resizeTextMinSize = NAME_TEXT_MIN_SIZE;
-        name_text.resizeTextMaxSize = NAME_TEXT_SIZE;
-        place_top_left(name_text.rectTransform, NAME_X, NAME_Y, NAME_WIDTH, NAME_HEIGHT);
+        PlayMarquee name_marquee = PlayMarquee.create(bar, "PlayerName", NAME_TEXT_SIZE, PlayTheme.text, NAME_WIDTH, NAME_HEIGHT);
+        place_top_left(name_marquee.rect, NAME_X, NAME_Y, NAME_WIDTH, NAME_HEIGHT);
+        name_marquee.set_text(value);
 
         RectTransform line = PlayOrnament.arrow_line(bar, "PlayerNameLine", NAME_LINE_WIDTH, PlayTheme.gold);
         PlayUi.place(line, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(NAME_X + NAME_WIDTH * 0.5f, -NAME_LINE_CENTER_Y), new Vector2(NAME_LINE_WIDTH, line.sizeDelta.y));
@@ -143,7 +155,10 @@ public static class PlayTopBar
 
         Image icon = PlayUi.image("Icon", hit.rectTransform, PlayUi.sprite(icon_path));
         icon.enabled = icon.sprite != null;
+        icon.color = PlayTheme.icon;
+        icon.preserveAspect = true;
         PlayUi.stretch(icon.rectTransform);
+        PlayUi.add_shadow(icon, ICON_SHADOW_DISTANCE);
 
         Image line = PlayUi.image("Line", hit.rectTransform, get_center_line_sprite());
         line.color = PlayTheme.clear;
@@ -282,11 +297,6 @@ public class PlayTopBarIconHover : MonoBehaviour, IPointerEnterHandler, IPointer
 
     private void apply(float t)
     {
-        if (icon_image != null)
-        {
-            icon_image.color = Color.Lerp(PlayTheme.text_muted, PlayTheme.text, t);
-        }
-
         if (icon_rect != null)
         {
             icon_rect.localScale = Vector3.one * Mathf.Lerp(1f, ACTIVE_SCALE, t);

@@ -14,6 +14,8 @@ public static class PlaySideNav
     const float ICON_CENTER_X = 72f;
     const float LABEL_LEFT = 112f;
     const int LABEL_SIZE = 30;
+    const float GLOW_PAD_X = 28f;
+    const float GLOW_PAD_Y = 20f;
 
     static readonly string[] LABELS = { "Mode", "Customize", "Inventory", "Shop" };
     static readonly string[] ICON_PATHS =
@@ -36,9 +38,17 @@ public static class PlaySideNav
         var frame = PlayUi.image("SelectionFrame", nav, PlayUi.sprite(TAB_PATH));
         frame.preserveAspect = false;
         PlayUi.place(frame.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(LEFT, -ROW_Y[0]), new Vector2(ROW_WIDTH, FRAME_HEIGHT));
+        PlayUi.add_shadow(frame);
+
+        var glow = PlayUi.image("FrameGlow", frame.rectTransform, PlayUi.radial_glow());
+        PlayUi.stretch(glow.rectTransform);
+        glow.rectTransform.offsetMin = new Vector2(-GLOW_PAD_X, -GLOW_PAD_Y);
+        glow.rectTransform.offsetMax = new Vector2(GLOW_PAD_X, GLOW_PAD_Y);
+        glow.preserveAspect = false;
+        glow.color = PlayTheme.with_alpha(PlayTheme.glow, 0f);
 
         var frame_mover = nav.gameObject.AddComponent<PlaySideNavFrame>();
-        frame_mover.setup(frame.rectTransform, ROW_Y);
+        frame_mover.setup(frame.rectTransform, glow, ROW_Y);
 
         int count = LABELS.Length;
         var buttons = new Button[count];
@@ -77,12 +87,15 @@ public static class PlaySideNav
         PlayUi.stretch(content);
 
         var icon = PlayUi.image("Icon" + label_value, content, PlayUi.sprite(ICON_PATHS[index]));
+        icon.color = PlayTheme.icon;
         PlayUi.place(icon.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(ICON_CENTER_X, 0f), new Vector2(ICON_SIZE, ICON_SIZE));
         icon.preserveAspect = true;
+        PlayUi.add_shadow(icon);
 
         var label = PlayUi.text("Label" + label_value, content, label_value, LABEL_SIZE, PlayTheme.text_muted, TextAnchor.MiddleLeft);
         PlayUi.place(label.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(LABEL_LEFT, 0f), new Vector2(ROW_WIDTH - LABEL_LEFT, ROW_HEIGHT));
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
+        PlayUi.add_shadow(label);
 
         var button = row.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
@@ -98,22 +111,30 @@ public static class PlaySideNav
 
 public class PlaySideNavFrame : MonoBehaviour
 {
-    const float DURATION = 0.2f;
+    const float DURATION = 0.38f;
+    const float OVERSHOOT = 1.15f;
+    const float STRETCH = 0.12f;
+    const float PULSE_DURATION = 0.55f;
+    const float PULSE_STRENGTH = 1.8f;
 
     RectTransform frame;
+    Image glow;
     float[] rows_y;
     float from_y;
     float to_y;
     float progress = 1f;
+    float pulse = 1f;
 
     public int selected_index { get; private set; }
 
-    public void setup(RectTransform frame_rect, float[] row_positions)
+    public void setup(RectTransform frame_rect, Image glow_image, float[] row_positions)
     {
         frame = frame_rect;
+        glow = glow_image;
         rows_y = row_positions;
         selected_index = 0;
         progress = 1f;
+        pulse = 1f;
         if (rows_y != null && rows_y.Length > 0)
         {
             from_y = to_y = -rows_y[0];
@@ -128,14 +149,25 @@ public class PlaySideNavFrame : MonoBehaviour
         from_y = current_y();
         to_y = -rows_y[index];
         progress = 0f;
+        pulse = 1f;
     }
 
     void Update()
     {
-        if (frame == null || progress >= 1f) return;
+        if (frame == null) return;
 
-        progress = Mathf.Min(1f, progress + Time.unscaledDeltaTime / DURATION);
-        apply();
+        if (progress < 1f)
+        {
+            progress = Mathf.Min(1f, progress + Time.unscaledDeltaTime / DURATION);
+            apply();
+            if (progress >= 1f) pulse = 0f;
+        }
+        else if (pulse < 1f)
+        {
+            pulse = Mathf.Min(1f, pulse + Time.unscaledDeltaTime / PULSE_DURATION);
+        }
+
+        apply_glow();
     }
 
     float current_y()
@@ -143,12 +175,35 @@ public class PlaySideNavFrame : MonoBehaviour
         return frame != null ? frame.anchoredPosition.y : to_y;
     }
 
+    static float ease_out_back(float t)
+    {
+        float c3 = OVERSHOOT + 1f;
+        float u = t - 1f;
+        return 1f + c3 * u * u * u + OVERSHOOT * u * u;
+    }
+
     void apply()
     {
-        float eased = Mathf.SmoothStep(0f, 1f, progress);
+        float eased = ease_out_back(progress);
         var position = frame.anchoredPosition;
-        position.y = Mathf.Lerp(from_y, to_y, eased);
+        position.y = Mathf.LerpUnclamped(from_y, to_y, eased);
         frame.anchoredPosition = position;
+
+        float reach = Mathf.Clamp01(Mathf.Abs(to_y - from_y) / 140f);
+        float stretch = Mathf.Sin(Mathf.PI * progress) * STRETCH * Mathf.Max(0.35f, reach);
+        var scale = frame.localScale;
+        scale.y = 1f + stretch;
+        scale.x = 1f - stretch * 0.15f;
+        frame.localScale = scale;
+    }
+
+    void apply_glow()
+    {
+        if (glow == null) return;
+
+        float strength = pulse < 1f ? Mathf.Sin(Mathf.PI * pulse) : 0f;
+        float travel = progress < 1f ? Mathf.Sin(Mathf.PI * progress) * 0.35f : 0f;
+        glow.color = PlayTheme.with_alpha(PlayTheme.glow, PlayTheme.glow.a * (strength * PULSE_STRENGTH + travel));
     }
 }
 
@@ -156,6 +211,8 @@ public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, IPointerExit
 {
     const float SHIFT = 12f;
     const float SPEED = 14f;
+    const float CURRENT_SPEED = 9f;
+    const float CURRENT_SHADOW = 0.3f;
 
     int index;
     string scene_name;
@@ -163,9 +220,12 @@ public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, IPointerExit
     RectTransform content;
     Image icon;
     Text label;
+    Shadow icon_shadow;
+    Shadow label_shadow;
     bool hovered;
     bool focused;
     float amount;
+    float current_amount;
 
     public void setup(int item_index, string target_scene, PlaySideNavFrame mover, RectTransform content_rect, Image icon_image, Text label_text)
     {
@@ -175,6 +235,9 @@ public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, IPointerExit
         content = content_rect;
         icon = icon_image;
         label = label_text;
+        icon_shadow = icon != null ? icon.GetComponent<Shadow>() : null;
+        label_shadow = label != null ? label.GetComponent<Shadow>() : null;
+        current_amount = is_current() ? 1f : 0f;
         apply(0f);
     }
 
@@ -183,6 +246,7 @@ public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, IPointerExit
         hovered = false;
         focused = false;
         amount = 0f;
+        current_amount = is_current() ? 1f : 0f;
         apply(0f);
     }
 
@@ -190,6 +254,8 @@ public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, IPointerExit
     {
         float target = PlayFocus.lit(hovered, focused) ? 1f : 0f;
         amount = Mathf.Lerp(amount, target, 1f - Mathf.Exp(-SPEED * Time.unscaledDeltaTime));
+        float current_target = is_current() ? 1f : 0f;
+        current_amount = Mathf.Lerp(current_amount, current_target, 1f - Mathf.Exp(-CURRENT_SPEED * Time.unscaledDeltaTime));
         apply(amount);
     }
 
@@ -200,20 +266,34 @@ public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     void apply(float t)
     {
-        var base_color = is_current() ? PlayTheme.text : PlayTheme.text_muted;
+        var hover_color = Color.Lerp(PlayTheme.gold, PlayTheme.label_brown, current_amount);
         if (content != null) content.anchoredPosition = Vector2.right * (SHIFT * t);
-        if (label != null) label.color = Color.Lerp(base_color, PlayTheme.gold, t);
-        if (icon != null) icon.color = Color.Lerp(base_color, PlayTheme.gold, t);
+
+        if (label != null)
+        {
+            var idle = Color.Lerp(PlayTheme.text_muted, PlayTheme.label_brown, current_amount);
+            label.color = Color.Lerp(idle, hover_color, t);
+        }
+
+        if (icon != null)
+        {
+            var idle = Color.Lerp(PlayTheme.icon, PlayTheme.label_brown, current_amount);
+            icon.color = Color.Lerp(idle, hover_color, t);
+        }
+
+        var shadow_color = PlayTheme.with_alpha(PlayTheme.shadow, PlayTheme.shadow.a * Mathf.Lerp(1f, CURRENT_SHADOW, current_amount));
+        if (icon_shadow != null) icon_shadow.effectColor = shadow_color;
+        if (label_shadow != null) label_shadow.effectColor = shadow_color;
     }
 
     public void activate()
     {
-        if (!string.IsNullOrEmpty(scene_name) && !is_current())
+        bool was_current = is_current();
+
+        if (frame_mover != null) frame_mover.select(index);
+
+        if (!was_current && !string.IsNullOrEmpty(scene_name))
         {
-            if (Application.CanStreamedLevelBeLoaded(scene_name) && frame_mover != null)
-            {
-                frame_mover.select(index);
-            }
             PlayUi.go_to_scene(scene_name);
         }
 
