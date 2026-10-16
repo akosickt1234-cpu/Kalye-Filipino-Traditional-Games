@@ -546,6 +546,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3655970382047427021}
   - component: {fileID: 3892131382726245627}
+  - component: {fileID: 1257500209283897145}
   - component: {fileID: 5632647675497591742}
   - component: {fileID: -1798745715432377660}
   - component: {fileID: -1220638832653085774}
@@ -604,6 +605,19 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &1257500209283897145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9191364300320882001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b85ac7e44edc5a6458f5660588ea8f3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationController
+  animator: {fileID: 4000862811475512006}
 --- !u!114 &5632647675497591742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -617,14 +631,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerNetwork
   ShowTopMostFoldoutHeaderGroup: 1
-  foreground: {fileID: 8321786906853931339}
-  background: {fileID: 1315875360609842162}
   camera: {fileID: 699735224918613356}
   cameraPivot: {fileID: 1231403767601668922}
+  mouseSensitivity: 2
   rb: {fileID: -1220638832653085774}
   moveSpeed: 3
   sprintSpeedMult: 2
-  mouseSensitivity: 2
   jumpForce: 4
   highJumpForce: 4
   groundCheck: {fileID: 8695106233402994032}
@@ -632,10 +644,14 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 1
+  foreground: {fileID: 8321786906853931339}
+  background: {fileID: 1315875360609842162}
   stamina: 100
   addOrDeductStamina: 0.5
   maxWidth: 200
-  animator: {fileID: 4000862811475512006}
+  colorTransitionSpeed: 5
+  animatorController: {fileID: 1257500209283897145}
+  player: {fileID: 766596840465263809}
 --- !u!114 &-1798745715432377660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -707,7 +723,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 80
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!136 &3488557064687714109
 CapsuleCollider:
@@ -791,7 +807,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4000862811475512006}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6333267395152823535}
   m_SourcePrefab: {fileID: 100100000, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
+--- !u!1 &766596840465263809 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -5450526443423814944, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
+  m_PrefabInstance: {fileID: 4537562236503705121}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &3619135988846754672 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
@@ -819,6 +843,46 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &6333267395152823535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3619135988846754672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkAnimator
+  ShowTopMostFoldoutHeaderGroup: 1
+  NetworkAnimatorExpanded: 0
+  AuthorityMode: 0
+  m_Animator: {fileID: 4000862811475512006}
+  TransitionStateInfoList: []
+  AnimatorParameterEntries:
+    ParameterEntries:
+    - name: isthrow
+      NameHash: -2025513203
+      Synchronize: 1
+      ParameterType: 4
+    - name: isJump
+      NameHash: 109974298
+      Synchronize: 1
+      ParameterType: 4
+    - name: isPickUp
+      NameHash: 359798661
+      Synchronize: 1
+      ParameterType: 4
+    - name: isRun
+      NameHash: -1125067167
+      Synchronize: 1
+      ParameterType: 4
+    - name: isWalk
+      NameHash: 749498201
+      Synchronize: 1
+      ParameterType: 4
+  AnimatorParametersExpanded: 0
 --- !u!4 &4139390443772879306 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
