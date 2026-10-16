@@ -62,7 +62,7 @@ public static class PlayGameCards
         var line_x = right_x + HEADING_LINE_GAP;
         var line_end = ROW_X + row_width();
         var line = PlayUi.image("heading_line", parent, null);
-        line.color = with_alpha(PlayTheme.gold, HEADING_LINE_ALPHA);
+        line.color = PlayTheme.with_alpha(PlayTheme.gold, HEADING_LINE_ALPHA);
         place_top_left(line.rectTransform, line_x, HEADING_Y - HEADING_LINE_THICKNESS * 0.5f, Mathf.Max(0f, line_end - line_x), HEADING_LINE_THICKNESS);
     }
 
@@ -110,7 +110,7 @@ public static class PlayGameCards
         for (var i = 0; i < GLOW_PADS.Length; i++)
         {
             var layer = PlayUi.image("glow_" + i, selected_group, null);
-            layer.color = with_alpha(PlayTheme.glow, GLOW_ALPHAS[i] / PlayTheme.glow.a);
+            layer.color = PlayTheme.with_alpha(PlayTheme.glow, GLOW_ALPHAS[i]);
             stretch_padded(layer.rectTransform, GLOW_PADS[i]);
         }
 
@@ -124,7 +124,7 @@ public static class PlayGameCards
         PlayUi.stretch(frame.rectTransform);
 
         var overlay = PlayUi.image("hover_overlay", visual, null);
-        overlay.color = with_alpha(PlayTheme.glow, HOVER_OVERLAY_ALPHA / PlayTheme.glow.a);
+        overlay.color = PlayTheme.with_alpha(PlayTheme.glow, HOVER_OVERLAY_ALPHA);
         PlayUi.stretch(overlay.rectTransform);
 
         var name_value = game != null ? game.display_name : string.Empty;
@@ -215,11 +215,6 @@ public static class PlayGameCards
         var count = PlayState.games != null ? PlayState.games.Length : 0;
         if (count <= 0) return CARD_WIDTH;
         return count * CARD_WIDTH + (count - 1) * CARD_GAP;
-    }
-
-    static Color with_alpha(Color color, float factor)
-    {
-        return new Color(color.r, color.g, color.b, Mathf.Clamp01(color.a * factor));
     }
 }
 

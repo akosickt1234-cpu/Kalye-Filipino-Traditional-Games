@@ -137,7 +137,7 @@ public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, ISelectHandl
     {
         if (content != null) content.anchoredPosition = Vector2.right * (SHIFT * t);
         if (label != null) label.color = Color.Lerp(PlayTheme.text_muted, PlayTheme.gold, t);
-        if (icon != null) icon.color = Color.Lerp(Color.white, PlayTheme.gold, t);
+        if (icon != null) icon.color = Color.Lerp(PlayTheme.white, PlayTheme.gold, t);
     }
 
     public void OnPointerEnter(PointerEventData event_data)

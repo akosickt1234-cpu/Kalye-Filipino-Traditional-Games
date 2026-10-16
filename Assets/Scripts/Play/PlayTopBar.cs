@@ -128,7 +128,7 @@ public static class PlayTopBar
     private static Button build_icon_button(RectTransform bar, string object_name, string icon_path, string scene_name, float x)
     {
         Image hit = PlayUi.image(object_name, bar, null, true);
-        hit.color = Color.clear;
+        hit.color = PlayTheme.clear;
         place_top_left(hit.rectTransform, x, ICON_Y, ICON_SIZE, ICON_SIZE);
 
         Button button = hit.gameObject.AddComponent<Button>();
@@ -137,7 +137,7 @@ public static class PlayTopBar
         button.onClick.AddListener(() => PlayUi.go_to_scene(scene_name));
 
         Image glow = PlayUi.image("Glow", hit.rectTransform, get_glow_sprite());
-        glow.color = Color.clear;
+        glow.color = PlayTheme.clear;
         place_center(glow.rectTransform, GLOW_SIZE);
 
         Image icon = PlayUi.image("Icon", hit.rectTransform, PlayUi.sprite(icon_path));
@@ -145,7 +145,7 @@ public static class PlayTopBar
         PlayUi.stretch(icon.rectTransform);
 
         Image line = PlayUi.image("Line", hit.rectTransform, get_center_line_sprite());
-        line.color = Color.clear;
+        line.color = PlayTheme.clear;
         PlayUi.place(line.rectTransform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), new Vector2(0f, -LINE_GAP), new Vector2(0f, LINE_HEIGHT));
 
         PlayTopBarIconHover hover = hit.gameObject.AddComponent<PlayTopBarIconHover>();
@@ -223,7 +223,7 @@ public static class PlayTopBar
             {
                 float u = (x + 0.5f) / width;
                 float v = (y + 0.5f) / height;
-                pixels[y * width + x] = new Color(1f, 1f, 1f, alpha_at(u, v));
+                pixels[y * width + x] = PlayTheme.with_alpha(PlayTheme.white, alpha_at(u, v));
             }
         }
 
@@ -300,16 +300,12 @@ public class PlayTopBarIconHover : MonoBehaviour, IPointerEnterHandler, IPointer
 
         if (glow_image != null)
         {
-            Color glow = PlayTheme.glow;
-            glow.a *= t;
-            glow_image.color = glow;
+            glow_image.color = PlayTheme.with_alpha(PlayTheme.glow, PlayTheme.glow.a * t);
         }
 
         if (line_image != null)
         {
-            Color line = PlayTheme.gold;
-            line.a *= t;
-            line_image.color = line;
+            line_image.color = PlayTheme.with_alpha(PlayTheme.gold, PlayTheme.gold.a * t);
         }
 
         if (line_rect != null)
