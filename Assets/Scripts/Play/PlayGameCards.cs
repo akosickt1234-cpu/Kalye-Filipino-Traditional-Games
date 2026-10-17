@@ -5,6 +5,9 @@ using UnityEngine.UI;
 public static class PlayGameCards
 {
     const float REF_HEIGHT = 1080f;
+    const float REF_WIDTH = 1920f;
+    const float WIDE_SHARE = 0.45f;
+    const float MAX_WIDE_RATIO = 1.18f;
     const string FRAME_PATH = "Frames/Play/FrameGameCard";
     const float FRAME_WIDTH = 512f;
     const float FRAME_HEIGHT = 341f;
@@ -80,13 +83,14 @@ public static class PlayGameCards
         if (games == null || games.Length == 0) return;
 
         var frame_sprite = PlayUi.sprite(FRAME_PATH);
-        var card_height = CARD_WIDTH * FRAME_HEIGHT / FRAME_WIDTH;
+        var card_width = card_width_now();
+        var card_height = card_width * FRAME_HEIGHT / FRAME_WIDTH;
         var cards = new PlayGameCardItem[games.Length];
 
         for (var i = 0; i < games.Length; i++)
         {
-            var x = ROW_X + i * (CARD_WIDTH + CARD_GAP);
-            cards[i] = build_card(parent, i, games[i], frame_sprite, x, ROW_Y, CARD_WIDTH, card_height);
+            var x = ROW_X + i * (card_width + CARD_GAP);
+            cards[i] = build_card(parent, i, games[i], frame_sprite, x, ROW_Y, card_width, card_height);
         }
 
         for (var i = 0; i < cards.Length; i++)
@@ -260,8 +264,26 @@ public static class PlayGameCards
     static float row_width()
     {
         var count = PlayState.games != null ? PlayState.games.Length : 0;
+        var width = card_width_now();
+        if (count <= 0) return width;
+        return count * width + (count - 1) * CARD_GAP;
+    }
+
+    static float extra_width_now()
+    {
+        if (Screen.width <= 0 || Screen.height <= 0) return 0f;
+        var scale = Mathf.Sqrt(Screen.width / REF_WIDTH * (Screen.height / REF_HEIGHT));
+        var canvas_width = Screen.width / scale;
+        var canvas_height = Screen.height / scale;
+        return Mathf.Max(0f, canvas_width - canvas_height * 16f / 9f);
+    }
+
+    static float card_width_now()
+    {
+        var count = PlayState.games != null ? PlayState.games.Length : 0;
         if (count <= 0) return CARD_WIDTH;
-        return count * CARD_WIDTH + (count - 1) * CARD_GAP;
+        var wide_width = CARD_WIDTH + extra_width_now() * WIDE_SHARE / count;
+        return Mathf.Min(wide_width, CARD_WIDTH * MAX_WIDE_RATIO);
     }
 }
 
