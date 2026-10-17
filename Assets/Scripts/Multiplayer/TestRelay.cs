@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using UnityEngine;
+using System.Collections;
 using Unity.Services.Core;
 using Unity.Services.Authentication;
 using Unity.Services.Relay;
@@ -13,50 +14,98 @@ using TMPro;
 public class TestRelay : MonoBehaviour
 {
     [SerializeField] public TextMeshProUGUI code;
+    private bool isCreatingRelay;
+    private bool servicesReady;
 
-    private async void Start()
+    private void Start()
     {
-        await UnityServices.InitializeAsync();
-
-        AuthenticationService.Instance.SignedIn += () =>
-        {
-            Debug.Log("Signed in: " + AuthenticationService.Instance.PlayerId);
-        };
-
-        await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        InitializeServices();
     }
 
-    public async void CreateRelay()
+    private async void InitializeServices()
     {
         try
         {
-            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(3);
+            await UnityServices.InitializeAsync();
 
-            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            }
 
-            Debug.Log(joinCode);
+            servicesReady = true;
+            Debug.Log("Unity Services ready!");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Unity Services initialization failed: {e}");
+        }
+    }
+
+
+    public async void CreateRelay()
+    {
+        if (!servicesReady || isCreatingRelay)
+            return;
+
+        NetworkManager nm = NetworkManager.Singleton;
+
+        if (nm == null || nm.IsListening)
+        {
+            Debug.LogWarning("NetworkManager is already running!");
+            return;
+        }
+
+        isCreatingRelay = true;
+
+        try
+        {
+            Allocation allocation =
+                await RelayService.Instance.CreateAllocationAsync(3);
+
+            string joinCode =
+                await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
             code.text = joinCode;
 
-            NetworkManager.Singleton.GetComponent<UnityTransport>().SetHostRelayData(
+            nm.GetComponent<UnityTransport>().SetHostRelayData(
                 allocation.RelayServer.IpV4,
                 (ushort)allocation.RelayServer.Port,
                 allocation.AllocationIdBytes,
                 allocation.Key,
                 allocation.ConnectionData
-                );
+            );
 
-            NetworkManager.Singleton.StartHost();
+            if (!nm.StartHost())
+            {
+                Debug.LogError("Failed to start host!");
+                code.text = "Couldn't start room. Please try again.";
+            }
         }
         catch (RelayServiceException e)
         {
-            Debug.Log(e);
+            Debug.LogError(e);
+            code.text = "Couldn't create room. Please try again.";
         }
-        
+        catch (System.Exception e)
+        {
+            Debug.LogError(e);
+            code.text = e.Message;
+        }
+        finally
+        {
+            isCreatingRelay = false;
+        }
     }
+
 
     public async void JoinRelay(string joinCode)
     {
+        if (!servicesReady)
+        {
+            Debug.LogWarning("Unity Services are not ready yet!");
+            return;
+        }
         try
         {
             Debug.Log("Joining Relay with: " + joinCode);
@@ -75,10 +124,35 @@ public class TestRelay : MonoBehaviour
 
             code.text = joinCode;
         }
+
         catch (RelayServiceException e)
         {
-            Debug.Log(e);
-            code.text = e.ToString();
+            Debug.LogError(e);
+
+            if (e.Message.ToLower().Contains("join code"))
+            {
+                code.text = "Room code can't be found!";
+                StartCoroutine(ResetText());
+            }
+            else
+            {
+                code.text = e.Message;
+                StartCoroutine(ResetText());
+            }
         }
+        catch (System.Exception e)
+        {
+            Debug.LogError(e);
+            code.text = e.Message;
+            StartCoroutine(ResetText());
+        }
+
+
+    }
+
+    IEnumerator ResetText()
+    {
+        yield return new WaitForSeconds(1f);
+        code.text = "";
     }
 }
