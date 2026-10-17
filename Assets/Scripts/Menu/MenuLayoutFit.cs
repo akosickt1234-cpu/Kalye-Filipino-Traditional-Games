@@ -12,6 +12,7 @@ public class MenuLayoutFit : MonoBehaviour
     [SerializeField, Range(0.1f, 1f)] private float min_logo_scale = 0.55f;
 
     private const float REFERENCE_HEIGHT = 1080f;
+    private const float GAP_SCALE = 0.6f;
 
     private RectTransform canvas_rect;
     private Vector2 logo_size;
@@ -55,7 +56,7 @@ public class MenuLayoutFit : MonoBehaviour
 
         float top_margin = layout_height * top_margin_ratio;
         float bottom_margin = layout_height * bottom_margin_ratio;
-        float gap = Mathf.Max(min_gap, layout_height * gap_ratio);
+        float gap = Mathf.Max(min_gap, layout_height * gap_ratio) * GAP_SCALE;
         float menu_height = menu_list.rect.height;
 
         float menu_top = layout_height * 0.5f - menu_base_y - menu_height * 0.5f;
@@ -77,7 +78,7 @@ public class MenuLayoutFit : MonoBehaviour
         float available_width = Mathf.Max(1f, area.width - logo_left * 2f);
         float scale = Mathf.Min(1f, Mathf.Max(1f, available) / logo_size.y, available_width / logo_size.x);
         var size = logo_size * scale;
-        float top = top_margin + Mathf.Max(0f, available - size.y) * 0.5f;
+        float top = top_margin + Mathf.Max(0f, available - size.y);
 
         logo.sizeDelta = size;
         logo.anchoredPosition = new Vector2(logo_left, -top);
