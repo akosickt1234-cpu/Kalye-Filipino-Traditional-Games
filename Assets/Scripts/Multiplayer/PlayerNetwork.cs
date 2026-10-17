@@ -50,12 +50,16 @@ public class PlayerNetwork : NetworkBehaviour
     [SerializeField] private Transform tsinelasPrefab;
     private Transform spawnedTsinelasTransform;
     private NetworkObject spawnedTsinelas;
-    private bool hadSpawenedTsinelas = false;
+    private NetworkVariable<bool> hasTsinelas = new NetworkVariable<bool>(
+    false,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+);
     [SerializeField] private float pickupDistance = 2f;
     [SerializeField] private float throwSpeed = 12f;
     [SerializeField] private float spawnDistance = 1.2f;
     private bool canThrow = false;
-    private bool canGet = false;
+    private bool canGet = false; 
 
     public override void OnNetworkSpawn()
     {
@@ -96,24 +100,9 @@ public class PlayerNetwork : NetworkBehaviour
 
 
 
-    [Rpc(SendTo.Server)]
-    private void SpawnTsinelasRpc(RpcParams rpcParams = default)
-    {
-        if (rpcParams.Receive.SenderClientId != OwnerClientId)
-            return;
-
-       
-        if (spawnedTsinelas != null && spawnedTsinelas.IsSpawned)
-            return;
-
-        SpawnTsinelasWithAimRpc(
-            camera.transform.position,
-            camera.transform.forward
-        );
-    }
 
     [Rpc(SendTo.Server)]
-    private void SpawnTsinelasWithAimRpc(
+    private void SpawnTsinelasRpc(
         Vector3 cameraPosition,
         Vector3 cameraForward,
         RpcParams rpcParams = default)
@@ -124,7 +113,6 @@ public class PlayerNetwork : NetworkBehaviour
         if (spawnedTsinelas != null && spawnedTsinelas.IsSpawned)
             return;
 
-        
         if (Vector3.Distance(cameraPosition, transform.position) > 5f)
             return;
 
@@ -148,20 +136,19 @@ public class PlayerNetwork : NetworkBehaviour
         if (networkObject == null || tsinelasRb == null)
         {
             Destroy(tsinelas);
-            Debug.LogError(
-                "Tsinelas prefab needs NetworkObject and Rigidbody!"
-            );
+            Debug.LogError("Tsinelas needs a NetworkObject and Rigidbody!");
             return;
         }
 
         networkObject.Spawn();
 
-        // Throw
         tsinelasRb.linearVelocity = cameraForward * throwSpeed;
 
         spawnedTsinelas = networkObject;
         spawnedTsinelasTransform = tsinelas.transform;
+        hasTsinelas.Value = true;
     }
+
 
     [Rpc(SendTo.Server)]
     private void DespawnTsinelasRpc(RpcParams rpcParams = default)
@@ -185,7 +172,7 @@ public class PlayerNetwork : NetworkBehaviour
 
         spawnedTsinelas.Despawn(true);
         spawnedTsinelas = null;
-        hadSpawenedTsinelas = false;
+        hasTsinelas.Value = false;
     }
 
 
@@ -197,7 +184,7 @@ public class PlayerNetwork : NetworkBehaviour
         // Taya or Capture animation
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            if (hadSpawenedTsinelas == false) return;
+            if (!hasTsinelas.Value) return;
             if (canGet == false) return;
             //StartCoroutine(disAndAbleChar());
             animatorController.SetPickUp();
@@ -209,12 +196,12 @@ public class PlayerNetwork : NetworkBehaviour
         // throw animation for slippers
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (hadSpawenedTsinelas == true) return;
+            if (hasTsinelas.Value) return;
             if (canThrow == false) return;
             //StartCoroutine(disAndAbleChar());
             animatorController.SetThrow();
-            SpawnTsinelasRpc();
-            hadSpawenedTsinelas = true;
+            SpawnTsinelasRpc(camera.transform.position, camera.transform.forward);
+            
         }
 
         // Jump input
