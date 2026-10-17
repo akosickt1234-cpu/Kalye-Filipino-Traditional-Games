@@ -35,6 +35,7 @@ public static class PlayInfoPanel
     const int PLAYERS_FONT_SIZE = 30;
     const int DESCRIPTION_MAX_SIZE = 25;
     const int DESCRIPTION_MIN_SIZE = 16;
+    const float DESCRIPTION_LINE_SPACING = 1.15f;
     const int BUTTON_LABEL_SIZE = 46;
 
     public static void build(RectTransform root)
@@ -72,8 +73,10 @@ public static class PlayInfoPanel
         var crest = PlayOrnament.crest_line(text_group, "info_crest_line", CREST_WIDTH, PlayTheme.icon);
         anchor_at(crest, TEXT_CENTER_X, CREST_Y, crest.sizeDelta, new Vector2(0.5f, 0.5f));
 
-        var description = PlayScrollText.create(text_group, "info_description", DESCRIPTION_MIN_SIZE, DESCRIPTION_MAX_SIZE, PlayTheme.text_white, DESCRIPTION_WIDTH, DESCRIPTION_HEIGHT);
-        anchor_at(description.rect, TEXT_CENTER_X + DESCRIPTION_CENTER_OFFSET, DESCRIPTION_TOP_Y, new Vector2(DESCRIPTION_WIDTH, DESCRIPTION_HEIGHT), new Vector2(0.5f, 1f));
+        var description = PlayUi.text("info_description", text_group, string.Empty, DESCRIPTION_MAX_SIZE, PlayTheme.text_white, TextAnchor.UpperLeft);
+        anchor_at(description.rectTransform, TEXT_CENTER_X + DESCRIPTION_CENTER_OFFSET, DESCRIPTION_TOP_Y, new Vector2(DESCRIPTION_WIDTH, DESCRIPTION_HEIGHT), new Vector2(0.5f, 1f));
+        description.lineSpacing = DESCRIPTION_LINE_SPACING;
+        fit_text(description, DESCRIPTION_MIN_SIZE, DESCRIPTION_MAX_SIZE);
 
         var button_rect = build_play_button(holder);
 
@@ -82,7 +85,7 @@ public static class PlayInfoPanel
         align.add(title.rect, 0f);
         align.add(players_row, 0f);
         align.add(crest, 0f);
-        align.add(description.rect, DESCRIPTION_CENTER_OFFSET);
+        align.add(description.rectTransform, DESCRIPTION_CENTER_OFFSET);
 
         var view = holder.gameObject.AddComponent<PlayInfoPanelView>();
         view.setup(group, title, players_row, players_icon, players, description, align);
@@ -141,6 +144,14 @@ public static class PlayInfoPanel
         fx.setup(button_rect, glow_group);
         button.onClick.AddListener(fx.open_lobby);
         return button_rect;
+    }
+
+    static void fit_text(Text label, int min_size, int max_size)
+    {
+        label.resizeTextForBestFit = true;
+        label.resizeTextMinSize = min_size;
+        label.resizeTextMaxSize = max_size;
+        label.verticalOverflow = VerticalWrapMode.Truncate;
     }
 
     internal static void anchor_at(RectTransform rect, float x, float y, Vector2 size, Vector2 pivot)
@@ -229,19 +240,19 @@ public class PlayInfoPanelView : MonoBehaviour
     RectTransform players_row;
     Image players_icon;
     Text players_label;
-    PlayScrollText description_scroll;
+    Text description_label;
     PlayInfoPanelAlign align;
     string shown_id;
     Coroutine fade_routine;
 
-    public void setup(CanvasGroup text_group, PlayMarquee title, RectTransform row, Image icon, Text players, PlayScrollText description, PlayInfoPanelAlign panel_align)
+    public void setup(CanvasGroup text_group, PlayMarquee title, RectTransform row, Image icon, Text players, Text description, PlayInfoPanelAlign panel_align)
     {
         group = text_group;
         title_marquee = title;
         players_row = row;
         players_icon = icon;
         players_label = players;
-        description_scroll = description;
+        description_label = description;
         align = panel_align;
         refresh();
     }
@@ -308,7 +319,7 @@ public class PlayInfoPanelView : MonoBehaviour
 
         if (title_marquee != null) title_marquee.set_text(game != null && game.display_name != null ? game.display_name : string.Empty);
         if (players_label != null) players_label.text = format_players(game);
-        if (description_scroll != null) description_scroll.set_text(game != null && game.description != null ? game.description : string.Empty);
+        if (description_label != null) description_label.text = game != null && game.description != null ? game.description : string.Empty;
 
         layout_players(PLAYERS_Y);
     }
