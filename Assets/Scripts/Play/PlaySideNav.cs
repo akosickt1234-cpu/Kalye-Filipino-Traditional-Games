@@ -36,6 +36,12 @@ public static class PlaySideNav
         PlayUi.stretch(nav);
         nav.gameObject.AddComponent<PlaySideNavLayout>().setup(root);
 
+        var tab_backgrounds = new Image[LABELS.Length];
+        for (int i = 0; i < tab_backgrounds.Length; i++)
+        {
+            tab_backgrounds[i] = build_tab_background(nav, i);
+        }
+
         var frame = PlayUi.image("SelectionFrame", nav, PlayUi.sprite(TAB_PATH));
         frame.preserveAspect = false;
         PlayUi.place(frame.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(LEFT, -ROW_Y[0]), new Vector2(ROW_WIDTH, FRAME_HEIGHT));
@@ -56,7 +62,7 @@ public static class PlaySideNav
 
         for (int i = 0; i < count; i++)
         {
-            buttons[i] = build_row(nav, i, frame_mover);
+            buttons[i] = build_row(nav, i, frame_mover, tab_backgrounds[i]);
         }
 
         for (int i = 0; i < count; i++)
@@ -73,7 +79,17 @@ public static class PlaySideNav
         PlayFocus.default_target = buttons[0].gameObject;
     }
 
-    static Button build_row(RectTransform parent, int index, PlaySideNavFrame frame_mover)
+    static Image build_tab_background(RectTransform parent, int index)
+    {
+        var background = PlayUi.image("TabBackground" + LABELS[index], parent, PlayUi.sprite(TAB_PATH));
+        background.preserveAspect = false;
+        background.raycastTarget = false;
+        background.color = PlayTheme.fill_soft;
+        PlayUi.place(background.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 0.5f), new Vector2(LEFT, -ROW_Y[index]), new Vector2(ROW_WIDTH, FRAME_HEIGHT));
+        return background;
+    }
+
+    static Button build_row(RectTransform parent, int index, PlaySideNavFrame frame_mover, Image tab_background)
     {
         string label_value = LABELS[index];
 
@@ -103,7 +119,7 @@ public static class PlaySideNav
         button.transition = Selectable.Transition.None;
 
         var item = row.gameObject.AddComponent<PlaySideNavItem>();
-        item.setup(index, SCENES[index], frame_mover, content, icon, label);
+        item.setup(index, SCENES[index], frame_mover, content, icon, label, tab_background);
 
         button.onClick.AddListener(item.activate);
         return button;
@@ -264,8 +280,9 @@ public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, IPointerExit
     bool focused;
     float amount;
     float current_amount;
+    Image tab_background;
 
-    public void setup(int item_index, string target_scene, PlaySideNavFrame mover, RectTransform content_rect, Image icon_image, Text label_text)
+    public void setup(int item_index, string target_scene, PlaySideNavFrame mover, RectTransform content_rect, Image icon_image, Text label_text, Image background_image)
     {
         index = item_index;
         scene_name = target_scene;
@@ -273,6 +290,7 @@ public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, IPointerExit
         content = content_rect;
         icon = icon_image;
         label = label_text;
+        tab_background = background_image;
         icon_shadow = icon != null ? icon.GetComponent<Shadow>() : null;
         label_shadow = label != null ? label.GetComponent<Shadow>() : null;
         current_amount = is_current() ? 1f : 0f;
@@ -318,6 +336,8 @@ public class PlaySideNavItem : MonoBehaviour, IPointerEnterHandler, IPointerExit
             var idle = Color.Lerp(PlayTheme.icon, PlayTheme.label_brown, current_amount);
             icon.color = Color.Lerp(idle, hover_color, t);
         }
+
+        if (tab_background != null) tab_background.color = PlayTheme.with_alpha(PlayTheme.fill_soft, PlayTheme.fill_soft.a * (1f - current_amount));
 
         var shadow_color = PlayTheme.with_alpha(PlayTheme.shadow, PlayTheme.shadow.a * Mathf.Lerp(1f, CURRENT_SHADOW, current_amount));
         if (icon_shadow != null) icon_shadow.effectColor = shadow_color;
