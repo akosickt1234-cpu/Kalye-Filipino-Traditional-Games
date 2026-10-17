@@ -72,13 +72,21 @@ public class MenuLayoutFit : MonoBehaviour
             available += shift;
         }
 
-        float menu_y = area.height * 0.5f - (menu_top + shift) - menu_height * 0.5f;
-        menu_list.anchoredPosition = new Vector2(menu_list.anchoredPosition.x, menu_y);
-
         float available_width = Mathf.Max(1f, area.width - logo_left * 2f);
         float scale = Mathf.Min(1f, Mathf.Max(1f, available) / logo_size.y, available_width / logo_size.x);
         var size = logo_size * scale;
         float top = top_margin + Mathf.Max(0f, available - size.y);
+        float final_menu_top = menu_top + shift;
+
+        if (extra_width > 0f)
+        {
+            float group_height = size.y + gap + menu_height;
+            top = Mathf.Max(top_margin, (area.height - group_height) * 0.5f);
+            final_menu_top = top + size.y + gap;
+        }
+
+        float menu_y = area.height * 0.5f - final_menu_top - menu_height * 0.5f;
+        menu_list.anchoredPosition = new Vector2(menu_list.anchoredPosition.x, menu_y);
 
         logo.sizeDelta = size;
         logo.anchoredPosition = new Vector2(logo_left, -top);
