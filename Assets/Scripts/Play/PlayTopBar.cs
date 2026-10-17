@@ -12,8 +12,8 @@ public static class PlayTopBar
     private const float AVATAR_SIZE = 100f * SCALE;
     private const float AVATAR_FILL_SIZE = 88f * SCALE;
     private const float BADGE_X = 114f * SCALE;
-    private const float BADGE_Y = 80f * SCALE;
     private const float BADGE_SIZE = 36f * SCALE;
+    private const float BADGE_Y = AVATAR_Y + AVATAR_SIZE - BADGE_SIZE;
     private const int BADGE_TEXT_SIZE = 20;
     private const float CONTAINER_X = AVATAR_X + AVATAR_SIZE * 0.5f;
     private const float CONTAINER_END_X = 430f * SCALE;
