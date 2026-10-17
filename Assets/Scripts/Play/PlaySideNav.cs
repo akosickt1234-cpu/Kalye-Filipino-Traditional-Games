@@ -34,6 +34,7 @@ public static class PlaySideNav
 
         var nav = PlayUi.rect(NAV_NAME, root);
         PlayUi.stretch(nav);
+        nav.gameObject.AddComponent<PlaySideNavLayout>().setup(root);
 
         var frame = PlayUi.image("SelectionFrame", nav, PlayUi.sprite(TAB_PATH));
         frame.preserveAspect = false;
@@ -106,6 +107,43 @@ public static class PlaySideNav
 
         button.onClick.AddListener(item.activate);
         return button;
+    }
+}
+
+public class PlaySideNavLayout : MonoBehaviour
+{
+    const float REF_HEIGHT = 1080f;
+    const float REF_ASPECT = 16f / 9f;
+
+    RectTransform root;
+    RectTransform nav;
+    float applied_shift;
+
+    public void setup(RectTransform root_rect)
+    {
+        root = root_rect;
+        nav = transform as RectTransform;
+        apply();
+    }
+
+    void OnRectTransformDimensionsChange()
+    {
+        apply();
+    }
+
+    void apply()
+    {
+        if (root == null || nav == null) return;
+
+        var canvas_rect = root.rect;
+        float extra_width = Mathf.Max(0f, canvas_rect.width - canvas_rect.height * REF_ASPECT);
+        float shift = extra_width > 0f ? Mathf.Max(0f, REF_HEIGHT - canvas_rect.height) : 0f;
+        float delta = shift - applied_shift;
+        if (Mathf.Approximately(delta, 0f)) return;
+
+        applied_shift = shift;
+        nav.offsetMin += Vector2.up * delta;
+        nav.offsetMax += Vector2.up * delta;
     }
 }
 
