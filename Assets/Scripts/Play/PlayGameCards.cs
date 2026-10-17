@@ -53,6 +53,23 @@ public static class PlayGameCards
 
         build_heading(holder);
         build_row(holder);
+
+        holder.gameObject.AddComponent<PlayGameCardsRelayout>().setup(holder, card_width_now());
+    }
+
+    internal static void rebuild(RectTransform holder)
+    {
+        if (holder == null) return;
+
+        for (var i = holder.childCount - 1; i >= 0; i--)
+        {
+            var child = holder.GetChild(i).gameObject;
+            child.SetActive(false);
+            Object.Destroy(child);
+        }
+
+        build_heading(holder);
+        build_row(holder);
     }
 
     static void build_heading(RectTransform parent)
@@ -278,12 +295,37 @@ public static class PlayGameCards
         return Mathf.Max(0f, canvas_width - canvas_height * 16f / 9f);
     }
 
-    static float card_width_now()
+    internal static float card_width_now()
     {
         var count = PlayState.games != null ? PlayState.games.Length : 0;
         if (count <= 0) return CARD_WIDTH;
         var wide_width = CARD_WIDTH + extra_width_now() * WIDE_SHARE / count;
         return Mathf.Min(wide_width, CARD_WIDTH * MAX_WIDE_RATIO);
+    }
+}
+
+public class PlayGameCardsRelayout : MonoBehaviour
+{
+    const float TOLERANCE = 0.5f;
+
+    RectTransform holder;
+    float built_width;
+
+    public void setup(RectTransform holder_rect, float width)
+    {
+        holder = holder_rect;
+        built_width = width;
+    }
+
+    void Update()
+    {
+        if (holder == null) return;
+
+        var width = PlayGameCards.card_width_now();
+        if (Mathf.Abs(width - built_width) < TOLERANCE) return;
+
+        built_width = width;
+        PlayGameCards.rebuild(holder);
     }
 }
 
