@@ -45,8 +45,10 @@ public class PlayerNetwork : NetworkBehaviour
 
     [Header("Objects")]
     [SerializeField] private GameObject player;
-
-    
+    [SerializeField] private Transform tsinelasPrefab;
+    private Transform spawnedTsinelasTransform;
+    private NetworkObject spawnedTsinelas;
+    private bool hadSpawenedTsinelas = false;
 
     public override void OnNetworkSpawn()
     {
@@ -85,6 +87,54 @@ public class PlayerNetwork : NetworkBehaviour
         player.SetActive(true);
     }
 
+
+
+    [Rpc(SendTo.Server)]
+    private void SpawnTsinelasRpc(RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        // Prevent spawning multiple tsinelas.
+        if (spawnedTsinelas != null && spawnedTsinelas.IsSpawned)
+            return;
+
+        Vector3 spawnPosition =
+            transform.position + transform.forward * 1.5f + Vector3.up * 0.5f;
+
+        GameObject tsinelas = Instantiate(
+            tsinelasPrefab.gameObject,
+            spawnPosition,
+            transform.rotation
+        );
+
+        spawnedTsinelas = tsinelas.GetComponent<NetworkObject>();
+
+        if (spawnedTsinelas == null)
+        {
+            Destroy(tsinelas);
+            Debug.LogError("Tsinelas prefab needs a NetworkObject!");
+            return;
+        }
+
+        spawnedTsinelas.Spawn();
+    }
+
+    [Rpc(SendTo.Server)]
+    private void DespawnTsinelasRpc(RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        if (spawnedTsinelas == null || !spawnedTsinelas.IsSpawned)
+            return;
+
+        spawnedTsinelas.Despawn(true);
+        spawnedTsinelas = null;
+    }
+
+
+
     private void Update()
     {
         if (!IsOwner || !IsClient) return;
@@ -92,15 +142,22 @@ public class PlayerNetwork : NetworkBehaviour
         // Taya or Capture animation
         if (Input.GetKeyDown(KeyCode.Q))
         {
+            if (hadSpawenedTsinelas == false) return;
             StartCoroutine(disAndAbleChar());
             animatorController.SetPickUp();
+            DespawnTsinelasRpc();
+            hadSpawenedTsinelas = false;
+
         }
 
-        // Pick up animation for slippers
+        // throw animation for slippers
         if (Input.GetKeyDown(KeyCode.E))
         {
+            if (hadSpawenedTsinelas == true) return;
             StartCoroutine(disAndAbleChar());
             animatorController.SetThrow();
+            SpawnTsinelasRpc();
+            hadSpawenedTsinelas = true;
         }
 
         // Jump input

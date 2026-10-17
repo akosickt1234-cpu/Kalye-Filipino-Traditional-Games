@@ -654,6 +654,7 @@ MonoBehaviour:
   colorTransitionSpeed: 5
   animatorController: {fileID: 1257500209283897145}
   player: {fileID: 766596840465263809}
+  tsinelasPrefab: {fileID: 6807346094398842588, guid: 7a9922c40ac65a344b901bec81e747ad, type: 3}
 --- !u!114 &-1798745715432377660
 MonoBehaviour:
   m_ObjectHideFlags: 0
