@@ -45,10 +45,17 @@ public class PlayerNetwork : NetworkBehaviour
 
     [Header("Objects")]
     [SerializeField] private GameObject player;
+
+    [Header("Tsinelas")]
     [SerializeField] private Transform tsinelasPrefab;
     private Transform spawnedTsinelasTransform;
     private NetworkObject spawnedTsinelas;
     private bool hadSpawenedTsinelas = false;
+    [SerializeField] private float pickupDistance = 2f;
+    [SerializeField] private float throwSpeed = 12f;
+    [SerializeField] private float spawnDistance = 1.2f;
+    private bool canThrow = false;
+    private bool canGet = false;
 
     public override void OnNetworkSpawn()
     {
@@ -95,29 +102,65 @@ public class PlayerNetwork : NetworkBehaviour
         if (rpcParams.Receive.SenderClientId != OwnerClientId)
             return;
 
-        // Prevent spawning multiple tsinelas.
+       
         if (spawnedTsinelas != null && spawnedTsinelas.IsSpawned)
             return;
 
+        SpawnTsinelasWithAimRpc(
+            camera.transform.position,
+            camera.transform.forward
+        );
+    }
+
+    [Rpc(SendTo.Server)]
+    private void SpawnTsinelasWithAimRpc(
+        Vector3 cameraPosition,
+        Vector3 cameraForward,
+        RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        if (spawnedTsinelas != null && spawnedTsinelas.IsSpawned)
+            return;
+
+        
+        if (Vector3.Distance(cameraPosition, transform.position) > 5f)
+            return;
+
+        cameraForward.Normalize();
+
         Vector3 spawnPosition =
-            transform.position + transform.forward * 1.5f + Vector3.up * 0.5f;
+            cameraPosition + cameraForward * spawnDistance;
 
         GameObject tsinelas = Instantiate(
             tsinelasPrefab.gameObject,
             spawnPosition,
-            transform.rotation
+            Quaternion.LookRotation(cameraForward)
         );
 
-        spawnedTsinelas = tsinelas.GetComponent<NetworkObject>();
+        NetworkObject networkObject =
+            tsinelas.GetComponent<NetworkObject>();
 
-        if (spawnedTsinelas == null)
+        Rigidbody tsinelasRb =
+            tsinelas.GetComponent<Rigidbody>();
+
+        if (networkObject == null || tsinelasRb == null)
         {
             Destroy(tsinelas);
-            Debug.LogError("Tsinelas prefab needs a NetworkObject!");
+            Debug.LogError(
+                "Tsinelas prefab needs NetworkObject and Rigidbody!"
+            );
             return;
         }
 
-        spawnedTsinelas.Spawn();
+        networkObject.Spawn();
+
+        // Throw
+        tsinelasRb.linearVelocity = cameraForward * throwSpeed;
+
+        spawnedTsinelas = networkObject;
+        spawnedTsinelasTransform = tsinelas.transform;
     }
 
     [Rpc(SendTo.Server)]
@@ -129,8 +172,20 @@ public class PlayerNetwork : NetworkBehaviour
         if (spawnedTsinelas == null || !spawnedTsinelas.IsSpawned)
             return;
 
+        float distance = Vector3.Distance(
+        transform.position,
+        spawnedTsinelas.transform.position
+        );
+
+        if (distance > pickupDistance)
+        {
+            Debug.Log("You're too far away from the tsinelas!");
+            return;
+        }
+
         spawnedTsinelas.Despawn(true);
         spawnedTsinelas = null;
+        hadSpawenedTsinelas = false;
     }
 
 
@@ -143,10 +198,11 @@ public class PlayerNetwork : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.Q))
         {
             if (hadSpawenedTsinelas == false) return;
-            StartCoroutine(disAndAbleChar());
+            if (canGet == false) return;
+            //StartCoroutine(disAndAbleChar());
             animatorController.SetPickUp();
             DespawnTsinelasRpc();
-            hadSpawenedTsinelas = false;
+            
 
         }
 
@@ -154,7 +210,8 @@ public class PlayerNetwork : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             if (hadSpawenedTsinelas == true) return;
-            StartCoroutine(disAndAbleChar());
+            if (canThrow == false) return;
+            //StartCoroutine(disAndAbleChar());
             animatorController.SetThrow();
             SpawnTsinelasRpc();
             hadSpawenedTsinelas = true;
@@ -319,6 +376,23 @@ public class PlayerNetwork : NetworkBehaviour
             isJumping
         );
 
-        
+        if (hasMovementInput == false && isJumping == false)
+        {
+            canThrow = true;
+        }
+        else
+        {
+            canThrow = false;
+        }
+
+        if (isJumping == true)
+        {
+            canGet = false;
+        }
+        else
+        {
+            canGet = true;
+        }
+
     }
 }
