@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -24,6 +25,7 @@ public static class PlayInfoPanel
     const float DESCRIPTION_TOP_Y = 524f;
     const float DESCRIPTION_WIDTH = 345f;
     const float DESCRIPTION_HEIGHT = 170f;
+    const float DESCRIPTION_CENTER_OFFSET = DESCRIPTION_X + DESCRIPTION_WIDTH * 0.5f - TEXT_CENTER_X;
     const float BOTTOM_GRADIENT_HEIGHT = 560f;
     const float BOTTOM_GRADIENT_UPPER_HEIGHT = 320f;
     const float BUTTON_Y = 786f;
@@ -34,7 +36,6 @@ public static class PlayInfoPanel
     const int DESCRIPTION_MAX_SIZE = 25;
     const int DESCRIPTION_MIN_SIZE = 16;
     const int BUTTON_LABEL_SIZE = 46;
-    const float DESCRIPTION_LINE_SPACING = 1.15f;
 
     public static void build(RectTransform root)
     {
@@ -71,15 +72,20 @@ public static class PlayInfoPanel
         var crest = PlayOrnament.crest_line(text_group, "info_crest_line", CREST_WIDTH, PlayTheme.icon);
         anchor_at(crest, TEXT_CENTER_X, CREST_Y, crest.sizeDelta, new Vector2(0.5f, 0.5f));
 
-        var description = PlayUi.text("info_description", text_group, string.Empty, DESCRIPTION_MAX_SIZE, PlayTheme.text_white, TextAnchor.UpperLeft);
-        anchor_at(description.rectTransform, DESCRIPTION_X, DESCRIPTION_TOP_Y, new Vector2(DESCRIPTION_WIDTH, DESCRIPTION_HEIGHT), new Vector2(0f, 1f));
-        description.lineSpacing = DESCRIPTION_LINE_SPACING;
-        fit_text(description, DESCRIPTION_MIN_SIZE, DESCRIPTION_MAX_SIZE);
+        var description = PlayScrollText.create(text_group, "info_description", DESCRIPTION_MIN_SIZE, DESCRIPTION_MAX_SIZE, PlayTheme.text_white, DESCRIPTION_WIDTH, DESCRIPTION_HEIGHT);
+        anchor_at(description.rect, TEXT_CENTER_X + DESCRIPTION_CENTER_OFFSET, DESCRIPTION_TOP_Y, new Vector2(DESCRIPTION_WIDTH, DESCRIPTION_HEIGHT), new Vector2(0.5f, 1f));
+
+        var button_rect = build_play_button(holder);
+
+        var align = holder.gameObject.AddComponent<PlayInfoPanelAlign>();
+        align.setup(holder, button_rect);
+        align.add(title.rect, 0f);
+        align.add(players_row, 0f);
+        align.add(crest, 0f);
+        align.add(description.rect, DESCRIPTION_CENTER_OFFSET);
 
         var view = holder.gameObject.AddComponent<PlayInfoPanelView>();
-        view.setup(group, title, players_row, players_icon, players, description);
-
-        build_play_button(holder);
+        view.setup(group, title, players_row, players_icon, players, description, align);
     }
 
     static void build_bottom_gradient(RectTransform parent)
@@ -101,7 +107,7 @@ public static class PlayInfoPanel
         rect.offsetMax = Vector2.zero;
     }
 
-    static void build_play_button(RectTransform parent)
+    static RectTransform build_play_button(RectTransform parent)
     {
         var button_rect = PlayUi.rect("play_button", parent);
         anchor_at(button_rect, TEXT_CENTER_X, BUTTON_Y, new Vector2(BUTTON_WIDTH, BUTTON_WIDTH / BUTTON_ASPECT), new Vector2(0.5f, 0.5f));
@@ -134,20 +140,75 @@ public static class PlayInfoPanel
         var fx = button_rect.gameObject.AddComponent<PlayButtonFx>();
         fx.setup(button_rect, glow_group);
         button.onClick.AddListener(fx.open_lobby);
-    }
-
-    static void fit_text(Text label, int min_size, int max_size)
-    {
-        label.resizeTextForBestFit = true;
-        label.resizeTextMinSize = min_size;
-        label.resizeTextMaxSize = max_size;
-        label.verticalOverflow = VerticalWrapMode.Truncate;
+        return button_rect;
     }
 
     internal static void anchor_at(RectTransform rect, float x, float y, Vector2 size, Vector2 pivot)
     {
         var anchor = new Vector2(x / REFERENCE_WIDTH, 1f - y / REFERENCE_HEIGHT);
         PlayUi.place(rect, anchor, anchor, pivot, Vector2.zero, size);
+    }
+}
+
+public class PlayInfoPanelAlign : MonoBehaviour
+{
+    struct Entry
+    {
+        public RectTransform rect;
+        public float offset_x;
+    }
+
+    readonly List<Entry> entries = new List<Entry>();
+    RectTransform holder;
+    RectTransform button;
+
+    public void setup(RectTransform holder_rect, RectTransform button_rect)
+    {
+        holder = holder_rect;
+        button = button_rect;
+    }
+
+    public void add(RectTransform rect, float offset_x)
+    {
+        if (rect == null) return;
+        entries.Add(new Entry { rect = rect, offset_x = offset_x });
+        apply();
+    }
+
+    void LateUpdate()
+    {
+        apply();
+    }
+
+    public void apply()
+    {
+        if (holder == null || button == null) return;
+
+        var center_x = holder.InverseTransformPoint(button.TransformPoint(button.rect.center)).x;
+
+        for (var i = 0; i < entries.Count; i++)
+        {
+            var rect = entries[i].rect;
+            if (rect == null) continue;
+
+            var anchor_min = rect.anchorMin;
+            var anchor_max = rect.anchorMax;
+            if (!Mathf.Approximately(anchor_min.x, 0.5f) || !Mathf.Approximately(anchor_max.x, 0.5f))
+            {
+                anchor_min.x = 0.5f;
+                anchor_max.x = 0.5f;
+                rect.anchorMin = anchor_min;
+                rect.anchorMax = anchor_max;
+            }
+
+            var position = rect.anchoredPosition;
+            var target_x = center_x + entries[i].offset_x;
+            if (!Mathf.Approximately(position.x, target_x))
+            {
+                position.x = target_x;
+                rect.anchoredPosition = position;
+            }
+        }
     }
 }
 
@@ -168,18 +229,20 @@ public class PlayInfoPanelView : MonoBehaviour
     RectTransform players_row;
     Image players_icon;
     Text players_label;
-    Text description_label;
+    PlayScrollText description_scroll;
+    PlayInfoPanelAlign align;
     string shown_id;
     Coroutine fade_routine;
 
-    public void setup(CanvasGroup text_group, PlayMarquee title, RectTransform row, Image icon, Text players, Text description)
+    public void setup(CanvasGroup text_group, PlayMarquee title, RectTransform row, Image icon, Text players, PlayScrollText description, PlayInfoPanelAlign panel_align)
     {
         group = text_group;
         title_marquee = title;
         players_row = row;
         players_icon = icon;
         players_label = players;
-        description_label = description;
+        description_scroll = description;
+        align = panel_align;
         refresh();
     }
 
@@ -245,7 +308,7 @@ public class PlayInfoPanelView : MonoBehaviour
 
         if (title_marquee != null) title_marquee.set_text(game != null && game.display_name != null ? game.display_name : string.Empty);
         if (players_label != null) players_label.text = format_players(game);
-        if (description_label != null) description_label.text = game != null && game.description != null ? game.description : string.Empty;
+        if (description_scroll != null) description_scroll.set_text(game != null && game.description != null ? game.description : string.Empty);
 
         layout_players(PLAYERS_Y);
     }
@@ -255,6 +318,7 @@ public class PlayInfoPanelView : MonoBehaviour
         if (players_row == null) return;
 
         PlayInfoPanel.anchor_at(players_row, TEXT_CENTER_X, players_y, new Vector2(ARCH_WIDTH, PLAYERS_ROW_HEIGHT), CENTER);
+        if (align != null) align.apply();
 
         var has_text = !string.IsNullOrEmpty(players_label.text);
         var has_icon = has_text && players_icon != null && players_icon.sprite != null;
