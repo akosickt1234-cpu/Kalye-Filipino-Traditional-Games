@@ -241,6 +241,7 @@ public class PlayInfoPanelView : MonoBehaviour
     Image players_icon;
     Text players_label;
     Text description_label;
+    PlayTextReveal description_reveal;
     PlayInfoPanelAlign align;
     string shown_id;
     Coroutine fade_routine;
@@ -253,6 +254,7 @@ public class PlayInfoPanelView : MonoBehaviour
         players_icon = icon;
         players_label = players;
         description_label = description;
+        description_reveal = description != null ? description.gameObject.AddComponent<PlayTextReveal>() : null;
         align = panel_align;
         refresh();
     }
@@ -294,6 +296,7 @@ public class PlayInfoPanelView : MonoBehaviour
     {
         yield return fade_to(0f);
         refresh();
+        if (description_reveal != null) description_reveal.play(HALF_FADE_SECONDS);
         yield return fade_to(1f);
         fade_routine = null;
     }
