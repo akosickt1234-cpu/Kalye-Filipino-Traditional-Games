@@ -4,35 +4,36 @@ using UnityEngine.UI;
 
 public static class PlayTopBar
 {
-    private const float BAR_WIDTH = 720f;
-    private const float BAR_HEIGHT = 140f;
-    private const float AVATAR_X = 46f;
-    private const float AVATAR_Y = 12f;
-    private const float AVATAR_SIZE = 100f;
-    private const float AVATAR_FILL_SIZE = 88f;
-    private const float BADGE_X = 114f;
-    private const float BADGE_Y = 80f;
-    private const float BADGE_SIZE = 36f;
-    private const int BADGE_TEXT_SIZE = 18;
+    private const float SCALE = 1.12f;
+    private const float BAR_WIDTH = 720f * SCALE;
+    private const float BAR_HEIGHT = 140f * SCALE;
+    private const float AVATAR_X = 46f * SCALE;
+    private const float AVATAR_Y = 12f * SCALE;
+    private const float AVATAR_SIZE = 100f * SCALE;
+    private const float AVATAR_FILL_SIZE = 88f * SCALE;
+    private const float BADGE_X = 114f * SCALE;
+    private const float BADGE_Y = 80f * SCALE;
+    private const float BADGE_SIZE = 36f * SCALE;
+    private const int BADGE_TEXT_SIZE = 20;
     private const float CONTAINER_X = AVATAR_X + AVATAR_SIZE * 0.5f;
-    private const float CONTAINER_END_X = 430f;
+    private const float CONTAINER_END_X = 430f * SCALE;
     private const float CONTAINER_HEIGHT = AVATAR_SIZE;
     private const float NAME_FIELD_X = AVATAR_X + AVATAR_SIZE;
-    private const float NAME_PADDING = 16f;
+    private const float NAME_PADDING = 10f * SCALE;
     private const float NAME_X = NAME_FIELD_X + NAME_PADDING;
-    private const float NAME_Y = 24f;
+    private const float NAME_Y = 24f * SCALE;
     private const float NAME_WIDTH = CONTAINER_END_X - NAME_FIELD_X - NAME_PADDING * 2f;
-    private const float NAME_HEIGHT = 44f;
-    private const int NAME_TEXT_SIZE = 32;
-    private const float NAME_LINE_CENTER_Y = 82f;
+    private const float NAME_HEIGHT = 44f * SCALE;
+    private const int NAME_TEXT_SIZE = 36;
+    private const float NAME_LINE_CENTER_Y = 82f * SCALE;
     private const float NAME_LINE_WIDTH = NAME_WIDTH;
-    private const float ICON_X = 450f;
-    private const float ICON_Y = 25f;
-    private const float ICON_SIZE = 64f;
-    private const float ICON_GAP = 24f;
+    private const float ICON_X = 450f * SCALE;
+    private const float ICON_Y = 25f * SCALE;
+    private const float ICON_SIZE = 64f * SCALE;
+    private const float ICON_GLYPH_RATIO = 0.62f;
+    private const float ICON_GAP = 24f * SCALE;
     private const float ICON_SHADOW_DISTANCE = 3f;
-    private const float CONTAINER_SHADOW_DISTANCE = 4f;
-    private const float GLOW_SIZE = 150f;
+    private const float GLOW_SIZE = 150f * SCALE;
     private const float LINE_GAP = 8f;
     private const float LINE_HEIGHT = 3f;
     private const string DEFAULT_NAME = "Guest";
@@ -61,10 +62,9 @@ public static class PlayTopBar
     {
         Image container = PlayUi.image("ProfileContainer", bar, PlayUi.pill());
         container.type = Image.Type.Sliced;
-        container.color = PlayTheme.panel_blue;
+        container.color = PlayTheme.fill_soft;
         container.raycastTarget = false;
         place_top_left(container.rectTransform, CONTAINER_X, AVATAR_Y, CONTAINER_END_X - CONTAINER_X, CONTAINER_HEIGHT);
-        PlayUi.add_shadow(container, CONTAINER_SHADOW_DISTANCE);
     }
 
     private static void build_avatar(RectTransform bar)
@@ -104,6 +104,7 @@ public static class PlayTopBar
 
         PlayMarquee name_marquee = PlayMarquee.create(bar, "PlayerName", NAME_TEXT_SIZE, PlayTheme.text, NAME_WIDTH, NAME_HEIGHT);
         place_top_left(name_marquee.rect, NAME_X, NAME_Y, NAME_WIDTH, NAME_HEIGHT);
+        name_marquee.set_left_aligned(true);
         name_marquee.set_text(value);
 
         RectTransform line = PlayOrnament.arrow_line(bar, "PlayerNameLine", NAME_LINE_WIDTH, PlayTheme.gold);
@@ -136,8 +137,9 @@ public static class PlayTopBar
 
     private static Button build_icon_button(RectTransform bar, string object_name, string icon_path, string scene_name, float x)
     {
-        Image hit = PlayUi.image(object_name, bar, null, true);
-        hit.color = PlayTheme.clear;
+        Image hit = PlayUi.image(object_name, bar, PlayUi.pill(), true);
+        hit.type = Image.Type.Sliced;
+        hit.color = PlayTheme.fill_soft;
         place_top_left(hit.rectTransform, x, ICON_Y, ICON_SIZE, ICON_SIZE);
 
         Button button = hit.gameObject.AddComponent<Button>();
@@ -157,7 +159,7 @@ public static class PlayTopBar
         icon.enabled = icon.sprite != null;
         icon.color = PlayTheme.icon;
         icon.preserveAspect = true;
-        PlayUi.stretch(icon.rectTransform);
+        place_center(icon.rectTransform, ICON_SIZE * ICON_GLYPH_RATIO);
         PlayUi.add_shadow(icon, ICON_SHADOW_DISTANCE);
 
         Image line = PlayUi.image("Line", hit.rectTransform, get_center_line_sprite());
