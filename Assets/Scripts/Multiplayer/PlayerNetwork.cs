@@ -67,21 +67,60 @@ public class PlayerNetwork : NetworkBehaviour
     [Header("Catch")]
     [SerializeField] private BoxCollider hitbox;
 
-    [SerializeField] private bool hasBeenHit;
+    private NetworkVariable<bool> hasBeenHit = new NetworkVariable<bool>(
+    false,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+    );
+
+    private NetworkVariable<bool> taya = new NetworkVariable<bool>(
+    false,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+    );
+    bool catchPlayer = false;
+    [SerializeField] private bool tayaDisplay;
+    [SerializeField] private bool gotHitDisplay;
+
+    [Rpc(SendTo.Server)]
+    private void BecomeTayaRpc(RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        if (!IsSpawned) return;
+
+        taya.Value = true;
+
+        Debug.Log($"Player {OwnerClientId} is now Taya!");
+    }
 
     // Detect a possible catch on the catching player's client.
     private void OnTriggerEnter(Collider other)
     {
         if (!IsOwner || !IsClient) return;
+        if (taya.Value == false) return;
+        if (catchPlayer == false) return;
+        //Debug.Log($"[{OwnerClientId}] Trigger entered: {other.name}");
 
-        if (hitbox == null) return;
-        PlayerNetwork target =
-            other.GetComponentInParent<PlayerNetwork>();
+        if (hitbox == null)
+        {
+            Debug.LogWarning("Hitbox is missing!");
+            return;
+        }
 
-        // Ignore objects that aren't players or our own player.
-        if (target == null || target == this) return;
+        PlayerNetwork target = other.GetComponentInParent<PlayerNetwork>();
 
-        // Ask the server to validate the catch.
+        if (target == null)
+        {
+            //Debug.Log("Touched object isn't a player.");
+            return;
+        }
+
+        if (target == this) return;
+
+        Debug.Log($"[{OwnerClientId}] Sending catch request to {target.OwnerClientId}");
+
         RequestCatchRpc(target.OwnerClientId);
     }
 
@@ -101,46 +140,81 @@ public class PlayerNetwork : NetworkBehaviour
 
         if (target == null || target == this) return;
 
-        if (target.hasBeenHit) return;
+        if (target.hasBeenHit.Value) return;
 
-        // Validate the target's position against the server's hitbox.
-        if (!hitbox.bounds.Intersects(target.GetComponent<Collider>().bounds)) return;
+        // Validate that the colliders overlap.
+        if (!hitbox.bounds.Intersects(target.GetComponent<Collider>().bounds))
+            return;
 
-        // Server confirms the catch.
-        target.hasBeenHit = true;
+        // Server marks the target as hit.
+        target.hasBeenHit.Value = true;
 
         Debug.Log("Server validated catch! Player " + targetClientId + " got caught!");
 
-        // Notify the caught player's owner.
-        target.HitRpc();
+        // Reset hit immunity after 3 seconds.
+        target.StartCoroutine(target.ResetHitAfterDelay());
     }
-
-    [Rpc(SendTo.Owner)]
-    private void HitRpc()
+    private void OnTayaChanged(bool previousValue, bool newValue)
     {
-        Debug.Log("IM HIT!");
-        disAndAbleChar();
+        tayaDisplay = newValue;
     }
 
+    private void OnHitStateChanged(bool previousValue, bool newValue)
+    {
+        gotHitDisplay = newValue;
+        if (newValue)
+        {
+            Debug.Log($"Player {OwnerClientId} got hit!");
+        }
+        else
+        {
+            Debug.Log($"Player {OwnerClientId} can be hit again!");
+        }
+    }
     public override void OnNetworkSpawn()
     {
+        gotHitDisplay = hasBeenHit.Value;
+        hasBeenHit.OnValueChanged += OnHitStateChanged;
+
+        tayaDisplay = taya.Value;
+        taya.OnValueChanged += OnTayaChanged;
+
         if (IsOwner)
         {
             cameraPivot.gameObject.SetActive(true);
 
-            GameObject sceneCam =
-                GameObject.FindWithTag("SceneCamera");
+            GameObject sceneCam = GameObject.FindWithTag("SceneCamera");
 
             if (sceneCam != null)
-            {
                 sceneCam.SetActive(false);
-            }
-
-            
         }
         else
         {
             cameraPivot.gameObject.SetActive(false);
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        hasBeenHit.OnValueChanged -= OnHitStateChanged;
+        taya.OnValueChanged -= OnTayaChanged;
+    }
+
+
+
+    private IEnumerator ResetHitAfterDelay()
+    {
+        Debug.Log($"Reset coroutine started for {OwnerClientId}");
+        yield return new WaitForSeconds(3f);
+
+        if (IsServer && IsSpawned)
+        {
+            hasBeenHit.Value = false;
+            Debug.Log($"Player {OwnerClientId} can be hit again!");
+            Debug.Log(
+            $"Reset complete for {OwnerClientId}. " +
+            $"hasBeenHit = {hasBeenHit.Value}"
+            );
         }
     }
 
@@ -236,22 +310,35 @@ public class PlayerNetwork : NetworkBehaviour
         hasTsinelas.Value = false;
     }
 
-
+    IEnumerator Catch()
+    {
+        catchPlayer = true;
+        yield return new WaitForSeconds(1f);
+        catchPlayer = false;
+    }
 
     private void Update()
     {
         if (!IsOwner || !IsClient) return;
-
-        // Taya or Capture animation
+        if (hasBeenHit.Value) return;
+        // Taya or Pick up animation
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            if (!hasTsinelas.Value) return;
             if (canGet == false) return;
-            StartCoroutine(disAndAbleChar());
-            animatorController.SetPickUp();
-            DespawnTsinelasRpc();
+            if (hasTsinelas.Value)
+            {
+                
+                StartCoroutine(disAndAbleChar());
+                animatorController.SetPickUp();
+                DespawnTsinelasRpc();
+            }
+            else
+            {
+                StartCoroutine(disAndAbleChar());
+                animatorController.SetPickUp();
+                StartCoroutine(Catch());
+            }
             
-
         }
 
         // throw animation for slippers
@@ -263,6 +350,12 @@ public class PlayerNetwork : NetworkBehaviour
             animatorController.SetThrow();
             SpawnTsinelasRpc(camera.transform.position, camera.transform.forward);
             
+        }
+
+        // become taya
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            BecomeTayaRpc();
         }
 
         // Jump input
@@ -338,7 +431,7 @@ public class PlayerNetwork : NetworkBehaviour
     private void FixedUpdate()
     {
         if (!IsOwner) return;
-
+        if (hasBeenHit.Value) return;
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
 
