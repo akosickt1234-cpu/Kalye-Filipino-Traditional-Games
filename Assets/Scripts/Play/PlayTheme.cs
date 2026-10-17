@@ -14,7 +14,7 @@ public static class PlayTheme
     public static readonly Color clear = new Color(0f, 0f, 0f, 0f);
     public static readonly Color white = new Color(1f, 1f, 1f, 1f);
     public static readonly Color panel_blue = new Color(0.067f, 0.102f, 0.180f, 1f);
-    public static readonly Color fill_soft = new Color(panel_blue.r, panel_blue.g, panel_blue.b, 0.20f);
+    public static readonly Color fill_soft = new Color(panel_blue.r, panel_blue.g, panel_blue.b, 0.40f);
     public static readonly Color magic_glow = new Color(1f, 0.937f, 0.780f, 0.6f);
     public static readonly Color magic_spark = new Color(0.949f, 0.812f, 0.545f, 1f);
     public static readonly Color overlay_dark = new Color(0.034f, 0.038f, 0.060f, 1f);
