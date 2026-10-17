@@ -619,6 +619,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AnimationController
   ShowTopMostFoldoutHeaderGroup: 1
   animator: {fileID: 4000862811475512006}
+  actionDuration: 1
 --- !u!114 &5632647675497591742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -640,7 +641,7 @@ MonoBehaviour:
   moveSpeed: 3
   sprintSpeedMult: 2
   jumpForce: 4
-  highJumpForce: 4
+  highJumpForce: 6
   groundCheck: {fileID: 8695106233402994032}
   groundCheckRadius: 0.2
   groundLayer:
@@ -649,12 +650,15 @@ MonoBehaviour:
   foreground: {fileID: 8321786906853931339}
   background: {fileID: 1315875360609842162}
   stamina: 100
-  addOrDeductStamina: 0.5
+  addOrDeductStamina: 10
   maxWidth: 200
   colorTransitionSpeed: 5
   animatorController: {fileID: 1257500209283897145}
   player: {fileID: 766596840465263809}
   tsinelasPrefab: {fileID: 6807346094398842588, guid: 7a9922c40ac65a344b901bec81e747ad, type: 3}
+  pickupDistance: 2
+  throwSpeed: 12
+  spawnDistance: 1.2
 --- !u!114 &-1798745715432377660
 MonoBehaviour:
   m_ObjectHideFlags: 0

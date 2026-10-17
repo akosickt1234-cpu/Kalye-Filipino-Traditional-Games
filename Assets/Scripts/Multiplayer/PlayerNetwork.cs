@@ -7,6 +7,7 @@ public class PlayerNetwork : NetworkBehaviour
 {
     [Header("Camera")]
     [SerializeField] private Camera camera;
+    private GameObject cam;
     [SerializeField] private Transform cameraPivot;
     [SerializeField] private Transform defaultCameraPivot;
     [SerializeField] private float mouseSensitivity = 2f;
@@ -86,7 +87,7 @@ public class PlayerNetwork : NetworkBehaviour
     private void Start()
     {
         if (!IsOwner) return;
-
+        cam = camera.gameObject;
         Cursor.lockState = CursorLockMode.Locked;
         rb = GetComponent<Rigidbody>();
     }
@@ -186,7 +187,7 @@ public class PlayerNetwork : NetworkBehaviour
         {
             if (!hasTsinelas.Value) return;
             if (canGet == false) return;
-            //StartCoroutine(disAndAbleChar());
+            StartCoroutine(disAndAbleChar());
             animatorController.SetPickUp();
             DespawnTsinelasRpc();
             
@@ -198,7 +199,7 @@ public class PlayerNetwork : NetworkBehaviour
         {
             if (hasTsinelas.Value) return;
             if (canThrow == false) return;
-            //StartCoroutine(disAndAbleChar());
+            StartCoroutine(disAndAbleChar());
             animatorController.SetThrow();
             SpawnTsinelasRpc(camera.transform.position, camera.transform.forward);
             
@@ -225,11 +226,11 @@ public class PlayerNetwork : NetworkBehaviour
         // Stamina
         if (sprintRequested && isGrounded)
         {
-            stamina -= addOrDeductStamina;
+            stamina -= addOrDeductStamina * Time.deltaTime;
         }
         else if (!sprintRequested)
         {
-            stamina += addOrDeductStamina;
+            stamina += addOrDeductStamina * Time.deltaTime;
         }
 
         stamina = Mathf.Clamp(stamina, 0f, MaxStamina);
@@ -380,6 +381,20 @@ public class PlayerNetwork : NetworkBehaviour
         {
             canGet = true;
         }
+
+        float targetZ = isSprinting ? 1f : 0.35f;
+
+        Vector3 targetPosition = new Vector3(
+            cam.transform.localPosition.x,
+            cam.transform.localPosition.y,
+            targetZ
+        );
+
+        cam.transform.localPosition = Vector3.Lerp(
+            cam.transform.localPosition,
+            targetPosition,
+            Time.fixedDeltaTime * 5f
+        );
 
     }
 }
