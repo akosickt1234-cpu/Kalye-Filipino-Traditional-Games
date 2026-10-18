@@ -49,11 +49,6 @@ public static class LobbyPlayerSlots
     const float RHOMBUS_ALPHA_EMPTY = 0.6f;
     const float FRAME_ALPHA_FAINT = 0.4f;
     const float FRAME_ALPHA_HOST = 0.8f;
-    const float RIM_GLOW_YOU_ALPHA = 0.5f;
-    const float RIM_GLOW_HOST_ALPHA = 0.25f;
-    const float AVATAR_GLOW_MIN = -0.35f;
-    const float AVATAR_GLOW_MAX = 1.35f;
-    const float AVATAR_GLOW_ALPHA = 0.6f;
     const float CROWN_BOTTOM = 0.91f;
     const float CROWN_TOP = 1.09f;
     const float CROWN_ICON_INSET = 0.12f;
@@ -166,9 +161,6 @@ public static class LobbyPlayerSlots
         LobbyUi.place_fraction(frame, CELL_PAD_X, CELL_BOTTOM, 1f - CELL_PAD_X, CELL_TOP);
         fit_aspect(frame, CARD_ASPECT, AspectRatioFitter.AspectMode.FitInParent);
 
-        if (is_you) LobbyUi.rim_glow("you_glow", frame, PlayTheme.with_alpha(PlayTheme.gold, RIM_GLOW_YOU_ALPHA));
-        else if (is_host) LobbyUi.rim_glow("host_glow", frame, PlayTheme.with_alpha(PlayTheme.gold, RIM_GLOW_HOST_ALPHA));
-
         var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE);
         card.raycastTarget = true;
         card.color = PlayTheme.with_alpha(PlayTheme.white, is_you ? 1f : is_host ? FRAME_ALPHA_HOST : FRAME_ALPHA_FAINT);
@@ -223,14 +215,6 @@ public static class LobbyPlayerSlots
     static void build_avatar(RectTransform frame, LobbyPlayer player)
     {
         var holder = build_avatar_holder(frame, "avatar");
-        var emphasized = player.is_you || player.is_host;
-        if (emphasized)
-        {
-            var glow = PlayUi.image("avatar_glow", holder, PlayUi.radial_glow());
-            glow.color = PlayTheme.with_alpha(PlayTheme.gold, AVATAR_GLOW_ALPHA);
-            LobbyUi.place_fraction(glow.rectTransform, AVATAR_GLOW_MIN, AVATAR_GLOW_MIN, AVATAR_GLOW_MAX, AVATAR_GLOW_MAX);
-        }
-
         var portrait = string.IsNullOrEmpty(player.avatar_path) ? null : Resources.Load<Sprite>(player.avatar_path);
 
         var fill = PlayUi.circle("avatar_fill", holder, portrait != null ? PlayTheme.panel_dark : PlayTheme.panel_blue);
@@ -247,7 +231,7 @@ public static class LobbyPlayerSlots
             fit_aspect(picture.rectTransform, rect.width / Mathf.Max(1f, rect.height), AspectRatioFitter.AspectMode.EnvelopeParent);
         }
 
-        build_circle_frame(holder, emphasized ? PlayTheme.white : PlayTheme.with_alpha(PlayTheme.white, RING_ALPHA));
+        build_circle_frame(holder, PlayTheme.white);
     }
 
     static void build_empty_avatar(RectTransform frame)
