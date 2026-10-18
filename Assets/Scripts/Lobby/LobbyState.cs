@@ -22,6 +22,7 @@ public class LobbyFriend
     public string name;
     public bool online;
     public string avatar_path;
+    public bool invited;
 }
 
 public class LobbyMessage
@@ -63,6 +64,7 @@ public static class LobbyState
     public static event Action mode_changed;
     public static event Action code_changed;
     public static event Action search_changed;
+    public static event Action friends_changed;
 
     public static IReadOnlyList<LobbyPlayer> players
     {
@@ -187,6 +189,7 @@ public static class LobbyState
         mode_changed = null;
         code_changed = null;
         search_changed = null;
+        friends_changed = null;
     }
 
     public static string generate()
@@ -300,20 +303,27 @@ public static class LobbyState
 
     public static bool invite(LobbyFriend friend)
     {
-        if (!in_lobby || friend == null || !friend.online) return false;
-        if (has_player(friend.name)) return false;
+        if (friend == null || friend.invited || !friend_list.Contains(friend)) return false;
 
-        var slot = first_empty_slot();
-        if (slot < 0)
-        {
-            add_message(SYSTEM_NAME, "The lobby is full");
-            return false;
-        }
-
-        player_list[slot] = new LobbyPlayer { name = friend.name, ready = false, join_order = next_join_order(), avatar_path = friend.avatar_path };
-        players_changed?.Invoke();
-        add_message(SYSTEM_NAME, friend.name + " joined the lobby");
+        friend.invited = true;
+        friends_changed?.Invoke();
+        if (friend.online) seat_invited(friend);
         return true;
+    }
+
+    public static bool set_friend_online(string name, bool online)
+    {
+        for (var i = 0; i < friend_list.Count; i++)
+        {
+            var candidate = friend_list[i];
+            if (candidate.name != name) continue;
+            if (candidate.online == online) return false;
+
+            candidate.online = online;
+            friends_changed?.Invoke();
+            return true;
+        }
+        return false;
     }
 
     public static void add_message(string name, string text)
@@ -363,6 +373,22 @@ public static class LobbyState
         search_timer = 0f;
         search_changed?.Invoke();
         if (Application.CanStreamedLevelBeLoaded(MATCH_SCENE)) LobbyUi.go_to_scene(MATCH_SCENE);
+    }
+
+    static void seat_invited(LobbyFriend friend)
+    {
+        if (!in_lobby || has_player(friend.name)) return;
+
+        var slot = first_empty_slot();
+        if (slot < 0)
+        {
+            add_message(SYSTEM_NAME, "The lobby is full");
+            return;
+        }
+
+        player_list[slot] = new LobbyPlayer { name = friend.name, ready = false, join_order = next_join_order(), avatar_path = friend.avatar_path };
+        players_changed?.Invoke();
+        add_message(SYSTEM_NAME, friend.name + " joined the lobby");
     }
 
     static void ensure_runner()
