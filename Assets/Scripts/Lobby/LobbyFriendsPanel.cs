@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -72,76 +71,100 @@ public static class LobbyFriendsPanel
 
 public class LobbyFriendsView : MonoBehaviour
 {
-    readonly List<LobbyFriendRow> rows = new List<LobbyFriendRow>();
+    RectTransform viewport_rect;
+    RectTransform content_rect;
+    ScrollRect scroll;
+    Text empty_text;
 
     public void setup(RectTransform list_area)
     {
         var viewport = PlayUi.image("friends_viewport", list_area, null, true);
         PlayUi.stretch(viewport.rectTransform);
         viewport.gameObject.AddComponent<RectMask2D>();
+        viewport_rect = viewport.rectTransform;
 
-        var content = PlayUi.rect("friends_scroll_content", viewport.rectTransform);
-        content.anchorMin = new Vector2(0f, 1f);
-        content.anchorMax = new Vector2(1f, 1f);
-        content.pivot = new Vector2(0.5f, 1f);
-        content.offsetMin = Vector2.zero;
-        content.offsetMax = Vector2.zero;
+        content_rect = PlayUi.rect("friends_scroll_content", viewport_rect);
+        content_rect.anchorMin = new Vector2(0f, 1f);
+        content_rect.anchorMax = new Vector2(1f, 1f);
+        content_rect.pivot = new Vector2(0.5f, 1f);
+        content_rect.offsetMin = Vector2.zero;
+        content_rect.offsetMax = Vector2.zero;
 
-        var layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
+        var layout = content_rect.gameObject.AddComponent<VerticalLayoutGroup>();
         layout.childControlWidth = true;
         layout.childControlHeight = true;
         layout.childForceExpandWidth = true;
         layout.childForceExpandHeight = false;
         layout.childAlignment = TextAnchor.UpperCenter;
 
-        var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
+        var fitter = content_rect.gameObject.AddComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-        var scroll = viewport.gameObject.AddComponent<ScrollRect>();
-        scroll.viewport = viewport.rectTransform;
-        scroll.content = content;
+        scroll = viewport.gameObject.AddComponent<ScrollRect>();
+        scroll.viewport = viewport_rect;
+        scroll.content = content_rect;
         scroll.horizontal = false;
         scroll.vertical = true;
         scroll.movementType = ScrollRect.MovementType.Clamped;
         scroll.scrollSensitivity = LobbyFriendsPanel.SCROLL_SENSITIVITY;
 
-        var friends = LobbyState.friends;
-        if (friends == null || friends.Count == 0)
-        {
-            build_empty(viewport.rectTransform);
-            return;
-        }
-
-        for (var i = 0; i < friends.Count; i++)
-        {
-            if (friends[i] == null) continue;
-            rows.Add(LobbyFriendRow.create(content, friends[i], LobbyFriendsPanel.ROW_HEIGHT));
-        }
-
-        refresh();
+        rebuild();
     }
 
     void OnEnable()
     {
-        LobbyState.players_changed += refresh;
+        LobbyState.friends_changed += rebuild;
     }
 
     void OnDisable()
     {
-        LobbyState.players_changed -= refresh;
+        LobbyState.friends_changed -= rebuild;
     }
 
-    void refresh()
+    void rebuild()
     {
-        for (var i = 0; i < rows.Count; i++) rows[i].refresh();
+        if (content_rect == null) return;
+
+        var scroll_position = scroll.verticalNormalizedPosition;
+
+        for (var i = content_rect.childCount - 1; i >= 0; i--)
+        {
+            var child = content_rect.GetChild(i).gameObject;
+            child.SetActive(false);
+            Destroy(child);
+        }
+
+        if (empty_text != null)
+        {
+            Destroy(empty_text.gameObject);
+            empty_text = null;
+        }
+
+        var friends = LobbyState.friends;
+        var count = 0;
+        for (var i = 0; friends != null && i < friends.Count; i++)
+        {
+            if (friends[i] == null) continue;
+            LobbyFriendRow.create(content_rect, friends[i], LobbyFriendsPanel.ROW_HEIGHT);
+            count++;
+        }
+
+        if (count == 0)
+        {
+            build_empty(viewport_rect);
+            return;
+        }
+
+        Canvas.ForceUpdateCanvases();
+        scroll.verticalNormalizedPosition = Mathf.Clamp01(scroll_position);
     }
 
-    static void build_empty(RectTransform parent)
+    void build_empty(RectTransform parent)
     {
-        var empty = PlayUi.text("friends_empty", parent, LobbyFriendsPanel.EMPTY_TEXT, 24, PlayTheme.with_alpha(PlayTheme.text_muted, LobbyFriendsPanel.EMPTY_ALPHA), TextAnchor.MiddleCenter);
-        LobbyUi.place_fraction(empty.rectTransform, 0f, 0.4f, 1f, 0.7f);
-        LobbyFriendRow.fit_text(empty, 14, 26);
+        empty_text = PlayUi.text("friends_empty", parent, LobbyFriendsPanel.EMPTY_TEXT, 24, PlayTheme.with_alpha(PlayTheme.text_muted, LobbyFriendsPanel.EMPTY_ALPHA), TextAnchor.MiddleCenter);
+        LobbyUi.place_fraction(empty_text.rectTransform, 0f, 0.4f, 1f, 0.7f);
+        LobbyFriendRow.fit_text(empty_text, 14, 26);
     }
 }
 
@@ -188,6 +211,7 @@ public class LobbyFriendRow
     {
         var row = new LobbyFriendRow(source);
         row.build(parent, height);
+        row.refresh();
         return row;
     }
 
@@ -356,7 +380,6 @@ public class LobbyFriendRow
         if (friend.invited) return;
 
         LobbyState.invite(friend);
-        refresh();
     }
 
     void set_enabled(bool value)
