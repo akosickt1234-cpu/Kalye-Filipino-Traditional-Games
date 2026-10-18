@@ -19,7 +19,11 @@ public static class LobbyUi
     public const string FRAME_AVATAR_CIRCLE_PATH = "Frames/Play/FrameAvatarRing";
     public const string BACKDROP_PATH = "Background/Lobby/LobbyBackdrop";
     public const float PANEL_BORDER_SCALE = 1.8f;
+    public const float RIM_GLOW_FEATHER = 24f;
     const float BLOCKER_ALPHA = 0.6f;
+    const int RIM_GLOW_SIZE = 64;
+    const float RIM_GLOW_RADIUS = 8f;
+    static Sprite rim_glow_sprite;
 
     public static RectTransform modal_blocker(Transform parent)
     {
@@ -54,6 +58,48 @@ public static class LobbyUi
     public static void go_to_scene(string scene_name)
     {
         PlayUi.go_to_scene(scene_name);
+    }
+
+    public static Image rim_glow(string name, Transform parent, Color color)
+    {
+        var picture = PlayUi.image(name, parent, rim_glow_art());
+        picture.type = Image.Type.Sliced;
+        picture.fillCenter = false;
+        picture.color = color;
+        PlayUi.stretch(picture.rectTransform);
+        picture.rectTransform.offsetMin = new Vector2(-RIM_GLOW_FEATHER, -RIM_GLOW_FEATHER);
+        picture.rectTransform.offsetMax = new Vector2(RIM_GLOW_FEATHER, RIM_GLOW_FEATHER);
+        return picture;
+    }
+
+    static Sprite rim_glow_art()
+    {
+        if (rim_glow_sprite != null) return rim_glow_sprite;
+
+        var texture = new Texture2D(RIM_GLOW_SIZE, RIM_GLOW_SIZE, TextureFormat.RGBA32, false);
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+
+        var pixels = new Color[RIM_GLOW_SIZE * RIM_GLOW_SIZE];
+        var center = (RIM_GLOW_SIZE - 1) * 0.5f;
+        var inner = center - RIM_GLOW_FEATHER - RIM_GLOW_RADIUS;
+        for (var y = 0; y < RIM_GLOW_SIZE; y++)
+        {
+            for (var x = 0; x < RIM_GLOW_SIZE; x++)
+            {
+                var dx = Mathf.Max(Mathf.Abs(x - center) - inner, 0f);
+                var dy = Mathf.Max(Mathf.Abs(y - center) - inner, 0f);
+                var distance = Mathf.Max(Mathf.Sqrt(dx * dx + dy * dy) - RIM_GLOW_RADIUS, 0f);
+                var alpha = Mathf.Pow(Mathf.Clamp01(1f - distance / RIM_GLOW_FEATHER), 2f);
+                pixels[y * RIM_GLOW_SIZE + x] = PlayTheme.with_alpha(PlayTheme.white, alpha);
+            }
+        }
+
+        texture.SetPixels(pixels);
+        texture.Apply(false, true);
+        var border = new Vector4(RIM_GLOW_FEATHER, RIM_GLOW_FEATHER, RIM_GLOW_FEATHER, RIM_GLOW_FEATHER);
+        rim_glow_sprite = Sprite.Create(texture, new Rect(0f, 0f, RIM_GLOW_SIZE, RIM_GLOW_SIZE), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, border);
+        return rim_glow_sprite;
     }
 
     public static string sanitize(string value)
