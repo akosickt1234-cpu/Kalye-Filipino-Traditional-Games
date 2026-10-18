@@ -172,7 +172,7 @@ public static class LobbyPlayerSlots
         if (is_host) build_host_tag(frame);
         if (is_you) build_you_tag(frame, is_host);
 
-        var name_value = empty ? INVITE_LABEL : player.name;
+        var name_value = empty ? INVITE_LABEL : LobbyUi.sanitize(player.name);
         var name_color = empty ? PlayTheme.text_muted : PlayTheme.text;
         var name_cell = PlayUi.rect("name", frame);
         LobbyUi.place_fraction(name_cell, 0.08f, 0.26f, 0.92f, 0.38f);
