@@ -44,6 +44,7 @@ public static class LobbyState
     const int MAX_MESSAGES = 100;
     const float SEARCH_STEP_SECONDS = 1f;
     const string YOU_NAME = "Ruenz";
+    const string AVATAR_ROOT = "Portraits/Lobby/";
 
     static readonly List<LobbyPlayer> player_list = new List<LobbyPlayer>();
     static readonly List<LobbyFriend> friend_list = new List<LobbyFriend>();
@@ -522,10 +523,10 @@ public static class LobbyState
 
     static void build_mock_players()
     {
-        var self = new LobbyPlayer { name = YOU_NAME, ready = true, is_you = true, join_order = next_join_order() };
-        var first = new LobbyPlayer { name = "Bayanihan", ready = true, join_order = next_join_order() };
-        var second = new LobbyPlayer { name = "Hazel", ready = true, join_order = next_join_order() };
-        var third = new LobbyPlayer { name = "Charles", ready = false, join_order = next_join_order() };
+        var self = new LobbyPlayer { name = YOU_NAME, ready = true, is_you = true, join_order = next_join_order(), avatar_path = avatar_for(YOU_NAME) };
+        var first = new LobbyPlayer { name = "Bayanihan", ready = true, join_order = next_join_order(), avatar_path = avatar_for("Bayanihan") };
+        var second = new LobbyPlayer { name = "Hazel", ready = true, join_order = next_join_order(), avatar_path = avatar_for("Hazel") };
+        var third = new LobbyPlayer { name = "Charles", ready = false, join_order = next_join_order(), avatar_path = avatar_for("Charles") };
 
         player_list.Clear();
         player_list.Add(first);
@@ -538,11 +539,16 @@ public static class LobbyState
     static void build_mock_friends()
     {
         friend_list.Clear();
-        friend_list.Add(new LobbyFriend { name = "Hazel", online = true });
-        friend_list.Add(new LobbyFriend { name = "Charles", online = true });
-        friend_list.Add(new LobbyFriend { name = "Azey", online = true });
-        friend_list.Add(new LobbyFriend { name = "Kae", online = false });
-        friend_list.Add(new LobbyFriend { name = "Yohan", online = false });
+        friend_list.Add(new LobbyFriend { name = "Hazel", online = true, avatar_path = avatar_for("Hazel") });
+        friend_list.Add(new LobbyFriend { name = "Charles", online = true, avatar_path = avatar_for("Charles") });
+        friend_list.Add(new LobbyFriend { name = "Azey", online = true, avatar_path = avatar_for("Azey") });
+        friend_list.Add(new LobbyFriend { name = "Kae", online = false, avatar_path = avatar_for("Kae") });
+        friend_list.Add(new LobbyFriend { name = "Yohan", online = false, avatar_path = avatar_for("Yohan") });
+    }
+
+    static string avatar_for(string name)
+    {
+        return AVATAR_ROOT + name;
     }
 
     static void build_mock_messages()
