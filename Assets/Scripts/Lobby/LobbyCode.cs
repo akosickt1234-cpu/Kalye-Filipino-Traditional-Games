@@ -69,7 +69,7 @@ public static class LobbyCode
         key.preserveAspect = true;
         LobbyUi.place_fraction(key.rectTransform, KEY_LEFT, KEY_VERTICAL_PADDING, KEY_RIGHT, 1f - KEY_VERTICAL_PADDING);
 
-        var code = fitted_text("code_text", pill.rectTransform, LobbyState.lobby_code, CODE_MIN_SIZE, CODE_MAX_SIZE, PlayTheme.gold_soft, TextAnchor.MiddleCenter);
+        var code = fitted_text("code_text", pill.rectTransform, LobbyState.lobby_code, CODE_MIN_SIZE, CODE_MAX_SIZE, PlayTheme.text_white, TextAnchor.MiddleCenter);
         LobbyUi.place_fraction(code.rectTransform, CODE_TEXT_LEFT, 0.08f, CODE_TEXT_RIGHT, 0.92f);
         PlayUi.add_shadow(code, 2f);
 
