@@ -1,4 +1,3 @@
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
@@ -9,7 +8,6 @@ public class LobbyScreen : MonoBehaviour
     const string CANVAS_NAME = "Canvas";
     const string EVENT_SYSTEM_NAME = "EventSystem";
     const string UI_LAYER = "UI";
-    const string BUILD_METHOD = "build";
     const float REFERENCE_WIDTH = 1920f;
     const float REFERENCE_HEIGHT = 1080f;
     const float MATCH_WIDTH_OR_HEIGHT = 0.5f;
@@ -74,13 +72,13 @@ public class LobbyScreen : MonoBehaviour
         var start_bar = create_region("start_bar", root, START_LEFT, 1f - BOTTOM_BOTTOM, START_RIGHT, 1f - BOTTOM_TOP);
         var join_slot = create_region("join_slot", root, JOIN_LEFT, 1f - BOTTOM_BOTTOM, JOIN_RIGHT, 1f - BOTTOM_TOP);
 
-        call_region("LobbyTopBar", top_bar);
-        call_region("LobbyPlayerSlots", heading_slot, slots_row);
-        call_region("LobbyChat", chat_col);
-        call_region("LobbyInfoBar", count_col, mode_col);
-        call_region("LobbyCode", code_slot, join_slot);
-        call_region("LobbyFriendsPanel", friends_panel.rectTransform);
-        call_region("LobbyStartBar", start_bar);
+        LobbyTopBar.build(top_bar);
+        LobbyPlayerSlots.build(heading_slot, slots_row);
+        LobbyChat.build(chat_col);
+        LobbyInfoBar.build(count_col, mode_col);
+        LobbyCode.build(code_slot, join_slot);
+        LobbyFriendsPanel.build(friends_panel.rectTransform);
+        LobbyStartBar.build(start_bar);
 
         overlay_root = create_region("overlay_root", root, 0f, 0f, 1f, 1f);
         overlay_root.SetAsLastSibling();
@@ -139,35 +137,5 @@ public class LobbyScreen : MonoBehaviour
     static void place_from_top(RectTransform r, float x_min, float top, float x_max, float bottom)
     {
         LobbyUi.place_fraction(r, x_min, 1f - bottom, x_max, 1f - top);
-    }
-
-    static void call_region(string type_name, params RectTransform[] rects)
-    {
-        var type = typeof(LobbyScreen).Assembly.GetType(type_name);
-        if (type == null) return;
-
-        var types = new System.Type[rects.Length];
-        var values = new object[rects.Length];
-        for (var i = 0; i < rects.Length; i++)
-        {
-            types[i] = typeof(RectTransform);
-            values[i] = rects[i];
-        }
-
-        var method = type.GetMethod(BUILD_METHOD, BindingFlags.Public | BindingFlags.Static, null, types, null);
-        if (method == null)
-        {
-            Debug.LogWarning($"{type_name} has no public static {BUILD_METHOD} with {rects.Length} RectTransform argument(s)");
-            return;
-        }
-
-        try
-        {
-            method.Invoke(null, values);
-        }
-        catch (TargetInvocationException error)
-        {
-            Debug.LogException(error.InnerException ?? error);
-        }
     }
 }
