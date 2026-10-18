@@ -130,6 +130,7 @@ public class PlaySideNavLayout : MonoBehaviour
 {
     const float REF_HEIGHT = 1080f;
     const float REF_ASPECT = 16f / 9f;
+    const float SHIFT_RATIO = 0.43f;
 
     RectTransform root;
     RectTransform nav;
@@ -153,7 +154,7 @@ public class PlaySideNavLayout : MonoBehaviour
 
         var canvas_rect = root.rect;
         float extra_width = Mathf.Max(0f, canvas_rect.width - canvas_rect.height * REF_ASPECT);
-        float shift = extra_width > 0f ? Mathf.Max(0f, REF_HEIGHT - canvas_rect.height) : 0f;
+        float shift = extra_width > 0f ? Mathf.Max(0f, REF_HEIGHT - canvas_rect.height) * SHIFT_RATIO : 0f;
         float delta = shift - applied_shift;
         if (Mathf.Approximately(delta, 0f)) return;
 
