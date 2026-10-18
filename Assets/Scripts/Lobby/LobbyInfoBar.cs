@@ -83,7 +83,7 @@ public static class LobbyInfoBar
         var icon_sprite = PlayUi.sprite(PLAYERS_ICON_PATH);
         var icon = PlayUi.image("count_icon", view, icon_sprite, false);
         icon.preserveAspect = true;
-        if (icon_sprite != null) icon.color = PlayTheme.icon;
+        if (icon_sprite != null) icon.color = PlayTheme.gold;
         LobbyUi.place_fraction(icon.rectTransform, COUNT_ICON_LEFT, COUNT_ICON_V_MIN, COUNT_ICON_RIGHT, COUNT_ICON_V_MAX);
 
         var label = PlayUi.text("count_label", view, string.Empty, COUNT_FONT_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
@@ -110,7 +110,7 @@ public static class LobbyInfoBar
         var mode_icon_sprite = PlayUi.sprite(MODE_ICON_PATH);
         var mode_icon = PlayUi.image("mode_icon", hit.rectTransform, mode_icon_sprite, false);
         mode_icon.preserveAspect = true;
-        if (mode_icon_sprite != null) mode_icon.color = PlayTheme.icon;
+        if (mode_icon_sprite != null) mode_icon.color = PlayTheme.gold;
         LobbyUi.place_fraction(mode_icon.rectTransform, MODE_ICON_LEFT, MODE_ICON_V_MIN, MODE_ICON_RIGHT, MODE_ICON_V_MAX);
 
         var mode_label = PlayUi.text("mode_name", hit.rectTransform, string.Empty, NAME_FONT_SIZE, PlayTheme.gold_soft, TextAnchor.MiddleLeft);
