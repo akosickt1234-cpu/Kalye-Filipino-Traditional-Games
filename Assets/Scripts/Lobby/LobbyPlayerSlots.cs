@@ -126,7 +126,7 @@ public static class LobbyPlayerSlots
 
         var title_cell = PlayUi.rect("title_cell", heading_slot);
         LobbyUi.place_fraction(title_cell, TITLE_LEFT, 0f, TITLE_RIGHT, 1f);
-        var title = PlayUi.text("title", title_cell, TITLE, TITLE_MAX_SIZE, PlayTheme.gold, TextAnchor.MiddleLeft);
+        var title = PlayUi.text("title", title_cell, TITLE, TITLE_MAX_SIZE, PlayTheme.text_white, TextAnchor.MiddleLeft);
         fit_text(title, TITLE_MIN_SIZE, TITLE_MAX_SIZE);
         PlayUi.stretch(title.rectTransform);
         PlayUi.add_shadow(title);
