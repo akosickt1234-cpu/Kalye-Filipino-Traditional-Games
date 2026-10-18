@@ -169,7 +169,7 @@ public class LobbyTopBarLayout : MonoBehaviour
     private const float BACK_ASPECT = 512f / 415f;
     private const float MARGIN_RATIO = 0.35f;
     private const float GAP_RATIO = 0.3f;
-    private const float CRUMB_GAP_RATIO = 0.4f;
+    private const float CRUMB_GAP_RATIO = 0.15f;
     private const float CRUMB_SPACING_RATIO = 0.1f;
     private const float TEXT_RATIO = 0.26f;
     private const float CRUMB_RIGHT_ANCHOR = 0.55f;
