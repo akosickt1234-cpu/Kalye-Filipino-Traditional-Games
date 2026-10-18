@@ -12,8 +12,8 @@ public static class LobbyTopBar
     private const float GLOW_OVERSHOOT = 0.55f;
     private const float LINE_GAP = 8f;
     private const float LINE_HEIGHT = 3f;
-    private const float CREST_WIDTH = 150f;
-    private const float CREST_ARROW_HEIGHT = 0.42f;
+    private const float CREST_WIDTH = 96f;
+    private const float CREST_ARROW_HEIGHT = 0.5f;
     private const float BACK_FILL_INSET = 0.1f;
 
     public static void build(RectTransform root)
@@ -89,9 +89,9 @@ public static class LobbyTopBar
         PlayFocus.clear_selection();
     }
 
-    private static void build_crest(RectTransform parent, string object_name, bool arrow_on_right)
+    private static void build_crest(RectTransform parent, string object_name, bool diamond_on_right)
     {
-        RectTransform crest = LobbyOrnament.arrow_tail(parent, object_name, PlayTheme.gold, arrow_on_right, CREST_ARROW_HEIGHT);
+        RectTransform crest = LobbyOrnament.diamond_tail(parent, object_name, PlayTheme.gold, diamond_on_right, CREST_ARROW_HEIGHT);
         LayoutElement element = crest.gameObject.AddComponent<LayoutElement>();
         element.minWidth = CREST_WIDTH;
         element.preferredWidth = CREST_WIDTH;

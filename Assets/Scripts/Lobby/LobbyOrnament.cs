@@ -3,31 +3,35 @@ using UnityEngine.UI;
 
 public static class LobbyOrnament
 {
-    const float DEFAULT_ARROW_HEIGHT = 0.76f;
+    const float DEFAULT_DIAMOND_HEIGHT = 0.76f;
     const float LINE_THICKNESS = 2f;
+    const float LINE_ALPHA = 0.7f;
     const float LINE_OVERLAP = 0.5f;
 
-    public static RectTransform arrow_tail(Transform parent, string name, Color color, bool arrow_on_right, float arrow_height = DEFAULT_ARROW_HEIGHT)
+    public static RectTransform diamond_tail(Transform parent, string name, Color color, bool diamond_on_right, float diamond_height = DEFAULT_DIAMOND_HEIGHT)
     {
-        var arrow_min = 0.5f - arrow_height * 0.5f;
-        var arrow_max = 0.5f + arrow_height * 0.5f;
+        var diamond_min = 0.5f - diamond_height * 0.5f;
+        var diamond_max = 0.5f + diamond_height * 0.5f;
         var holder = PlayUi.rect(name, parent);
 
-        var arrow_slot = PlayUi.rect("arrow_slot", holder);
-        var edge = arrow_on_right ? 1f : 0f;
-        arrow_slot.anchorMin = new Vector2(edge, arrow_min);
-        arrow_slot.anchorMax = new Vector2(edge, arrow_max);
-        arrow_slot.pivot = new Vector2(edge, 0.5f);
-        arrow_slot.offsetMin = Vector2.zero;
-        arrow_slot.offsetMax = Vector2.zero;
-        var fit = arrow_slot.gameObject.AddComponent<AspectRatioFitter>();
+        var diamond_slot = PlayUi.rect("diamond_slot", holder);
+        var edge = diamond_on_right ? 1f : 0f;
+        diamond_slot.anchorMin = new Vector2(edge, diamond_min);
+        diamond_slot.anchorMax = new Vector2(edge, diamond_max);
+        diamond_slot.pivot = new Vector2(edge, 0.5f);
+        diamond_slot.offsetMin = Vector2.zero;
+        diamond_slot.offsetMax = Vector2.zero;
+        var fit = diamond_slot.gameObject.AddComponent<AspectRatioFitter>();
         fit.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
         fit.aspectRatio = 1f;
 
-        var arrow = PlayOrnament.arrow(arrow_slot, "arrow", 1f, arrow_on_right, color);
-        PlayUi.stretch(arrow.rectTransform);
+        var diamond = PlayUi.image("diamond", diamond_slot, PlayUi.sprite(LobbyUi.ICON_RHOMBUS_PATH));
+        diamond.enabled = diamond.sprite != null;
+        diamond.preserveAspect = true;
+        diamond.color = color;
+        PlayUi.stretch(diamond.rectTransform);
 
-        var line = PlayOrnament.line(holder, "line", 10f, LINE_THICKNESS, color, arrow_on_right, !arrow_on_right);
+        var line = PlayOrnament.line(holder, "line", 10f, LINE_THICKNESS, PlayTheme.with_alpha(color, LINE_ALPHA), diamond_on_right, !diamond_on_right);
         var half = LINE_THICKNESS * 0.5f;
         var line_rect = line.rectTransform;
         line_rect.pivot = new Vector2(0.5f, 0.5f);
@@ -38,7 +42,7 @@ public static class LobbyOrnament
         line_rect.SetAsFirstSibling();
 
         var overlap = holder.gameObject.AddComponent<LobbyOrnamentLine>();
-        overlap.setup(line_rect, arrow_slot, arrow_on_right, LINE_OVERLAP, half);
+        overlap.setup(line_rect, diamond_slot, diamond_on_right, LINE_OVERLAP, half);
         return holder;
     }
 }
@@ -46,17 +50,17 @@ public static class LobbyOrnament
 public class LobbyOrnamentLine : MonoBehaviour
 {
     RectTransform line;
-    RectTransform arrow_slot;
-    bool arrow_on_right;
+    RectTransform diamond_slot;
+    bool diamond_on_right;
     float overlap;
     float half;
 
-    public void setup(RectTransform line_rect, RectTransform slot, bool on_right, float arrow_overlap, float half_thickness)
+    public void setup(RectTransform line_rect, RectTransform slot, bool on_right, float diamond_overlap, float half_thickness)
     {
         line = line_rect;
-        arrow_slot = slot;
-        arrow_on_right = on_right;
-        overlap = arrow_overlap;
+        diamond_slot = slot;
+        diamond_on_right = on_right;
+        overlap = diamond_overlap;
         half = half_thickness;
         apply();
     }
@@ -73,10 +77,10 @@ public class LobbyOrnamentLine : MonoBehaviour
 
     void apply()
     {
-        if (line == null || arrow_slot == null) return;
+        if (line == null || diamond_slot == null) return;
 
-        var reach = arrow_slot.rect.width * overlap;
-        if (arrow_on_right)
+        var reach = diamond_slot.rect.width * overlap;
+        if (diamond_on_right)
         {
             line.offsetMin = new Vector2(0f, -half);
             line.offsetMax = new Vector2(-reach, half);
