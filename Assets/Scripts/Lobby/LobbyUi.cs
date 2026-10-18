@@ -14,6 +14,9 @@ public static class LobbyUi
     public const string ICON_REFRESH_PATH = "Icons/Lobby/IconRefresh";
     public const string ICON_COPY_PATH = "Icons/Lobby/IconCopy";
     public const string ICON_ARROW_RIGHT_PATH = "Icons/Lobby/IconArrowRight";
+    public const string ICON_SUN_PATH = "Icons/Lobby/IconSun";
+    public const string ICON_RHOMBUS_PATH = "Icons/Lobby/IconRhombus";
+    public const string FRAME_AVATAR_CIRCLE_PATH = "Frames/Play/FrameAvatarRing";
     public const string BACKDROP_PATH = "Background/Lobby/LobbyBackdrop";
     public const float PANEL_BORDER_SCALE = 1.8f;
     const float BLOCKER_ALPHA = 0.6f;
