@@ -202,7 +202,7 @@ public class LobbyFriendRow
 
     public static Color status_color(bool online)
     {
-        return online ? PlayTheme.gold_soft : PlayTheme.text_muted;
+        return online ? PlayTheme.success : PlayTheme.text_muted;
     }
 
     public void refresh()
