@@ -9,7 +9,8 @@ public static class PlayInfoPanel
     const string PANEL_PATH = "Panels/Play/PanelInfoRight";
     const string BUTTON_PATH = "Buttons/Play/BtnPlayGold";
     const string PLAYERS_ICON_PATH = "Icons/Play/IconPlayers";
-    const string PLAY_LABEL = "Play";
+    internal const string PLAY_LABEL = "Play";
+    internal const string RETURN_LABEL = "Return Lobby";
     const float REFERENCE_WIDTH = 1920f;
     const float REFERENCE_HEIGHT = 1080f;
     const float TEXT_CENTER_X = 1686f;
@@ -37,6 +38,7 @@ public static class PlayInfoPanel
     const int DESCRIPTION_MIN_SIZE = 16;
     const float DESCRIPTION_LINE_SPACING = 1.15f;
     const int BUTTON_LABEL_SIZE = 46;
+    const int BUTTON_LABEL_MIN_SIZE = 26;
 
     public static void build(RectTransform root)
     {
@@ -78,7 +80,8 @@ public static class PlayInfoPanel
         description.lineSpacing = DESCRIPTION_LINE_SPACING;
         fit_text(description, DESCRIPTION_MIN_SIZE, DESCRIPTION_MAX_SIZE);
 
-        var button_rect = build_play_button(holder);
+        Text button_label;
+        var button_rect = build_play_button(holder, out button_label);
 
         var align = holder.gameObject.AddComponent<PlayInfoPanelAlign>();
         align.setup(holder, button_rect);
@@ -88,7 +91,7 @@ public static class PlayInfoPanel
         align.add(description.rectTransform, DESCRIPTION_CENTER_OFFSET);
 
         var view = holder.gameObject.AddComponent<PlayInfoPanelView>();
-        view.setup(group, title, players_row, players_icon, players, description, align);
+        view.setup(group, title, players_row, players_icon, players, description, align, button_label);
     }
 
     static void build_bottom_gradient(RectTransform parent)
@@ -110,7 +113,7 @@ public static class PlayInfoPanel
         rect.offsetMax = Vector2.zero;
     }
 
-    static RectTransform build_play_button(RectTransform parent)
+    static RectTransform build_play_button(RectTransform parent, out Text button_label)
     {
         var button_rect = PlayUi.rect("play_button", parent);
         anchor_at(button_rect, TEXT_CENTER_X, BUTTON_Y, new Vector2(BUTTON_WIDTH, BUTTON_WIDTH / BUTTON_ASPECT), new Vector2(0.5f, 0.5f));
@@ -137,8 +140,10 @@ public static class PlayInfoPanel
         glow_group.blocksRaycasts = false;
         glow_group.interactable = false;
 
-        var label = PlayUi.text("play_button_label", button_rect, PLAY_LABEL, BUTTON_LABEL_SIZE, PlayTheme.label_brown, TextAnchor.MiddleCenter);
+        var label = PlayUi.text("play_button_label", button_rect, PlayInfoPanelView.button_label_text(), BUTTON_LABEL_SIZE, PlayTheme.label_brown, TextAnchor.MiddleCenter);
         PlayUi.stretch(label.rectTransform);
+        fit_text(label, BUTTON_LABEL_MIN_SIZE, BUTTON_LABEL_SIZE);
+        button_label = label;
 
         var fx = button_rect.gameObject.AddComponent<PlayButtonFx>();
         fx.setup(button_rect, glow_group);
@@ -243,11 +248,18 @@ public class PlayInfoPanelView : MonoBehaviour
     Text description_label;
     PlayTextReveal description_reveal;
     PlayInfoPanelAlign align;
+    Text button_label;
     string shown_id;
     Coroutine fade_routine;
 
-    public void setup(CanvasGroup text_group, PlayMarquee title, RectTransform row, Image icon, Text players, Text description, PlayInfoPanelAlign panel_align)
+    internal static string button_label_text()
     {
+        return LobbyState.in_lobby ? PlayInfoPanel.RETURN_LABEL : PlayInfoPanel.PLAY_LABEL;
+    }
+
+    public void setup(CanvasGroup text_group, PlayMarquee title, RectTransform row, Image icon, Text players, Text description, PlayInfoPanelAlign panel_align, Text play_button_label)
+    {
+        button_label = play_button_label;
         group = text_group;
         title_marquee = title;
         players_row = row;
@@ -264,6 +276,11 @@ public class PlayInfoPanelView : MonoBehaviour
         PlayState.selection_changed += on_selection_changed;
     }
 
+    void Start()
+    {
+        if (LobbyState.in_lobby) PlayState.select(LobbyState.mode_index);
+    }
+
     void OnDisable()
     {
         PlayState.selection_changed -= on_selection_changed;
@@ -271,8 +288,18 @@ public class PlayInfoPanelView : MonoBehaviour
         if (group != null) group.alpha = 1f;
     }
 
+    void update_button_label()
+    {
+        if (button_label == null) return;
+
+        var value = button_label_text();
+        if (button_label.text != value) button_label.text = value;
+    }
+
     void on_selection_changed(int index)
     {
+        update_button_label();
+
         var game = PlayState.current;
         var id = game != null ? game.id : null;
         if (id == shown_id) return;
@@ -320,6 +347,7 @@ public class PlayInfoPanelView : MonoBehaviour
         var game = PlayState.current;
         shown_id = game != null ? game.id : null;
 
+        update_button_label();
         if (title_marquee != null) title_marquee.set_text(game != null && game.display_name != null ? game.display_name : string.Empty);
         if (players_label != null) players_label.text = format_players(game);
         if (description_label != null) description_label.text = game != null && game.description != null ? game.description : string.Empty;
