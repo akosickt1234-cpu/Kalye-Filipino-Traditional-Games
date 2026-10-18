@@ -72,7 +72,7 @@ public static class LobbyChat
         var icon = PlayUi.image("icon_chat", button_rect, PlayUi.sprite(LobbyUi.ICON_CHAT_PATH));
         LobbyUi.place_fraction(icon.rectTransform, ICON_LEFT, ICON_BOTTOM, ICON_RIGHT, ICON_TOP);
         icon.preserveAspect = true;
-        icon.color = PlayTheme.icon;
+        icon.color = PlayTheme.gold;
         PlayUi.add_shadow(icon);
 
         var area = PlayUi.rect("message_area", button_rect);
@@ -83,7 +83,7 @@ public static class LobbyChat
         button.transition = Selectable.Transition.None;
 
         var hover = button_rect.gameObject.AddComponent<LobbyChatHover>();
-        hover.setup(button, icon, PlayTheme.icon, PlayTheme.gold_soft, icon.rectTransform, ICON_HOVER_SCALE, glow);
+        hover.setup(button, icon, PlayTheme.gold, PlayTheme.gold_soft, icon.rectTransform, ICON_HOVER_SCALE, glow);
 
         var column = button_rect.gameObject.AddComponent<LobbyChatColumn>();
         column.setup(area, COLUMN_FONT_SIZE);
