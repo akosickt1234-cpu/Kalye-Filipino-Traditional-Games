@@ -591,7 +591,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2877628098
+  GlobalObjectIdHash: 941846305
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -661,6 +661,8 @@ MonoBehaviour:
   throwSpeed: 12
   spawnDistance: 1.2
   hitbox: {fileID: 7486020098013570915}
+  tayaDisplay: 0
+  gotHitDisplay: 0
 --- !u!114 &-1798745715432377660
 MonoBehaviour:
   m_ObjectHideFlags: 0

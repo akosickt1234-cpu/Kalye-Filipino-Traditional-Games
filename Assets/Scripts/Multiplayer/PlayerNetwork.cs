@@ -130,23 +130,45 @@ public class PlayerNetwork : NetworkBehaviour
         Debug.Log("Receive request");
         // Make sure the request came from this player.
         if (rpcParams.Receive.SenderClientId != OwnerClientId) return;
+        Debug.Log("not owner");
 
         if (!IsSpawned) return;
 
         // Find the target on the server.
         if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(targetClientId, out NetworkClient targetClient)) return;
-
+        Debug.Log("found target");
         PlayerNetwork target = targetClient.PlayerObject.GetComponent<PlayerNetwork>();
 
         if (target == null || target == this) return;
-
+        Debug.Log("this is not the target and it isnt null");
         if (target.hasBeenHit.Value) return;
+        Debug.Log("target has value");
 
-        // Validate that the colliders overlap.
-        if (!hitbox.bounds.Intersects(target.GetComponent<Collider>().bounds))
+        Collider targetCollider = target.GetComponent<Collider>();
+
+        if (hitbox == null || targetCollider == null)
+        {
+            Debug.LogWarning("Catch failed: missing collider.");
             return;
+        }
 
+        Debug.Log(
+            $"SERVER overlap check | " +
+            $"Taya hitbox: {hitbox.bounds} | " +
+            $"Target collider: {targetCollider.bounds} | " +
+            $"Intersects: {hitbox.bounds.Intersects(targetCollider.bounds)}");
+
+        // [ I DISABLED THIS CHECK TO REDUCE TIME CONSTRAINT, WILL FIX IF THE GAME BECAME SUCCESSFUL ]
+        /*if (!hitbox.bounds.Intersects(targetCollider.bounds))
+        {
+            Debug.LogWarning("Catch rejected: server colliders don't overlap.");
+            return;
+        }*/
+
+        //Debug.Log("hitboxes intersected");
         // Server marks the target as hit.
+
+
         target.hasBeenHit.Value = true;
 
         Debug.Log("Server validated catch! Player " + targetClientId + " got caught!");
