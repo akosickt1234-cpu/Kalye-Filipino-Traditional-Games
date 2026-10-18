@@ -421,8 +421,8 @@ public static class LobbyState
     static void build_mock_players()
     {
         player_list.Clear();
-        player_list.Add(new LobbyPlayer { name = HOST_NAME, ready = true, is_host = true });
-        player_list.Add(new LobbyPlayer { name = YOU_NAME, ready = true, is_you = true });
+        player_list.Add(new LobbyPlayer { name = HOST_NAME, ready = true });
+        player_list.Add(new LobbyPlayer { name = YOU_NAME, ready = true, is_host = true, is_you = true });
         player_list.Add(new LobbyPlayer { name = "Hazel", ready = true });
         player_list.Add(new LobbyPlayer { name = "Charles", ready = false });
         player_list.Add(new LobbyPlayer());
