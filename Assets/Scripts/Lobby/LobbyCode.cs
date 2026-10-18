@@ -163,7 +163,7 @@ public static class LobbyCode
 
         var icon = PlayUi.image("icon", hit.rectTransform, PlayUi.sprite(icon_path));
         icon.enabled = icon.sprite != null;
-        icon.color = PlayTheme.icon;
+        icon.color = PlayTheme.gold;
         icon.preserveAspect = true;
         LobbyUi.place_fraction(icon.rectTransform, 0.5f - ICON_GLYPH_RATIO * 0.5f, 0.5f - ICON_GLYPH_RATIO * 0.5f, 0.5f + ICON_GLYPH_RATIO * 0.5f, 0.5f + ICON_GLYPH_RATIO * 0.5f);
         PlayUi.add_shadow(icon, 2f);
