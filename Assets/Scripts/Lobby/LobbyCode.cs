@@ -78,16 +78,13 @@ public static class LobbyCode
         PlayUi.add_shadow(code, 2f);
 
         var copy_button = build_square_button("copy_button", row, LobbyUi.ICON_COPY_PATH);
-        var refresh_button = build_square_button("refresh_button", row, LobbyUi.ICON_REFRESH_PATH);
 
         var layout = row.gameObject.AddComponent<LobbyCodeRow>();
-        layout.setup(pill.rectTransform, new List<RectTransform> { (RectTransform)refresh_button.transform, (RectTransform)copy_button.transform });
+        layout.setup(pill.rectTransform, new List<RectTransform> { (RectTransform)copy_button.transform });
 
         view.code_text = code;
         view.copied_text = copied;
         view.copy_button = copy_button;
-        view.refresh_button = refresh_button;
-        view.refresh_icon = refresh_button.transform.Find("icon").GetComponent<Image>();
     }
 
     static void build_join(RectTransform slot, LobbyCodeView view)
@@ -312,7 +309,6 @@ public class LobbyCodeButtonHover : MonoBehaviour, IPointerEnterHandler, IPointe
 
 public class LobbyCodeView : MonoBehaviour
 {
-    const float DIMMED_ALPHA = 0.35f;
     const float FOCUS_FILL_ALPHA = 0.22f;
     const float COPIED_SECONDS = 1.2f;
     const float COPIED_FADE_SECONDS = 0.3f;
@@ -320,8 +316,6 @@ public class LobbyCodeView : MonoBehaviour
     public Text code_text;
     public Text copied_text;
     public Button copy_button;
-    public Button refresh_button;
-    public Image refresh_icon;
     public Image join_pill;
     public InputField join_input;
     public Button join_button;
@@ -337,21 +331,17 @@ public class LobbyCodeView : MonoBehaviour
         bound = true;
 
         copy_button.onClick.AddListener(copy_code);
-        refresh_button.onClick.AddListener(refresh_code);
         join_button.onClick.AddListener(submit);
         join_input.onValueChanged.AddListener(on_input_changed);
 
         LobbyState.code_changed += refresh_code_text;
-        LobbyState.players_changed += refresh_host_state;
 
         refresh_code_text();
-        refresh_host_state();
     }
 
     void OnDestroy()
     {
         LobbyState.code_changed -= refresh_code_text;
-        LobbyState.players_changed -= refresh_host_state;
     }
 
     void Update()
@@ -367,29 +357,12 @@ public class LobbyCodeView : MonoBehaviour
         code_text.text = string.IsNullOrEmpty(LobbyState.lobby_code) ? string.Empty : LobbyState.lobby_code;
     }
 
-    void refresh_host_state()
-    {
-        if (refresh_button == null) return;
-
-        var host = LobbyState.is_host;
-        refresh_button.interactable = host;
-        if (refresh_icon != null) refresh_icon.color = PlayTheme.with_alpha(PlayTheme.icon, host ? 1f : DIMMED_ALPHA);
-    }
-
     void copy_code()
     {
         if (string.IsNullOrEmpty(LobbyState.lobby_code)) return;
 
         GUIUtility.systemCopyBuffer = LobbyState.lobby_code;
         copied_timer = COPIED_SECONDS + COPIED_FADE_SECONDS;
-        PlayFocus.clear_selection();
-    }
-
-    void refresh_code()
-    {
-        if (!LobbyState.is_host) return;
-
-        LobbyState.regenerate_code();
         PlayFocus.clear_selection();
     }
 
