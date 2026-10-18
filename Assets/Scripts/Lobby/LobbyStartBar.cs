@@ -149,6 +149,9 @@ public class LobbyStartBarView : MonoBehaviour
         face.raycastTarget = host;
         button_fx.enabled = host;
         button_group.alpha = host ? 1f : DISABLED_ALPHA;
+
+        if (host) PlayFocus.default_target = button.gameObject;
+        else if (PlayFocus.default_target == button.gameObject) PlayFocus.default_target = null;
     }
 
     static void fit_text(Text target, int min_size, int max_size)
