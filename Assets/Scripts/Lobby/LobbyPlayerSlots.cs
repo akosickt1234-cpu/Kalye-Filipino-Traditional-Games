@@ -42,10 +42,10 @@ public static class LobbyPlayerSlots
     const float AVATAR_BOTTOM = 0.38f;
     const float AVATAR_TOP = 0.76f;
     const float AVATAR_FILL_INSET = 0.07f;
-    const float RHOMBUS_LEFT = 0.38f;
-    const float RHOMBUS_RIGHT = 0.62f;
-    const float RHOMBUS_BOTTOM = 0.795f;
-    const float RHOMBUS_TOP = 0.885f;
+    const float RHOMBUS_LEFT = 0.34f;
+    const float RHOMBUS_RIGHT = 0.66f;
+    const float RHOMBUS_BOTTOM = 0.78f;
+    const float RHOMBUS_TOP = 0.90f;
     const float RHOMBUS_ALPHA_EMPTY = 0.6f;
     const float FRAME_ALPHA_FAINT = 0.4f;
     const float CROWN_BOTTOM = 0.91f;
