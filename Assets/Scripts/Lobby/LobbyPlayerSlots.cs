@@ -5,7 +5,6 @@ using UnityEngine.UI;
 public static class LobbyPlayerSlots
 {
     const string TITLE = "GATHER YOUR TEAM";
-    const string HOST_LABEL = "HOST";
     const string YOU_LABEL = "YOU";
     const string INVITE_LABEL = "Invite Friend";
     const string READY_LABEL = "Ready";
@@ -39,20 +38,19 @@ public static class LobbyPlayerSlots
     const int NAME_MAX_SIZE = 30;
     const int NAME_MIN_SIZE = 12;
     const float NAME_HEIGHT_RATIO = 0.7f;
-    const float AVATAR_LEFT = 0.10f;
-    const float AVATAR_RIGHT = 0.90f;
-    const float AVATAR_BOTTOM = 0.40f;
-    const float AVATAR_TOP = 0.80f;
+    const float AVATAR_LEFT = 0.18f;
+    const float AVATAR_RIGHT = 0.82f;
+    const float AVATAR_BOTTOM = 0.44f;
+    const float AVATAR_TOP = 0.76f;
     const float AVATAR_FILL_INSET = 0.07f;
-    const float RHOMBUS_HALF_WIDTH = 0.13f;
-    const float RHOMBUS_HALF_HEIGHT = 0.09f;
+    const float RHOMBUS_LEFT = 0.38f;
+    const float RHOMBUS_RIGHT = 0.62f;
+    const float RHOMBUS_BOTTOM = 0.795f;
+    const float RHOMBUS_TOP = 0.885f;
     const float RHOMBUS_ALPHA_EMPTY = 0.6f;
-    const float CROWN_BOTTOM = 0.92f;
-    const float CROWN_TOP = 1.08f;
-    const float CROWN_FILL_INSET = 0.06f;
-    const float CROWN_ICON_INSET = 0.2f;
-    const float HOST_LABEL_BOTTOM = 0.835f;
-    const float HOST_LABEL_TOP = 0.915f;
+    const float CROWN_BOTTOM = 0.91f;
+    const float CROWN_TOP = 1.09f;
+    const float CROWN_ICON_INSET = 0.12f;
     const float NAME_BOTTOM = 0.24f;
     const float NAME_TOP = 0.36f;
     const float STATUS_BOTTOM = 0.10f;
@@ -175,6 +173,7 @@ public static class LobbyPlayerSlots
         if (empty) build_empty_avatar(frame);
         else build_avatar(frame, player);
 
+        build_rhombus(frame, empty ? PlayTheme.with_alpha(PlayTheme.gold_soft, RHOMBUS_ALPHA_EMPTY) : PlayTheme.gold_soft);
         if (is_host) build_host_tag(frame);
         if (is_you) build_you_tag(frame, is_host);
 
@@ -206,13 +205,13 @@ public static class LobbyPlayerSlots
         return ring;
     }
 
-    static void build_rhombus(RectTransform holder, Color color)
+    static void build_rhombus(RectTransform frame, Color color)
     {
-        var rhombus = PlayUi.image("avatar_rhombus", holder, PlayUi.sprite(LobbyUi.ICON_RHOMBUS_PATH));
+        var rhombus = PlayUi.image("rhombus", frame, PlayUi.sprite(LobbyUi.ICON_RHOMBUS_PATH));
         rhombus.enabled = rhombus.sprite != null;
         rhombus.preserveAspect = true;
         rhombus.color = color;
-        LobbyUi.place_fraction(rhombus.rectTransform, 0.5f - RHOMBUS_HALF_WIDTH, 1f - RHOMBUS_HALF_HEIGHT, 0.5f + RHOMBUS_HALF_WIDTH, 1f + RHOMBUS_HALF_HEIGHT);
+        LobbyUi.place_fraction(rhombus.rectTransform, RHOMBUS_LEFT, RHOMBUS_BOTTOM, RHOMBUS_RIGHT, RHOMBUS_TOP);
         PlayUi.add_shadow(rhombus, 2f);
     }
 
@@ -236,7 +235,6 @@ public static class LobbyPlayerSlots
         }
 
         build_circle_frame(holder, PlayTheme.white);
-        build_rhombus(holder, PlayTheme.gold_soft);
     }
 
     static void build_empty_avatar(RectTransform frame)
@@ -257,7 +255,6 @@ public static class LobbyPlayerSlots
         vertical.color = PlayTheme.text_muted;
         LobbyUi.place_fraction(vertical.rectTransform, 0.5f - PLUS_HALF_THICKNESS, PLUS_MIN, 0.5f + PLUS_HALF_THICKNESS, PLUS_MAX);
 
-        build_rhombus(holder, PlayTheme.with_alpha(PlayTheme.gold_soft, RHOMBUS_ALPHA_EMPTY));
     }
 
     static void build_host_tag(RectTransform frame)
@@ -272,21 +269,14 @@ public static class LobbyPlayerSlots
         badge_fit.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
         badge_fit.aspectRatio = 1f;
 
-        var ring = PlayUi.circle("crown_ring", badge, PlayTheme.gold);
-        PlayUi.stretch(ring.rectTransform);
-
         var fill = PlayUi.circle("crown_fill", badge, PlayTheme.panel_blue);
-        LobbyUi.place_fraction(fill.rectTransform, CROWN_FILL_INSET, CROWN_FILL_INSET, 1f - CROWN_FILL_INSET, 1f - CROWN_FILL_INSET);
+        PlayUi.stretch(fill.rectTransform);
 
         var crown = PlayUi.image("crown_icon", badge, PlayUi.sprite(LobbyUi.ICON_CROWN_PATH));
         crown.enabled = crown.sprite != null;
         crown.preserveAspect = true;
         crown.color = PlayTheme.gold;
         LobbyUi.place_fraction(crown.rectTransform, CROWN_ICON_INSET, CROWN_ICON_INSET, 1f - CROWN_ICON_INSET, 1f - CROWN_ICON_INSET);
-
-        var label = PlayUi.text("host_label", frame, HOST_LABEL, LABEL_MAX_SIZE, PlayTheme.gold, TextAnchor.MiddleCenter);
-        fit_text(label, LABEL_MIN_SIZE, LABEL_MAX_SIZE);
-        LobbyUi.place_fraction(label.rectTransform, 0.2f, HOST_LABEL_BOTTOM, 0.8f, HOST_LABEL_TOP);
     }
 
     static void build_you_tag(RectTransform frame, bool bottom)
