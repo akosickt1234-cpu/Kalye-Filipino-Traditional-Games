@@ -8,6 +8,7 @@ public class LobbyPlayer
     public bool ready;
     public bool is_host;
     public bool is_you;
+    public int join_order;
     public string avatar_path;
 
     public bool is_empty
@@ -41,7 +42,6 @@ public static class LobbyState
     const int MAX_MESSAGES = 100;
     const int SEARCH_TARGET = 5;
     const float SEARCH_STEP_SECONDS = 1f;
-    const string HOST_NAME = "Bayanihan";
     const string YOU_NAME = "Ruenz";
 
     static readonly List<LobbyPlayer> player_list = new List<LobbyPlayer>();
@@ -49,12 +49,14 @@ public static class LobbyState
     static readonly List<LobbyMessage> message_list = new List<LobbyMessage>();
     static LobbyStateRunner runner;
     static float search_timer;
+    static int join_counter;
 
     public static bool in_lobby { get; private set; }
     public static string lobby_code { get; private set; } = string.Empty;
     public static int mode_index { get; private set; }
     public static bool searching { get; private set; }
     public static int opponents_found { get; private set; }
+    public static bool is_host { get; private set; }
 
     public static event Action players_changed;
     public static event Action chat_changed;
@@ -75,15 +77,6 @@ public static class LobbyState
     public static IReadOnlyList<LobbyMessage> messages
     {
         get { return message_list; }
-    }
-
-    public static bool is_host
-    {
-        get
-        {
-            var self = you;
-            return self != null && self.is_host;
-        }
     }
 
     public static LobbyPlayer you
@@ -151,8 +144,13 @@ public static class LobbyState
         searching = false;
         opponents_found = 0;
         search_timer = 0f;
+        join_counter = 0;
 
         build_mock_players();
+        is_host = true;
+        var self = you;
+        if (self != null) self.is_host = true;
+        fit_slots();
         build_mock_friends();
         build_mock_messages();
     }
@@ -172,6 +170,8 @@ public static class LobbyState
         message_list.Clear();
         lobby_code = string.Empty;
         in_lobby = false;
+        is_host = false;
+        join_counter = 0;
 
         search_changed?.Invoke();
         players_changed?.Invoke();
@@ -206,8 +206,16 @@ public static class LobbyState
         if (!is_valid_code(code)) return "Code must look like 7F3K-9Q2B";
         if (code == lobby_code) return "You are already in this lobby";
 
+        var creator = earliest_other();
+        if (creator == null) return "Lobby not found";
+
+        var self = you;
+        if (self != null) self.join_order = next_join_order();
+        clear_host_flags();
+        creator.is_host = true;
+        is_host = false;
         lobby_code = code;
-        set_host(false);
+        players_changed?.Invoke();
         code_changed?.Invoke();
         return JOIN_OK;
     }
@@ -240,19 +248,12 @@ public static class LobbyState
         var self = you;
         if (self == null) return;
 
-        LobbyPlayer other = null;
-        for (var i = 0; i < player_list.Count; i++)
-        {
-            if (player_list[i].is_you || player_list[i].is_empty) continue;
-            other = player_list[i];
-            break;
-        }
-
-        var next_host = value ? self : other;
+        var next_host = value ? self : earliest_other();
         if (next_host == null) return;
 
-        for (var i = 0; i < player_list.Count; i++) player_list[i].is_host = false;
+        clear_host_flags();
         next_host.is_host = true;
+        is_host = next_host.is_you;
         players_changed?.Invoke();
     }
 
@@ -277,7 +278,7 @@ public static class LobbyState
             return false;
         }
 
-        player_list[slot] = new LobbyPlayer { name = friend.name, ready = false, avatar_path = friend.avatar_path };
+        player_list[slot] = new LobbyPlayer { name = friend.name, ready = false, join_order = next_join_order(), avatar_path = friend.avatar_path };
         players_changed?.Invoke();
         add_message(SYSTEM_NAME, friend.name + " joined the lobby");
         return true;
@@ -402,8 +403,49 @@ public static class LobbyState
             if (player_list[i].is_host) has_host = true;
         }
 
-        var self = you;
-        if (!has_host && self != null) self.is_host = true;
+        if (!has_host) assign_next_host();
+    }
+
+    static int next_join_order()
+    {
+        join_counter++;
+        return join_counter;
+    }
+
+    static void clear_host_flags()
+    {
+        for (var i = 0; i < player_list.Count; i++) player_list[i].is_host = false;
+    }
+
+    static LobbyPlayer earliest_player(bool include_you)
+    {
+        LobbyPlayer earliest = null;
+        for (var i = 0; i < player_list.Count; i++)
+        {
+            var candidate = player_list[i];
+            if (candidate.is_empty || (candidate.is_you && !include_you)) continue;
+            if (earliest == null || candidate.join_order < earliest.join_order) earliest = candidate;
+        }
+        return earliest;
+    }
+
+    static LobbyPlayer earliest_other()
+    {
+        return earliest_player(false);
+    }
+
+    static void assign_next_host()
+    {
+        var next_host = earliest_player(true);
+        if (next_host == null)
+        {
+            is_host = false;
+            return;
+        }
+
+        clear_host_flags();
+        next_host.is_host = true;
+        is_host = next_host.is_you;
     }
 
     static int last_removable_index(bool keep_host)
@@ -420,13 +462,17 @@ public static class LobbyState
 
     static void build_mock_players()
     {
+        var self = new LobbyPlayer { name = YOU_NAME, ready = true, is_you = true, join_order = next_join_order() };
+        var first = new LobbyPlayer { name = "Bayanihan", ready = true, join_order = next_join_order() };
+        var second = new LobbyPlayer { name = "Hazel", ready = true, join_order = next_join_order() };
+        var third = new LobbyPlayer { name = "Charles", ready = false, join_order = next_join_order() };
+
         player_list.Clear();
-        player_list.Add(new LobbyPlayer { name = HOST_NAME, ready = true });
-        player_list.Add(new LobbyPlayer { name = YOU_NAME, ready = true, is_host = true, is_you = true });
-        player_list.Add(new LobbyPlayer { name = "Hazel", ready = true });
-        player_list.Add(new LobbyPlayer { name = "Charles", ready = false });
+        player_list.Add(first);
+        player_list.Add(self);
+        player_list.Add(second);
+        player_list.Add(third);
         player_list.Add(new LobbyPlayer());
-        fit_slots();
     }
 
     static void build_mock_friends()
