@@ -268,20 +268,16 @@ public class LobbyFriendRow
         fit.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
         fit.aspectRatio = 1f;
 
-        var ring = PlayUi.image("avatar_ring", slot, PlayUi.pill());
-        ring.type = Image.Type.Sliced;
-        ring.color = PlayTheme.gold;
+        var ring = PlayUi.circle("avatar_ring", slot, PlayTheme.gold);
         PlayUi.stretch(ring.rectTransform);
 
-        var face = PlayUi.image("avatar_face", slot, PlayUi.pill());
-        face.type = Image.Type.Sliced;
-        face.color = PlayTheme.panel_dark;
+        var face = PlayUi.circle("avatar_face", slot, PlayTheme.panel_dark);
         PlayUi.stretch(face.rectTransform);
         face.rectTransform.offsetMin = new Vector2(RING_THICKNESS, RING_THICKNESS);
         face.rectTransform.offsetMax = new Vector2(-RING_THICKNESS, -RING_THICKNESS);
         face.gameObject.AddComponent<Mask>().showMaskGraphic = true;
 
-        var art = PlayUi.sprite(friend.avatar_path);
+        var art = string.IsNullOrEmpty(friend.avatar_path) ? null : Resources.Load<Sprite>(friend.avatar_path);
         if (art != null)
         {
             var picture = PlayUi.image("avatar_art", face.rectTransform, art);
