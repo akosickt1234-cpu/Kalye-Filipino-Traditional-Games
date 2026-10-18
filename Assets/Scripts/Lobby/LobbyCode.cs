@@ -138,7 +138,7 @@ public static class LobbyCode
         var error_area = PlayUi.rect("error_area", slot);
         LobbyUi.place_fraction(error_area, 0.04f, ERROR_BOTTOM, 1f, ERROR_TOP);
 
-        var error = fitted_text("error_text", error_area, string.Empty, ERROR_MIN_SIZE, ERROR_MAX_SIZE, PlayTheme.text, TextAnchor.UpperLeft);
+        var error = fitted_text("error_text", error_area, string.Empty, ERROR_MIN_SIZE, ERROR_MAX_SIZE, PlayTheme.error, TextAnchor.UpperLeft);
         PlayUi.stretch(error.rectTransform);
 
         view.join_pill = pill;
