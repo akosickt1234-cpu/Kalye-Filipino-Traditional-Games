@@ -117,8 +117,7 @@ public static class LobbyChat
 
     static string clean(string value)
     {
-        if (string.IsNullOrEmpty(value)) return string.Empty;
-        return value.Replace("<", string.Empty).Replace("\r", string.Empty).Replace("\n", " ");
+        return LobbyUi.sanitize(value).Replace("\r", string.Empty).Replace("\n", " ");
     }
 
     internal static string sender_name()
