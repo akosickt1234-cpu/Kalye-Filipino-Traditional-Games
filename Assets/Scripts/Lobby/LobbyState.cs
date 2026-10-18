@@ -257,6 +257,23 @@ public static class LobbyState
         players_changed?.Invoke();
     }
 
+    public static bool remove_player(string name)
+    {
+        if (!in_lobby) return false;
+
+        for (var i = 0; i < player_list.Count; i++)
+        {
+            var candidate = player_list[i];
+            if (candidate.is_empty || candidate.is_you || candidate.name != name) continue;
+
+            player_list[i] = new LobbyPlayer();
+            if (candidate.is_host) assign_next_host();
+            players_changed?.Invoke();
+            return true;
+        }
+        return false;
+    }
+
     public static bool has_player(string name)
     {
         for (var i = 0; i < player_list.Count; i++)
@@ -392,7 +409,9 @@ public static class LobbyState
             var remove_at = last_removable_index(true);
             if (remove_at < 0) remove_at = last_removable_index(false);
             if (remove_at < 0) break;
+            var removed = player_list[remove_at];
             player_list.RemoveAt(remove_at);
+            if (removed.is_host) assign_next_host();
         }
 
         while (player_list.Count < size) player_list.Add(new LobbyPlayer());
