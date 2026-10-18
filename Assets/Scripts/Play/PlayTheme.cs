@@ -19,6 +19,8 @@ public static class PlayTheme
     public static readonly Color magic_spark = new Color(0.949f, 0.812f, 0.545f, 1f);
     public static readonly Color overlay_dark = new Color(0.034f, 0.038f, 0.060f, 1f);
     public static readonly Color label_brown = new Color(0.274f, 0.152f, 0.048f, 1f);
+    public static readonly Color success = new Color(0.30f, 0.78f, 0.42f, 1f);
+    public static readonly Color error = new Color(0.90f, 0.35f, 0.35f, 1f);
 
     public static Color with_alpha(Color color, float alpha)
     {
