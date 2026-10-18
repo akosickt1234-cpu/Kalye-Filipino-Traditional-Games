@@ -43,8 +43,7 @@ public static class LobbyState
     const int MAX_TEAM_SIZE = 5;
     const int MAX_MESSAGES = 100;
     const float SEARCH_STEP_SECONDS = 1f;
-    const string YOU_NAME = "Ruenz";
-    const string AVATAR_ROOT = "Portraits/Lobby/";
+    const string DEFAULT_NAME = "Guest";
 
     static readonly List<LobbyPlayer> player_list = new List<LobbyPlayer>();
     static readonly List<LobbyFriend> friend_list = new List<LobbyFriend>();
@@ -149,13 +148,11 @@ public static class LobbyState
         search_timer = 0f;
         join_counter = 0;
 
-        build_mock_players();
+        build_local_player();
         is_host = true;
-        var self = you;
-        if (self != null) self.is_host = true;
         fit_slots();
-        build_mock_friends();
-        build_mock_messages();
+        friend_list.Clear();
+        message_list.Clear();
     }
 
     public static void minimize()
@@ -521,41 +518,12 @@ public static class LobbyState
         return -1;
     }
 
-    static void build_mock_players()
+    static void build_local_player()
     {
-        var self = new LobbyPlayer { name = YOU_NAME, ready = true, is_you = true, join_order = next_join_order(), avatar_path = avatar_for(YOU_NAME) };
-        var first = new LobbyPlayer { name = "Bayanihan", ready = true, join_order = next_join_order(), avatar_path = avatar_for("Bayanihan") };
-        var second = new LobbyPlayer { name = "Hazel", ready = true, join_order = next_join_order(), avatar_path = avatar_for("Hazel") };
-        var third = new LobbyPlayer { name = "Charles", ready = false, join_order = next_join_order(), avatar_path = avatar_for("Charles") };
+        var name = string.IsNullOrWhiteSpace(PlayState.player_name) ? DEFAULT_NAME : PlayState.player_name;
 
         player_list.Clear();
-        player_list.Add(first);
-        player_list.Add(self);
-        player_list.Add(second);
-        player_list.Add(third);
-        player_list.Add(new LobbyPlayer());
-    }
-
-    static void build_mock_friends()
-    {
-        friend_list.Clear();
-        friend_list.Add(new LobbyFriend { name = "Hazel", online = true, avatar_path = avatar_for("Hazel") });
-        friend_list.Add(new LobbyFriend { name = "Charles", online = true, avatar_path = avatar_for("Charles") });
-        friend_list.Add(new LobbyFriend { name = "Azey", online = true, avatar_path = avatar_for("Azey") });
-        friend_list.Add(new LobbyFriend { name = "Kae", online = false, avatar_path = avatar_for("Kae") });
-        friend_list.Add(new LobbyFriend { name = "Yohan", online = false, avatar_path = avatar_for("Yohan") });
-    }
-
-    static string avatar_for(string name)
-    {
-        return AVATAR_ROOT + name;
-    }
-
-    static void build_mock_messages()
-    {
-        message_list.Clear();
-        message_list.Add(new LobbyMessage { name = "Hazel", text = "Ready na ako!" });
-        message_list.Add(new LobbyMessage { name = "Charles", text = "Wait lang, mag-aayos pa." });
+        player_list.Add(new LobbyPlayer { name = name, ready = true, is_you = true, is_host = true, join_order = next_join_order() });
     }
 }
 
