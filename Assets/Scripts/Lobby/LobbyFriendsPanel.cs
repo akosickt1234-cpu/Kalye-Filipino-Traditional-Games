@@ -178,7 +178,6 @@ public class LobbyFriendRow
     Text button_label;
     CanvasGroup button_group;
     PlayButtonFx button_fx;
-    bool invited;
 
     LobbyFriendRow(LobbyFriend source)
     {
@@ -209,10 +208,8 @@ public class LobbyFriendRow
     {
         if (button == null) return;
 
-        var joined = LobbyState.has_player(friend.name);
-        var done = invited || joined;
-        button_label.text = done ? INVITED_LABEL : INVITE_LABEL;
-        set_enabled(!done);
+        button_label.text = friend.invited ? INVITED_LABEL : INVITE_LABEL;
+        set_enabled(!friend.invited);
     }
 
     void build(RectTransform parent, float height)
@@ -356,10 +353,9 @@ public class LobbyFriendRow
 
     void on_click()
     {
-        if (invited) return;
+        if (friend.invited) return;
 
-        var sent = LobbyState.invite(friend);
-        invited = sent || !friend.online;
+        LobbyState.invite(friend);
         refresh();
     }
 
