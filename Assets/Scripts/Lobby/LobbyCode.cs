@@ -130,7 +130,7 @@ public static class LobbyCode
         input.customCaretColor = true;
         input.selectionColor = PlayTheme.with_alpha(PlayTheme.gold, SELECTION_ALPHA);
 
-        var submit_button = build_square_button("join_button", row, LobbyUi.ICON_ARROW_RIGHT_PATH);
+        var submit_button = build_square_button("join_button", row, LobbyUi.ICON_ARROW_RIGHT_PATH, true);
 
         var layout = row.gameObject.AddComponent<LobbyCodeRow>();
         layout.setup(pill.rectTransform, new List<RectTransform> { submit_button.rectTransform });
@@ -147,11 +147,19 @@ public static class LobbyCode
         view.error_text = error;
     }
 
-    static Button build_square_button(string name, RectTransform parent, string icon_path)
+    static Button build_square_button(string name, RectTransform parent, string icon_path, bool round = false)
     {
-        var hit = PlayUi.image(name, parent, PlayUi.pill(), true);
-        hit.type = Image.Type.Sliced;
-        hit.color = PlayTheme.fill_soft;
+        Image hit;
+        if (round)
+        {
+            hit = PlayUi.circle(name, parent, PlayTheme.fill_soft, true);
+        }
+        else
+        {
+            hit = PlayUi.image(name, parent, PlayUi.pill(), true);
+            hit.type = Image.Type.Sliced;
+            hit.color = PlayTheme.fill_soft;
+        }
 
         var button = hit.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
