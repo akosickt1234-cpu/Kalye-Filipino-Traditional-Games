@@ -17,8 +17,7 @@ public static class LobbyCode
     const int INPUT_MAX_SIZE = 28;
     const int ERROR_MIN_SIZE = 9;
     const int ERROR_MAX_SIZE = 20;
-    const int CODE_GROUP_LENGTH = 4;
-    const int CODE_LENGTH = CODE_GROUP_LENGTH * 2 + 1;
+    const int CODE_LENGTH = 9;
     const float LABEL_BOTTOM = 0.64f;
     const float ROW_TOP = 0.56f;
     const float ROW_BOTTOM = 0.04f;
@@ -191,28 +190,6 @@ public static class LobbyCode
         label.resizeTextMinSize = min_size;
         label.resizeTextMaxSize = max_size;
         return label;
-    }
-
-    public static string format_input(string value)
-    {
-        if (string.IsNullOrEmpty(value)) return string.Empty;
-
-        var chars = new List<char>(CODE_LENGTH);
-        for (var i = 0; i < value.Length && chars.Count < CODE_GROUP_LENGTH * 2; i++)
-        {
-            var c = char.ToUpperInvariant(value[i]);
-            if (char.IsLetterOrDigit(c) && c < 128) chars.Add(c);
-        }
-
-        var text = new System.Text.StringBuilder(CODE_LENGTH);
-        for (var i = 0; i < chars.Count; i++)
-        {
-            if (i == CODE_GROUP_LENGTH) text.Append('-');
-            text.Append(chars[i]);
-        }
-
-        if (chars.Count == CODE_GROUP_LENGTH && value.EndsWith("-")) text.Append('-');
-        return text.ToString();
     }
 }
 
@@ -448,7 +425,7 @@ public class LobbyCodeView : MonoBehaviour
         if (formatting) return;
 
         formatting = true;
-        var formatted = LobbyCode.format_input(value);
+        var formatted = LobbyState.format_code_input(value);
         if (formatted != value)
         {
             join_input.SetTextWithoutNotify(formatted);
