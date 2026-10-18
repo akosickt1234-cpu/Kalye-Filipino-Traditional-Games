@@ -34,13 +34,13 @@ public static class LobbyState
 {
     public const string JOIN_OK = "ok";
     public const string SYSTEM_NAME = "System";
+    public const int SEARCH_TARGET = 5;
     const string PLAY_SCENE = "Play";
     const string MATCH_SCENE = "Match";
     const string CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const int CODE_GROUP_LENGTH = 4;
     const int MAX_TEAM_SIZE = 5;
     const int MAX_MESSAGES = 100;
-    const int SEARCH_TARGET = 5;
     const float SEARCH_STEP_SECONDS = 1f;
     const string YOU_NAME = "Ruenz";
 
@@ -195,6 +195,21 @@ public static class LobbyState
         for (var i = 0; i < chars.Length; i++) chars[i] = CODE_ALPHABET[UnityEngine.Random.Range(0, CODE_ALPHABET.Length)];
         chars[CODE_GROUP_LENGTH] = '-';
         return new string(chars);
+    }
+
+    public static string format_code_input(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+
+        var upper = value.ToUpperInvariant();
+        var chars = new System.Text.StringBuilder(CODE_GROUP_LENGTH * 2 + 1);
+        for (var i = 0; i < upper.Length && chars.Length < CODE_GROUP_LENGTH * 2; i++)
+        {
+            if (CODE_ALPHABET.IndexOf(upper[i]) >= 0) chars.Append(upper[i]);
+        }
+
+        if (chars.Length > CODE_GROUP_LENGTH) chars.Insert(CODE_GROUP_LENGTH, '-');
+        return chars.ToString();
     }
 
     public static string join_code(string value)
