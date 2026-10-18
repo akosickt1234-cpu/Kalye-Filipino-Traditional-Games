@@ -18,7 +18,6 @@ public class LobbyStartBarView : MonoBehaviour
     const string START_TEXT = "START MATCH";
     const string WAITING_TEXT = "Waiting for host";
     const string CANCEL_TEXT = "CANCEL";
-    const int SEARCH_TARGET = 5;
     const float BUTTON_ASPECT = 768f / 217f;
     const float ORNAMENT_MIN_WIDTH = 60f;
     const float ORNAMENT_LEFT_START = 0.02f;
@@ -138,7 +137,7 @@ public class LobbyStartBarView : MonoBehaviour
         var searching = host && LobbyState.searching;
 
         if (!host) label.text = WAITING_TEXT;
-        else if (searching) label.text = "SEARCHING " + LobbyState.opponents_found + "/" + SEARCH_TARGET;
+        else if (searching) label.text = "SEARCHING " + LobbyState.opponents_found + "/" + LobbyState.SEARCH_TARGET;
         else label.text = START_TEXT;
 
         if (searching) LobbyUi.place_fraction(label.rectTransform, LABEL_SIDE, SEARCH_LABEL_BOTTOM, 1f - LABEL_SIDE, SEARCH_LABEL_TOP);
