@@ -21,7 +21,7 @@ public static class LobbyPlayerSlots
     const float CREST_RIGHT = 0.92f;
     const float CREST_BOTTOM = 0.32f;
     const float CREST_TOP = 0.68f;
-    const float RING_ALPHA = 0.55f;
+    const float RING_ALPHA = 0.4f;
     const float RING_INSET = 0.05f;
     const float PLUS_MIN = 0.30f;
     const float PLUS_MAX = 0.70f;
@@ -48,7 +48,6 @@ public static class LobbyPlayerSlots
     const float RHOMBUS_TOP = 0.885f;
     const float RHOMBUS_ALPHA_EMPTY = 0.6f;
     const float FRAME_ALPHA_FAINT = 0.4f;
-    const float FRAME_ALPHA_HOST = 0.8f;
     const float CROWN_BOTTOM = 0.91f;
     const float CROWN_TOP = 1.09f;
     const float CROWN_ICON_INSET = 0.12f;
@@ -163,7 +162,7 @@ public static class LobbyPlayerSlots
 
         var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE);
         card.raycastTarget = true;
-        card.color = PlayTheme.with_alpha(PlayTheme.white, is_you ? 1f : is_host ? FRAME_ALPHA_HOST : FRAME_ALPHA_FAINT);
+        card.color = PlayTheme.with_alpha(PlayTheme.white, empty ? FRAME_ALPHA_FAINT : 1f);
 
         if (empty) build_empty_avatar(frame);
         else build_avatar(frame, player);
