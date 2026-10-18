@@ -50,8 +50,6 @@ public static class LobbyPlayerSlots
     const int NAME_MIN_SIZE = 12;
     const float NAME_HEIGHT_RATIO = 0.7f;
 
-    static readonly Color READY_DOT = new Color(0.30f, 0.78f, 0.42f, 1f);
-
     static RectTransform row_root;
 
     public static void build(RectTransform heading_slot, RectTransform slots_row)
@@ -286,12 +284,12 @@ public static class LobbyPlayerSlots
 
         var dot = PlayUi.image("status_dot", row, PlayUi.pill());
         dot.type = Image.Type.Sliced;
-        dot.color = ready ? READY_DOT : PlayTheme.text_muted;
+        dot.color = ready ? PlayTheme.success : PlayTheme.text_muted;
         var dot_layout = dot.gameObject.AddComponent<LayoutElement>();
         dot_layout.preferredWidth = DOT_SIZE;
         dot_layout.preferredHeight = DOT_SIZE;
 
-        var label = PlayUi.text("status_text", row, ready ? READY_LABEL : WAITING_LABEL, STATUS_SIZE, ready ? READY_DOT : PlayTheme.text_muted, TextAnchor.MiddleLeft);
+        var label = PlayUi.text("status_text", row, ready ? READY_LABEL : WAITING_LABEL, STATUS_SIZE, ready ? PlayTheme.success : PlayTheme.text_muted, TextAnchor.MiddleLeft);
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
         label.verticalOverflow = VerticalWrapMode.Overflow;
     }
