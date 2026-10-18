@@ -6,7 +6,6 @@ using UnityEngine.UI;
 
 public static class LobbyCode
 {
-    const string LABEL_TEXT = "Lobby Code";
     const string COPIED_TEXT = "Copied";
     const string PLACEHOLDER_TEXT = "Enter friend's code";
     const int LABEL_MIN_SIZE = 10;
@@ -52,9 +51,6 @@ public static class LobbyCode
     {
         var label_area = PlayUi.rect("label_area", slot);
         LobbyUi.place_fraction(label_area, 0f, LABEL_BOTTOM, 1f, 1f);
-
-        var label = fitted_text("label", label_area, LABEL_TEXT, LABEL_MIN_SIZE, LABEL_MAX_SIZE, PlayTheme.text_muted, TextAnchor.LowerLeft);
-        LobbyUi.place_fraction(label.rectTransform, 0.02f, 0f, 0.6f, 1f);
 
         var copied = fitted_text("copied_text", label_area, COPIED_TEXT, LABEL_MIN_SIZE, LABEL_MAX_SIZE, PlayTheme.gold_soft, TextAnchor.LowerRight);
         LobbyUi.place_fraction(copied.rectTransform, 0.5f, 0f, 1f, 1f);
