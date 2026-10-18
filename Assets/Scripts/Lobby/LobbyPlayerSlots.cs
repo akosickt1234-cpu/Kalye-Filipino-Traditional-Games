@@ -195,7 +195,7 @@ public static class LobbyPlayerSlots
         var mask = mask_area.gameObject.AddComponent<Mask>();
         mask.showMaskGraphic = true;
 
-        var portrait = PlayUi.sprite(player.avatar_path);
+        var portrait = string.IsNullOrEmpty(player.avatar_path) ? null : Resources.Load<Sprite>(player.avatar_path);
         if (portrait != null)
         {
             var picture = PlayUi.image("portrait", mask_area.rectTransform, portrait);
