@@ -19,7 +19,7 @@ public class LobbyStartBarView : MonoBehaviour
     const string WAITING_TEXT = "Waiting for host";
     const string CANCEL_TEXT = "CANCEL";
     const float BUTTON_ASPECT = 768f / 217f;
-    const float ORNAMENT_MIN_WIDTH = 60f;
+    const float ORNAMENT_HEIGHT = 0.3f;
     const float ORNAMENT_LEFT_START = 0.02f;
     const float ORNAMENT_LEFT_END = 0.20f;
     const float SLOT_LEFT = 0.22f;
@@ -64,14 +64,12 @@ public class LobbyStartBarView : MonoBehaviour
 
     static void build_ornament(RectTransform parent, string name, float x_min, float x_max, bool mirrored)
     {
-        var ornament = PlayOrnament.arrow_line(parent, name, ORNAMENT_MIN_WIDTH, PlayTheme.gold);
-        var height = ornament.sizeDelta.y;
-        ornament.anchorMin = new Vector2(x_min, 0.5f);
-        ornament.anchorMax = new Vector2(x_max, 0.5f);
+        var ornament = LobbyOrnament.diamond_tail(parent, name, PlayTheme.gold, !mirrored);
+        ornament.anchorMin = new Vector2(x_min, 0.5f - ORNAMENT_HEIGHT * 0.5f);
+        ornament.anchorMax = new Vector2(x_max, 0.5f + ORNAMENT_HEIGHT * 0.5f);
         ornament.pivot = new Vector2(0.5f, 0.5f);
-        ornament.anchoredPosition = Vector2.zero;
-        ornament.sizeDelta = new Vector2(0f, height);
-        ornament.localScale = new Vector3(mirrored ? -1f : 1f, 1f, 1f);
+        ornament.offsetMin = Vector2.zero;
+        ornament.offsetMax = Vector2.zero;
     }
 
     void build_button(RectTransform start_bar)

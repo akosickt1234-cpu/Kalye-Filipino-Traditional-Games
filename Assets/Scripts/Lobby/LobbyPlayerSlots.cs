@@ -18,10 +18,9 @@ public static class LobbyPlayerSlots
     const float TITLE_LEFT = 0.10f;
     const float TITLE_RIGHT = 0.72f;
     const float CREST_LEFT = 0.73f;
+    const float CREST_RIGHT = 0.92f;
     const float CREST_BOTTOM = 0.32f;
     const float CREST_TOP = 0.68f;
-    const float GLOW_MIN = -0.25f;
-    const float GLOW_MAX = 1.25f;
     const float RING_ALPHA = 0.55f;
     const float RING_INSET = 0.05f;
     const float PLUS_MIN = 0.30f;
@@ -38,9 +37,9 @@ public static class LobbyPlayerSlots
     const int NAME_MAX_SIZE = 30;
     const int NAME_MIN_SIZE = 12;
     const float NAME_HEIGHT_RATIO = 0.7f;
-    const float AVATAR_LEFT = 0.18f;
-    const float AVATAR_RIGHT = 0.82f;
-    const float AVATAR_BOTTOM = 0.44f;
+    const float AVATAR_LEFT = 0.12f;
+    const float AVATAR_RIGHT = 0.88f;
+    const float AVATAR_BOTTOM = 0.38f;
     const float AVATAR_TOP = 0.76f;
     const float AVATAR_FILL_INSET = 0.07f;
     const float RHOMBUS_LEFT = 0.38f;
@@ -48,6 +47,13 @@ public static class LobbyPlayerSlots
     const float RHOMBUS_BOTTOM = 0.795f;
     const float RHOMBUS_TOP = 0.885f;
     const float RHOMBUS_ALPHA_EMPTY = 0.6f;
+    const float FRAME_ALPHA_FAINT = 0.4f;
+    const float FRAME_ALPHA_HOST = 0.8f;
+    const float RIM_GLOW_YOU_ALPHA = 0.5f;
+    const float RIM_GLOW_HOST_ALPHA = 0.25f;
+    const float AVATAR_GLOW_MIN = -0.35f;
+    const float AVATAR_GLOW_MAX = 1.35f;
+    const float AVATAR_GLOW_ALPHA = 0.6f;
     const float CROWN_BOTTOM = 0.91f;
     const float CROWN_TOP = 1.09f;
     const float CROWN_ICON_INSET = 0.12f;
@@ -126,7 +132,7 @@ public static class LobbyPlayerSlots
         PlayUi.add_shadow(title);
 
         var crest_cell = PlayUi.rect("crest_cell", heading_slot);
-        LobbyUi.place_fraction(crest_cell, CREST_LEFT, 0f, 1f, 1f);
+        LobbyUi.place_fraction(crest_cell, CREST_LEFT, 0f, CREST_RIGHT, 1f);
         build_crest(crest_cell);
     }
 
@@ -146,7 +152,7 @@ public static class LobbyPlayerSlots
 
     static void build_crest(RectTransform cell)
     {
-        var tail = LobbyOrnament.arrow_tail(cell, "crest_tail", PlayTheme.gold, false);
+        var tail = LobbyOrnament.diamond_tail(cell, "crest_tail", PlayTheme.gold, false);
         LobbyUi.place_fraction(tail, 0f, CREST_BOTTOM, 1f, CREST_TOP);
     }
 
@@ -160,15 +166,12 @@ public static class LobbyPlayerSlots
         LobbyUi.place_fraction(frame, CELL_PAD_X, CELL_BOTTOM, 1f - CELL_PAD_X, CELL_TOP);
         fit_aspect(frame, CARD_ASPECT, AspectRatioFitter.AspectMode.FitInParent);
 
-        if (is_you)
-        {
-            var glow = PlayUi.image("you_glow", frame, PlayUi.radial_glow());
-            glow.color = PlayTheme.glow;
-            LobbyUi.place_fraction(glow.rectTransform, GLOW_MIN, GLOW_MIN, GLOW_MAX, GLOW_MAX);
-        }
+        if (is_you) LobbyUi.rim_glow("you_glow", frame, PlayTheme.with_alpha(PlayTheme.gold, RIM_GLOW_YOU_ALPHA));
+        else if (is_host) LobbyUi.rim_glow("host_glow", frame, PlayTheme.with_alpha(PlayTheme.gold, RIM_GLOW_HOST_ALPHA));
 
         var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE);
         card.raycastTarget = true;
+        card.color = PlayTheme.with_alpha(PlayTheme.white, is_you ? 1f : is_host ? FRAME_ALPHA_HOST : FRAME_ALPHA_FAINT);
 
         if (empty) build_empty_avatar(frame);
         else build_avatar(frame, player);
@@ -189,8 +192,10 @@ public static class LobbyPlayerSlots
 
     static RectTransform build_avatar_holder(RectTransform frame, string name)
     {
-        var holder = PlayUi.rect(name, frame);
-        LobbyUi.place_fraction(holder, AVATAR_LEFT, AVATAR_BOTTOM, AVATAR_RIGHT, AVATAR_TOP);
+        var area = PlayUi.rect(name + "_area", frame);
+        LobbyUi.place_fraction(area, AVATAR_LEFT, AVATAR_BOTTOM, AVATAR_RIGHT, AVATAR_TOP);
+
+        var holder = PlayUi.rect(name, area);
         fit_aspect(holder, 1f, AspectRatioFitter.AspectMode.FitInParent);
         return holder;
     }
@@ -218,6 +223,14 @@ public static class LobbyPlayerSlots
     static void build_avatar(RectTransform frame, LobbyPlayer player)
     {
         var holder = build_avatar_holder(frame, "avatar");
+        var emphasized = player.is_you || player.is_host;
+        if (emphasized)
+        {
+            var glow = PlayUi.image("avatar_glow", holder, PlayUi.radial_glow());
+            glow.color = PlayTheme.with_alpha(PlayTheme.gold, AVATAR_GLOW_ALPHA);
+            LobbyUi.place_fraction(glow.rectTransform, AVATAR_GLOW_MIN, AVATAR_GLOW_MIN, AVATAR_GLOW_MAX, AVATAR_GLOW_MAX);
+        }
+
         var portrait = string.IsNullOrEmpty(player.avatar_path) ? null : Resources.Load<Sprite>(player.avatar_path);
 
         var fill = PlayUi.circle("avatar_fill", holder, portrait != null ? PlayTheme.panel_dark : PlayTheme.panel_blue);
@@ -234,7 +247,7 @@ public static class LobbyPlayerSlots
             fit_aspect(picture.rectTransform, rect.width / Mathf.Max(1f, rect.height), AspectRatioFitter.AspectMode.EnvelopeParent);
         }
 
-        build_circle_frame(holder, PlayTheme.white);
+        build_circle_frame(holder, emphasized ? PlayTheme.white : PlayTheme.with_alpha(PlayTheme.white, RING_ALPHA));
     }
 
     static void build_empty_avatar(RectTransform frame)
