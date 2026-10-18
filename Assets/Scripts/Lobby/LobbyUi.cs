@@ -52,4 +52,16 @@ public static class LobbyUi
     {
         PlayUi.go_to_scene(scene_name);
     }
+
+    public static string sanitize(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+
+        var clean = value.Replace("<", string.Empty).Replace(">", string.Empty);
+        var start = 0;
+        var end = clean.Length - 1;
+        while (start <= end && (char.IsControl(clean[start]) || char.IsWhiteSpace(clean[start]))) start++;
+        while (end >= start && (char.IsControl(clean[end]) || char.IsWhiteSpace(clean[end]))) end--;
+        return clean.Substring(start, end - start + 1);
+    }
 }
