@@ -18,17 +18,9 @@ public static class LobbyPlayerSlots
     const float EMBLEM_RIGHT = 0.09f;
     const float TITLE_LEFT = 0.10f;
     const float TITLE_RIGHT = 0.72f;
-    const float CREST_LEFT = 0.74f;
-    const float EMBLEM_OUTER_MIN = 0.12f;
-    const float EMBLEM_OUTER_MAX = 0.88f;
-    const float EMBLEM_INNER_MIN = 0.32f;
-    const float EMBLEM_INNER_MAX = 0.68f;
-    const float EMBLEM_CORE_MIN = 0.42f;
-    const float EMBLEM_CORE_MAX = 0.58f;
-    const float DIAMOND_ROTATION = 45f;
-    const float CREST_ARROW_SIZE = 22f;
-    const float CREST_GAP = 8f;
-    const float CREST_THICKNESS = 2f;
+    const float CREST_LEFT = 0.73f;
+    const float CREST_BOTTOM = 0.32f;
+    const float CREST_TOP = 0.68f;
     const float GLOW_MIN = -0.25f;
     const float GLOW_MAX = 1.25f;
     const float RING_ALPHA = 0.55f;
@@ -111,39 +103,18 @@ public static class LobbyPlayerSlots
         PlayUi.stretch(emblem);
         fit_aspect(emblem, 1f, AspectRatioFitter.AspectMode.FitInParent);
 
-        build_diamond("diamond_outer", emblem, EMBLEM_OUTER_MIN, EMBLEM_OUTER_MAX, PlayTheme.gold);
-        build_diamond("diamond_inner", emblem, EMBLEM_INNER_MIN, EMBLEM_INNER_MAX, PlayTheme.panel_blue);
-        build_diamond("diamond_core", emblem, EMBLEM_CORE_MIN, EMBLEM_CORE_MAX, PlayTheme.gold_soft);
-    }
-
-    static void build_diamond(string name, RectTransform parent, float min, float max, Color color)
-    {
-        var diamond = PlayUi.image(name, parent, null);
-        diamond.color = color;
-        LobbyUi.place_fraction(diamond.rectTransform, min, min, max, max);
-        diamond.rectTransform.localRotation = Quaternion.Euler(0f, 0f, DIAMOND_ROTATION);
+        var sun = PlayUi.image("sun", emblem, PlayUi.sprite(LobbyUi.ICON_SUN_PATH));
+        sun.enabled = sun.sprite != null;
+        sun.preserveAspect = true;
+        sun.color = PlayTheme.gold;
+        PlayUi.stretch(sun.rectTransform);
+        PlayUi.add_shadow(sun, 2f);
     }
 
     static void build_crest(RectTransform cell)
     {
-        var arrow = PlayOrnament.arrow_up(cell, "crest_arrow", CREST_ARROW_SIZE, PlayTheme.gold);
-        arrow.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        arrow.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-
-        var reach = CREST_GAP + CREST_ARROW_SIZE * 0.5f;
-        var half = CREST_THICKNESS * 0.5f;
-
-        var left = PlayOrnament.line(cell, "line_left", 10f, CREST_THICKNESS, PlayTheme.gold, true, false);
-        left.rectTransform.anchorMin = new Vector2(0f, 0.5f);
-        left.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        left.rectTransform.offsetMin = new Vector2(0f, -half);
-        left.rectTransform.offsetMax = new Vector2(-reach, half);
-
-        var right = PlayOrnament.line(cell, "line_right", 10f, CREST_THICKNESS, PlayTheme.gold, false, true);
-        right.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        right.rectTransform.anchorMax = new Vector2(1f, 0.5f);
-        right.rectTransform.offsetMin = new Vector2(reach, -half);
-        right.rectTransform.offsetMax = new Vector2(0f, half);
+        var tail = LobbyOrnament.arrow_tail(cell, "crest_tail", PlayTheme.gold, false);
+        LobbyUi.place_fraction(tail, 0f, CREST_BOTTOM, 1f, CREST_TOP);
     }
 
     static void build_card(RectTransform cell, LobbyPlayer player)
