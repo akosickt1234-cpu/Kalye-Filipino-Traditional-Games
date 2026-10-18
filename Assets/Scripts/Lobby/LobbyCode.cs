@@ -81,7 +81,7 @@ public static class LobbyCode
         var refresh_button = build_square_button("refresh_button", row, LobbyUi.ICON_REFRESH_PATH);
 
         var layout = row.gameObject.AddComponent<LobbyCodeRow>();
-        layout.setup(pill.rectTransform, new List<RectTransform> { refresh_button.rectTransform, copy_button.rectTransform });
+        layout.setup(pill.rectTransform, new List<RectTransform> { (RectTransform)refresh_button.transform, (RectTransform)copy_button.transform });
 
         view.code_text = code;
         view.copied_text = copied;
@@ -132,7 +132,7 @@ public static class LobbyCode
         var submit_button = build_square_button("join_button", row, LobbyUi.ICON_ARROW_RIGHT_PATH, true);
 
         var layout = row.gameObject.AddComponent<LobbyCodeRow>();
-        layout.setup(pill.rectTransform, new List<RectTransform> { submit_button.rectTransform });
+        layout.setup(pill.rectTransform, new List<RectTransform> { (RectTransform)submit_button.transform });
 
         var error_area = PlayUi.rect("error_area", slot);
         LobbyUi.place_fraction(error_area, 0.04f, ERROR_BOTTOM, 1f, ERROR_TOP);
