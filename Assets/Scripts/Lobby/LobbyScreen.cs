@@ -20,6 +20,10 @@ public class LobbyScreen : MonoBehaviour
     const float MAIN_RIGHT = 0.66f;
     const float FRIENDS_LEFT = 0.70f;
     const float FRIENDS_RIGHT = 0.95f;
+    const float HEADING_LEFT = 0.03f;
+    const float HEADING_RIGHT = 0.58f;
+    const float HEADING_TOP = 0.04f;
+    const float HEADING_BOTTOM = 0.22f;
     const float CODE_LEFT = 0.60f;
     const float CODE_RIGHT = 0.97f;
     const float CODE_TOP = 0.04f;
@@ -56,6 +60,7 @@ public class LobbyScreen : MonoBehaviour
         var main_panel = LobbyUi.panel("main_panel", root, LobbyUi.PANEL_LOBBY_PATH, LobbyUi.PANEL_BORDER_SCALE);
         place_from_top(main_panel.rectTransform, MAIN_LEFT, PANEL_TOP, MAIN_RIGHT, PANEL_BOTTOM);
 
+        var heading_slot = create_region("heading_slot", main_panel.rectTransform, HEADING_LEFT, 1f - HEADING_BOTTOM, HEADING_RIGHT, 1f - HEADING_TOP);
         var code_slot = create_region("code_slot", main_panel.rectTransform, CODE_LEFT, 1f - CODE_BOTTOM, CODE_RIGHT, 1f - CODE_TOP);
         var slots_row = create_region("slots_row", main_panel.rectTransform, SLOTS_LEFT, 1f - SLOTS_BOTTOM, SLOTS_RIGHT, 1f - SLOTS_TOP);
         var info_row = create_region("info_row", main_panel.rectTransform, SLOTS_LEFT, 1f - INFO_BOTTOM, SLOTS_RIGHT, 1f - INFO_TOP);
@@ -70,7 +75,7 @@ public class LobbyScreen : MonoBehaviour
         var join_slot = create_region("join_slot", root, JOIN_LEFT, 1f - BOTTOM_BOTTOM, JOIN_RIGHT, 1f - BOTTOM_TOP);
 
         call_region("LobbyTopBar", top_bar);
-        call_region("LobbyPlayerSlots", slots_row);
+        call_region("LobbyPlayerSlots", heading_slot, slots_row);
         call_region("LobbyChat", chat_col);
         call_region("LobbyInfoBar", count_col, mode_col);
         call_region("LobbyCode", code_slot, join_slot);
