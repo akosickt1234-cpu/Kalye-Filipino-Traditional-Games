@@ -346,7 +346,6 @@ public class LobbyCodeView : MonoBehaviour
 
         refresh_code_text();
         refresh_host_state();
-        PlayFocus.default_target = copy_button.gameObject;
     }
 
     void OnDestroy()
