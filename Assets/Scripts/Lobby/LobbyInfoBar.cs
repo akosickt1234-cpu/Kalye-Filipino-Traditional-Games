@@ -7,10 +7,9 @@ public static class LobbyInfoBar
 {
     const string PLAYERS_ICON_PATH = "Icons/Play/IconPlayers";
     const string COUNT_SUFFIX = "PLAYERS";
-    const string MODE_CAPTION = "MODE";
+    const string MODE_ICON_PATH = "Icons/Play/IconNavMode";
     const int COUNT_FONT_SIZE = 30;
     const int COUNT_MIN_FONT_SIZE = 14;
-    const int CAPTION_FONT_SIZE = 20;
     const int NAME_FONT_SIZE = 32;
     const int MODE_MIN_FONT_SIZE = 12;
     const float DIVIDER_V_MIN = 0.12f;
@@ -27,12 +26,14 @@ public static class LobbyInfoBar
     const float MODE_HIT_RIGHT = 0.98f;
     const float MODE_HIT_V_MIN = 0.08f;
     const float MODE_HIT_V_MAX = 0.92f;
-    const float MODE_TEXT_LEFT = 0.08f;
+    const float MODE_ICON_LEFT = 0.06f;
+    const float MODE_ICON_RIGHT = 0.20f;
+    const float MODE_ICON_V_MIN = 0.22f;
+    const float MODE_ICON_V_MAX = 0.78f;
+    const float MODE_TEXT_LEFT = 0.24f;
     const float MODE_TEXT_RIGHT = 0.78f;
-    const float CAPTION_V_MIN = 0.56f;
-    const float CAPTION_V_MAX = 0.88f;
     const float NAME_V_MIN = 0.10f;
-    const float NAME_V_MAX = 0.60f;
+    const float NAME_V_MAX = 0.90f;
     const float CHEVRON_LEFT = 0.80f;
     const float CHEVRON_RIGHT = 0.96f;
     const float CHEVRON_SIZE = 26f;
@@ -106,9 +107,11 @@ public static class LobbyInfoBar
 
         var group = hit.gameObject.AddComponent<CanvasGroup>();
 
-        var caption = PlayUi.text("mode_caption", hit.rectTransform, MODE_CAPTION, CAPTION_FONT_SIZE, PlayTheme.text_muted, TextAnchor.LowerLeft);
-        fit_text(caption, MODE_MIN_FONT_SIZE, CAPTION_FONT_SIZE);
-        LobbyUi.place_fraction(caption.rectTransform, MODE_TEXT_LEFT, CAPTION_V_MIN, MODE_TEXT_RIGHT, CAPTION_V_MAX);
+        var mode_icon_sprite = PlayUi.sprite(MODE_ICON_PATH);
+        var mode_icon = PlayUi.image("mode_icon", hit.rectTransform, mode_icon_sprite, false);
+        mode_icon.preserveAspect = true;
+        if (mode_icon_sprite != null) mode_icon.color = PlayTheme.icon;
+        LobbyUi.place_fraction(mode_icon.rectTransform, MODE_ICON_LEFT, MODE_ICON_V_MIN, MODE_ICON_RIGHT, MODE_ICON_V_MAX);
 
         var mode_label = PlayUi.text("mode_name", hit.rectTransform, string.Empty, NAME_FONT_SIZE, PlayTheme.gold_soft, TextAnchor.MiddleLeft);
         fit_text(mode_label, MODE_MIN_FONT_SIZE, NAME_FONT_SIZE);
