@@ -16,7 +16,7 @@ public static class LobbyInfoBar
     const float DIVIDER_V_MAX = 0.88f;
     const float DIVIDER_THICKNESS = 2f;
     const float DIVIDER_ALPHA = 0.6f;
-    const float TOP_LINE_ANCHOR = 1.09f;
+    const float TOP_LINE_ANCHOR = 0.93f;
     const float TOP_LINE_THICKNESS = 2f;
     const float COUNT_ICON_LEFT = 0.12f;
     const float COUNT_ICON_RIGHT = 0.30f;
