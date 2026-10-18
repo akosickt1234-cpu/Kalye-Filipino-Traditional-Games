@@ -3,19 +3,20 @@ using UnityEngine.UI;
 
 public static class LobbyOrnament
 {
-    const float ARROW_MIN = 0.12f;
-    const float ARROW_MAX = 0.88f;
+    const float DEFAULT_ARROW_HEIGHT = 0.76f;
     const float LINE_THICKNESS = 2f;
     const float LINE_OVERLAP = 0.5f;
 
-    public static RectTransform arrow_tail(Transform parent, string name, Color color, bool arrow_on_right)
+    public static RectTransform arrow_tail(Transform parent, string name, Color color, bool arrow_on_right, float arrow_height = DEFAULT_ARROW_HEIGHT)
     {
+        var arrow_min = 0.5f - arrow_height * 0.5f;
+        var arrow_max = 0.5f + arrow_height * 0.5f;
         var holder = PlayUi.rect(name, parent);
 
         var arrow_slot = PlayUi.rect("arrow_slot", holder);
         var edge = arrow_on_right ? 1f : 0f;
-        arrow_slot.anchorMin = new Vector2(edge, ARROW_MIN);
-        arrow_slot.anchorMax = new Vector2(edge, ARROW_MAX);
+        arrow_slot.anchorMin = new Vector2(edge, arrow_min);
+        arrow_slot.anchorMax = new Vector2(edge, arrow_max);
         arrow_slot.pivot = new Vector2(edge, 0.5f);
         arrow_slot.offsetMin = Vector2.zero;
         arrow_slot.offsetMax = Vector2.zero;

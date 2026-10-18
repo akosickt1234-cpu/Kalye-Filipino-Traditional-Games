@@ -13,7 +13,8 @@ public static class LobbyTopBar
     private const float GLOW_OVERSHOOT = 0.55f;
     private const float LINE_GAP = 8f;
     private const float LINE_HEIGHT = 3f;
-    private const float CREST_WIDTH = 72f;
+    private const float CREST_WIDTH = 150f;
+    private const float CREST_ARROW_HEIGHT = 0.42f;
 
     public static void build(RectTransform root)
     {
@@ -35,14 +36,14 @@ public static class LobbyTopBar
         group.childForceExpandWidth = false;
         group.childForceExpandHeight = true;
 
-        build_crest(crumb, "CrestLeft");
+        build_crest(crumb, "CrestLeft", true);
 
         Text label = PlayUi.text("BreadcrumbText", crumb, string.Empty, 24, PlayTheme.text, TextAnchor.MiddleCenter);
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
         label.verticalOverflow = VerticalWrapMode.Overflow;
         PlayUi.add_shadow(label);
 
-        build_crest(crumb, "CrestRight");
+        build_crest(crumb, "CrestRight", false);
 
         Button private_lobby = build_circle(bar, "ButtonPrivateLobby", LobbyUi.ICON_PRIVATE_LOBBY_PATH, 0f, false, on_private_lobby);
         Button settings = build_circle(bar, "ButtonSettings", SETTINGS_ICON_PATH, 0f, false, on_settings);
@@ -88,9 +89,9 @@ public static class LobbyTopBar
         PlayFocus.clear_selection();
     }
 
-    private static void build_crest(RectTransform parent, string object_name)
+    private static void build_crest(RectTransform parent, string object_name, bool arrow_on_right)
     {
-        RectTransform crest = PlayOrnament.crest_line(parent, object_name, CREST_WIDTH, PlayTheme.gold);
+        RectTransform crest = LobbyOrnament.arrow_tail(parent, object_name, PlayTheme.gold, arrow_on_right, CREST_ARROW_HEIGHT);
         LayoutElement element = crest.gameObject.AddComponent<LayoutElement>();
         element.minWidth = CREST_WIDTH;
         element.preferredWidth = CREST_WIDTH;
@@ -157,7 +158,7 @@ public class LobbyTopBarLayout : MonoBehaviour
     private const float TEXT_RATIO = 0.26f;
     private const float CRUMB_RIGHT_ANCHOR = 0.55f;
     private const int MIN_TEXT_SIZE = 12;
-    private const string SEPARATOR = " / LOBBY";
+    private const string SEPARATOR = "/LOBBY";
     private const string LOBBY_ONLY = "LOBBY";
     private const char HAIR_SPACE = ' ';
 
