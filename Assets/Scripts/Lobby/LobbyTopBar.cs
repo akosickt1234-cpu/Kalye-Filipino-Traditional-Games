@@ -7,7 +7,6 @@ public static class LobbyTopBar
     private const string SETTINGS_SCENE = "Settings";
     private const string PRIVATE_LOBBY_SCENE = "PrivateLobby";
     private const string SETTINGS_ICON_PATH = "Icons/Play/IconTopSettings";
-    private const string RING_PATH = "Frames/Play/FrameAvatarRing";
     private const float ICON_GLYPH_RATIO = 0.62f;
     private const float ICON_SHADOW_DISTANCE = 3f;
     private const float GLOW_OVERSHOOT = 0.55f;
@@ -15,6 +14,7 @@ public static class LobbyTopBar
     private const float LINE_HEIGHT = 3f;
     private const float CREST_WIDTH = 150f;
     private const float CREST_ARROW_HEIGHT = 0.42f;
+    private const float BACK_FILL_INSET = 0.1f;
 
     public static void build(RectTransform root)
     {
@@ -100,14 +100,29 @@ public static class LobbyTopBar
 
     private static Button build_circle(RectTransform parent, string object_name, string icon_path, float icon_rotation, bool with_ring, UnityEngine.Events.UnityAction on_click)
     {
-        Image hit = PlayUi.image(object_name, parent, PlayUi.pill(), true);
-        hit.type = Image.Type.Sliced;
-        hit.color = PlayTheme.fill_soft;
+        Image hit;
+        if (with_ring)
+        {
+            hit = PlayUi.image(object_name, parent, null, true);
+        }
+        else
+        {
+            hit = PlayUi.image(object_name, parent, PlayUi.pill(), true);
+            hit.type = Image.Type.Sliced;
+            hit.color = PlayTheme.fill_soft;
+        }
 
         Button button = hit.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
         button.transition = Selectable.Transition.None;
         button.onClick.AddListener(on_click);
+
+        if (with_ring)
+        {
+            Image fill = PlayUi.circle("Fill", hit.rectTransform, PlayTheme.panel_blue);
+            fill.preserveAspect = false;
+            anchor_fraction(fill.rectTransform, BACK_FILL_INSET, BACK_FILL_INSET, 1f - BACK_FILL_INSET, 1f - BACK_FILL_INSET);
+        }
 
         Image glow = PlayUi.image("Glow", hit.rectTransform, PlayUi.radial_glow());
         glow.color = PlayTheme.clear;
@@ -115,9 +130,9 @@ public static class LobbyTopBar
 
         if (with_ring)
         {
-            Image ring = PlayUi.image("Ring", hit.rectTransform, PlayUi.sprite(RING_PATH));
-            ring.enabled = ring.sprite != null;
-            PlayUi.stretch(ring.rectTransform);
+            Image frame = PlayUi.image("Frame", hit.rectTransform, PlayUi.sprite(LobbyUi.BACK_FRAME_PATH));
+            frame.enabled = frame.sprite != null;
+            PlayUi.stretch(frame.rectTransform);
         }
 
         Image icon = PlayUi.image("Icon", hit.rectTransform, PlayUi.sprite(icon_path));
@@ -151,6 +166,7 @@ public static class LobbyTopBar
 public class LobbyTopBarLayout : MonoBehaviour
 {
     private const float BUTTON_RATIO = 0.56f;
+    private const float BACK_ASPECT = 512f / 415f;
     private const float MARGIN_RATIO = 0.35f;
     private const float GAP_RATIO = 0.3f;
     private const float CRUMB_GAP_RATIO = 0.4f;
@@ -245,9 +261,10 @@ public class LobbyTopBarLayout : MonoBehaviour
         float margin = height * MARGIN_RATIO;
         float gap = height * GAP_RATIO;
 
-        place_left(back, margin, size);
+        float back_width = size * BACK_ASPECT;
+        place_left(back, margin, back_width, size);
 
-        float crumb_left = margin + size + height * CRUMB_GAP_RATIO;
+        float crumb_left = margin + back_width + height * CRUMB_GAP_RATIO;
         crumb.anchorMin = new Vector2(0f, 0.5f);
         crumb.anchorMax = new Vector2(CRUMB_RIGHT_ANCHOR, 0.5f);
         crumb.pivot = new Vector2(0f, 0.5f);
@@ -271,9 +288,9 @@ public class LobbyTopBarLayout : MonoBehaviour
         }
     }
 
-    private static void place_left(RectTransform r, float x, float size)
+    private static void place_left(RectTransform r, float x, float width, float height)
     {
-        PlayUi.place(r, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(x, 0f), new Vector2(size, size));
+        PlayUi.place(r, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(x, 0f), new Vector2(width, height));
     }
 
     private static void place_right(RectTransform r, float x, float size)

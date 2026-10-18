@@ -5,7 +5,7 @@ public static class LobbyUi
 {
     public const string PANEL_LOBBY_PATH = "Frames/Lobby/PanelLobby";
     public const string FRAME_PLAYER_CARD_PATH = "Frames/Lobby/FramePlayerCard";
-    public const string FRAME_AVATAR_OVAL_PATH = "Frames/Lobby/FrameAvatarOval";
+    public const string BACK_FRAME_PATH = "Frames/Lobby/BackFrame";
     public const string ICON_CROWN_PATH = "Icons/Lobby/IconCrown";
     public const string ICON_MINIMIZE_PATH = "Icons/Lobby/IconMinimize";
     public const string ICON_KEY_PATH = "Icons/Lobby/IconKey";
