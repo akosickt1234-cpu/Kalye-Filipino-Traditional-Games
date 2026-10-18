@@ -16,6 +16,8 @@ public static class PlayUi
     const int PILL_SIZE = 64;
     const float PILL_RADIUS = 32f;
     const float PILL_BORDER = 31f;
+    const int CIRCLE_SIZE = 128;
+    const float CIRCLE_EDGE_SHARPNESS = 64f;
 
     static readonly Dictionary<string, Sprite> sprite_cache = new Dictionary<string, Sprite>();
     static readonly HashSet<string> missing_paths = new HashSet<string>();
@@ -24,6 +26,7 @@ public static class PlayUi
     static Sprite vertical_fade_sprite;
     static Sprite radial_glow_sprite;
     static Sprite pill_sprite;
+    static Sprite circle_sprite;
 
     public static Font font
     {
@@ -228,5 +231,40 @@ public static class PlayUi
         }
 
         SceneManager.LoadScene(scene_name);
+    }
+
+    public static Image circle(string name, Transform parent, Color color, bool raycast = false)
+    {
+        var picture = image(name, parent, circle_art(), raycast);
+        picture.type = Image.Type.Simple;
+        picture.preserveAspect = true;
+        picture.color = color;
+        return picture;
+    }
+
+    static Sprite circle_art()
+    {
+        if (circle_sprite != null) return circle_sprite;
+
+        var texture = new Texture2D(CIRCLE_SIZE, CIRCLE_SIZE, TextureFormat.RGBA32, false);
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+
+        var pixels = new Color[CIRCLE_SIZE * CIRCLE_SIZE];
+        for (var y = 0; y < CIRCLE_SIZE; y++)
+        {
+            for (var x = 0; x < CIRCLE_SIZE; x++)
+            {
+                var u = (x + 0.5f) / CIRCLE_SIZE;
+                var v = (y + 0.5f) / CIRCLE_SIZE;
+                var distance = Vector2.Distance(new Vector2(u, v), new Vector2(0.5f, 0.5f)) * 2f;
+                pixels[y * CIRCLE_SIZE + x] = PlayTheme.with_alpha(PlayTheme.white, (1f - distance) * CIRCLE_EDGE_SHARPNESS);
+            }
+        }
+
+        texture.SetPixels(pixels);
+        texture.Apply(false, true);
+        circle_sprite = Sprite.Create(texture, new Rect(0f, 0f, CIRCLE_SIZE, CIRCLE_SIZE), new Vector2(0.5f, 0.5f), 100f);
+        return circle_sprite;
     }
 }
