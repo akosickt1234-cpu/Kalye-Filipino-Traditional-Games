@@ -388,11 +388,13 @@ public class LobbyFriendRow
 
     static string initial_of(string value)
     {
-        return string.IsNullOrEmpty(value) ? "?" : value.Substring(0, 1).ToUpperInvariant();
+        var clean = LobbyUi.sanitize(value);
+        return clean.Length == 0 ? "?" : clean.Substring(0, 1).ToUpperInvariant();
     }
 
     static string display_name(string value)
     {
-        return string.IsNullOrEmpty(value) ? "Unknown" : value;
+        var clean = LobbyUi.sanitize(value);
+        return clean.Length == 0 ? "Unknown" : clean;
     }
 }
