@@ -16,6 +16,8 @@ public static class LobbyInfoBar
     const float DIVIDER_V_MAX = 0.88f;
     const float DIVIDER_THICKNESS = 2f;
     const float DIVIDER_ALPHA = 0.6f;
+    const float TOP_LINE_ANCHOR = 1.09f;
+    const float TOP_LINE_THICKNESS = 2f;
     const float COUNT_ICON_LEFT = 0.12f;
     const float COUNT_ICON_RIGHT = 0.30f;
     const float COUNT_ICON_V_MIN = 0.22f;
@@ -43,6 +45,9 @@ public static class LobbyInfoBar
 
     public static void build(RectTransform count_col, RectTransform mode_col)
     {
+        var row = count_col != null ? count_col.parent as RectTransform : null;
+        if (row != null) build_top_line(row);
+
         if (count_col != null)
         {
             build_divider(count_col);
@@ -73,6 +78,17 @@ public static class LobbyInfoBar
 
         var divider = holder.gameObject.AddComponent<LobbyInfoBarDivider>();
         divider.setup(holder, line.rectTransform, DIVIDER_THICKNESS);
+    }
+
+    static void build_top_line(RectTransform row)
+    {
+        var color = PlayTheme.with_alpha(PlayTheme.gold, DIVIDER_ALPHA);
+        var line = PlayOrnament.line(row, "info_top_line", 0f, TOP_LINE_THICKNESS, color, true, true);
+        var rect = line.rectTransform;
+        rect.anchorMin = new Vector2(0f, TOP_LINE_ANCHOR);
+        rect.anchorMax = new Vector2(1f, TOP_LINE_ANCHOR);
+        rect.offsetMin = new Vector2(0f, -TOP_LINE_THICKNESS * 0.5f);
+        rect.offsetMax = new Vector2(0f, TOP_LINE_THICKNESS * 0.5f);
     }
 
     static void build_count(RectTransform column)
