@@ -692,6 +692,7 @@ GameObject:
   - component: {fileID: 7486020098013570915}
   - component: {fileID: 3777811796310616838}
   - component: {fileID: 7280999098390212357}
+  - component: {fileID: 838174640154054096}
   m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
@@ -798,7 +799,6 @@ MonoBehaviour:
   animatorController: {fileID: 1257500209283897145}
   player: {fileID: 3619135988846754672}
   tsinelasPrefab: {fileID: 6807346094398842588, guid: 7a9922c40ac65a344b901bec81e747ad, type: 3}
-  soundHandler: {fileID: 7280999098390212357}
   pickupDistance: 3
   throwSpeed: 12
   spawnDistance: 1.2
@@ -806,6 +806,8 @@ MonoBehaviour:
   tayaDisplay: 0
   gotHitDisplay: 0
   textLabel: {fileID: 3350002234521050231}
+  lineDetector: {fileID: 838174640154054096}
+  soundHandler: {fileID: 7280999098390212357}
 --- !u!114 &-1798745715432377660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1037,6 +1039,23 @@ MonoBehaviour:
   thud: {fileID: 8300000, guid: 0deaf629609a8054aa568b40c89780fa, type: 3}
   walk: {fileID: 8300000, guid: 13650c0643bb2764dbafe4a04e7d6e50, type: 3}
   run: {fileID: 8300000, guid: c911c83ae3833764c844f1aaf21b62ec, type: 3}
+--- !u!114 &838174640154054096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9191364300320882001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4bdfcd532dc8ff47b670efaba2c595c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
+  lineLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  checkRadius: 0.12
+  groundCheckHeight: 0.1
 --- !u!1001 &4334884660689332604
 PrefabInstance:
   m_ObjectHideFlags: 0

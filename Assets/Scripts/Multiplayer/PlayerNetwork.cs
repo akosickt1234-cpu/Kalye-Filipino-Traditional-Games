@@ -60,9 +60,6 @@ public class PlayerNetwork : NetworkBehaviour
     NetworkVariableWritePermission.Server
     );
 
-    [Header("SoundHandler")]
-    [SerializeField] private SoundHandler soundHandler;
-
     [SerializeField] private float pickupDistance = 2f;
     [SerializeField] private float throwSpeed = 12f;
     [SerializeField] private float spawnDistance = 1.2f;
@@ -91,6 +88,11 @@ public class PlayerNetwork : NetworkBehaviour
     [Header("Error Handler")]
     [SerializeField] private TextMeshProUGUI textLabel;
 
+    [Header("PatinteroLineDetector")]
+    [SerializeField] private PatinteroLineDetector lineDetector;
+
+    [Header("SoundHandler")]
+    [SerializeField] private SoundHandler soundHandler;
     IEnumerator TextChange(string message)
     {
         textLabel.text = message;
@@ -545,9 +547,18 @@ public class PlayerNetwork : NetworkBehaviour
         Vector3 movement =
             (forward * vertical + right * horizontal).normalized;
 
-        rb.MovePosition(
+        /*rb.MovePosition(
             rb.position + movement * speed * Time.fixedDeltaTime
-        );
+        );*/
+
+        Vector3 nextPosition =
+    rb.position + movement * speed * Time.fixedDeltaTime;
+
+        // Replace IsTaya with your existing role check.
+        if (!taya.Value || lineDetector.IsOnLine(nextPosition))
+        {
+            rb.MovePosition(nextPosition);
+        }
 
         // Animation
         animatorController.SetLocomotion(
