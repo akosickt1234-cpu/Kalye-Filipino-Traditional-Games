@@ -19,6 +19,7 @@ public class PlayerNetwork : NetworkBehaviour
     [SerializeField] private Rigidbody rb;
     [SerializeField] private float moveSpeed = 0.5f;
     [SerializeField] private float sprintSpeedMult = 1.2f;
+    private bool wasGrounded;
 
     [Header("Jump")]
     [SerializeField] private float jumpForce = 2f;
@@ -58,6 +59,9 @@ public class PlayerNetwork : NetworkBehaviour
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server
     );
+
+    [Header("SoundHandler")]
+    [SerializeField] private SoundHandler soundHandler;
 
     [SerializeField] private float pickupDistance = 2f;
     [SerializeField] private float throwSpeed = 12f;
@@ -569,6 +573,27 @@ public class PlayerNetwork : NetworkBehaviour
         {
             canGet = true;
         }
+
+        if (isGrounded && !wasGrounded)
+        {
+            soundHandler.Thud();
+        }
+
+        wasGrounded = isGrounded;
+
+        if (isSprinting == true && hasMovementInput == true)
+        {
+            soundHandler.Run();
+        }
+        else if (isSprinting == false && hasMovementInput == true)
+        {
+            soundHandler.Walk();
+        }
+        else if (isSprinting == false && hasMovementInput == false)
+        {
+            soundHandler.Idle();
+        }
+        
 
         float targetZ = isSprinting ? 1f : 0.35f;
 
