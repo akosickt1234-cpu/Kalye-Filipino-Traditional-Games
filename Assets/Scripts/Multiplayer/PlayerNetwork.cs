@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.UI;
 using Unity.VisualScripting;
+using TMPro;
 
 public class PlayerNetwork : NetworkBehaviour
 {
@@ -56,7 +57,8 @@ public class PlayerNetwork : NetworkBehaviour
     false,
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server
-);
+    );
+
     [SerializeField] private float pickupDistance = 2f;
     [SerializeField] private float throwSpeed = 12f;
     [SerializeField] private float spawnDistance = 1.2f;
@@ -81,6 +83,16 @@ public class PlayerNetwork : NetworkBehaviour
     bool catchPlayer = false;
     [SerializeField] private bool tayaDisplay;
     [SerializeField] private bool gotHitDisplay;
+
+    [Header("Error Handler")]
+    [SerializeField] private TextMeshProUGUI textLabel;
+
+    IEnumerator TextChange(string message)
+    {
+        textLabel.text = message;
+        yield return new WaitForSeconds(1f);
+        textLabel.text = "";
+    }
 
     [Rpc(SendTo.Server)]
     private void BecomeTayaRpc(RpcParams rpcParams = default)
@@ -324,6 +336,7 @@ public class PlayerNetwork : NetworkBehaviour
         if (distance > pickupDistance)
         {
             Debug.Log("You're too far away from the tsinelas!");
+            StartCoroutine(TextChange("anlayo ko sa tsinelas"));
             return;
         }
 
