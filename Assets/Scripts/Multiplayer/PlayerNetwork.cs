@@ -76,11 +76,13 @@ public class PlayerNetwork : NetworkBehaviour
     NetworkVariableWritePermission.Server
     );
 
-    private NetworkVariable<bool> taya = new NetworkVariable<bool>(
+    public NetworkVariable<bool> taya = new NetworkVariable<bool>(
     false,
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server
     );
+
+    
     bool catchPlayer = false;
     [SerializeField] private bool tayaDisplay;
     [SerializeField] private bool gotHitDisplay;
@@ -262,7 +264,7 @@ public class PlayerNetwork : NetworkBehaviour
     {
         if (!IsOwner) return;
         cam = camera.gameObject;
-        Cursor.lockState = CursorLockMode.Locked;
+        //Cursor.lockState = CursorLockMode.Locked;
         rb = GetComponent<Rigidbody>();
     }
 
