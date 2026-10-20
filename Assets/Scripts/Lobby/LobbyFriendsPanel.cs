@@ -10,16 +10,17 @@ public static class LobbyFriendsPanel
     const float CONTENT_RIGHT = 0.93f;
     const float CONTENT_BOTTOM = 0.05f;
     const float CONTENT_TOP = 0.95f;
-    const float HEADER_BOTTOM = 0.88f;
-    const float UNDERLINE_Y = 0.865f;
+    const float HEADER_BOTTOM = 0.859f;
+    const float UNDERLINE_Y = 0.844f;
     const float UNDERLINE_THICKNESS = 2f;
-    const float LIST_TOP = 0.84f;
+    const float LIST_TOP = 0.82f;
     const float HEADER_TEXT_START = 0.17f;
     const int HEADER_MIN_SIZE = 18;
     const int HEADER_MAX_SIZE = 38;
     internal const float ROW_HEIGHT = 96f;
     const float UNDERLINE_ALPHA = 0.45f;
     internal const float EMPTY_ALPHA = 0.8f;
+    internal const float EMPTY_RHOMBUS_SIZE = 26f;
     internal const string EMPTY_HINT_TEXT = "Add friends and play together!";
     internal const string ONLINE_SUFFIX = " ONLINE";
     const float PILL_LEFT = 0.6f;
@@ -71,7 +72,7 @@ public static class LobbyFriendsPanel
         icon.enabled = icon.sprite != null;
         PlayUi.stretch(icon.rectTransform);
 
-        var title = PlayUi.text("friends_title", header, HEADER_TEXT, HEADER_MAX_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
+        var title = PlayUi.text("friends_title", header, HEADER_TEXT, HEADER_MAX_SIZE, PlayTheme.text_white, TextAnchor.MiddleLeft);
         LobbyUi.place_fraction(title.rectTransform, HEADER_TEXT_START, 0f, PILL_LEFT - TITLE_PILL_GAP, 1f);
         LobbyFriendRow.fit_text(title, HEADER_MIN_SIZE, HEADER_MAX_SIZE);
         PlayUi.add_shadow(title, 2f);
@@ -232,7 +233,7 @@ public class LobbyFriendsView : MonoBehaviour
 
     void build_empty(RectTransform parent)
     {
-        var tint = PlayTheme.with_alpha(PlayTheme.text_muted, LobbyFriendsPanel.EMPTY_ALPHA);
+        var tint = PlayTheme.white_blue;
 
         empty_root = PlayUi.rect("friends_empty", parent);
         LobbyUi.place_fraction(empty_root, 0f, 0.2f, 1f, 0.85f);
@@ -253,12 +254,19 @@ public class LobbyFriendsView : MonoBehaviour
         icon.enabled = icon.sprite != null;
         PlayUi.stretch(icon.rectTransform);
 
-        var title = PlayUi.text("friends_empty_title", empty_root, LobbyFriendsPanel.EMPTY_TEXT, 28, PlayTheme.text, TextAnchor.MiddleCenter);
+        var title = PlayUi.text("friends_empty_title", empty_root, LobbyFriendsPanel.EMPTY_TEXT, 28, PlayTheme.white_blue, TextAnchor.MiddleCenter);
         LobbyUi.place_fraction(title.rectTransform, 0f, 0.42f, 1f, 0.58f);
         LobbyFriendRow.fit_text(title, 14, 30);
 
         var divider = PlayOrnament.line(empty_root, "friends_empty_divider", 100f, 2f, PlayTheme.with_alpha(PlayTheme.gold, 0.45f), true, true);
         PlayUi.place(divider.rectTransform, new Vector2(0.15f, 0.38f), new Vector2(0.85f, 0.38f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(0f, 2f));
+
+        var rhombus = PlayUi.image("friends_empty_rhombus", empty_root, PlayUi.sprite(LobbyUi.ICON_RHOMBUS_PATH));
+        rhombus.enabled = rhombus.sprite != null;
+        rhombus.preserveAspect = true;
+        rhombus.color = PlayTheme.gold;
+        rhombus.raycastTarget = false;
+        PlayUi.place(rhombus.rectTransform, new Vector2(0.5f, 0.38f), new Vector2(0.5f, 0.38f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(EMPTY_RHOMBUS_SIZE, EMPTY_RHOMBUS_SIZE));
 
         var hint = PlayUi.text("friends_empty_hint", empty_root, LobbyFriendsPanel.EMPTY_HINT_TEXT, 22, tint, TextAnchor.UpperCenter);
         LobbyUi.place_fraction(hint.rectTransform, 0.05f, 0f, 0.95f, 0.34f);

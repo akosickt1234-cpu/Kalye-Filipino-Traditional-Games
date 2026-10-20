@@ -49,10 +49,16 @@ public static class LobbyPlayerSlots
     const float AVATAR_BOTTOM = 0.38f;
     const float AVATAR_TOP = 0.76f;
     const float AVATAR_FILL_INSET = 0.07f;
-    const float RHOMBUS_LEFT = 0.34f;
-    const float RHOMBUS_RIGHT = 0.66f;
-    const float RHOMBUS_BOTTOM = 0.78f;
-    const float RHOMBUS_TOP = 0.90f;
+    const float CROWN_LEFT = 0.34f;
+    const float CROWN_RIGHT = 0.66f;
+    const float CROWN_BOTTOM = 0.78f;
+    const float CROWN_TOP = 0.90f;
+    const float RHOMBUS_LEFT = 0.28f;
+    const float RHOMBUS_RIGHT = 0.72f;
+    const float RHOMBUS_BOTTOM = 0.77f;
+    const float RHOMBUS_TOP = 0.935f;
+    const float CARD_GLOW_ALPHA = 0.32f;
+    const float EMPTY_GLOW_ALPHA = 0.28f;
     const float FRAME_ALPHA_FAINT = 0.9f;
     const float AVATAR_ICON_INSET = 0.22f;
     const float HOURGLASS_SIZE = 20f;
@@ -186,8 +192,9 @@ public static class LobbyPlayerSlots
         LobbyUi.place_fraction(frame, CELL_PAD_X, CELL_BOTTOM, 1f - CELL_PAD_X, CELL_TOP);
         fit_aspect(frame, CARD_ASPECT, AspectRatioFitter.AspectMode.FitInParent);
 
-        var light = empty ? LobbyFrameLight.Style.BlueTopBottom : LobbyFrameLight.Style.GoldTopBottom;
-        if (is_you) LobbyUi.glow_panel("you_glow", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, PlayTheme.with_alpha(PlayTheme.gold, YOU_GLOW_ALPHA));
+        var light = empty ? LobbyFrameLight.Style.BlueCard : LobbyFrameLight.Style.GoldCard;
+        var glow_color = is_you ? PlayTheme.with_alpha(PlayTheme.gold, YOU_GLOW_ALPHA) : empty ? PlayTheme.with_alpha(PlayTheme.light_blue, EMPTY_GLOW_ALPHA) : PlayTheme.with_alpha(PlayTheme.gold, CARD_GLOW_ALPHA);
+        LobbyUi.glow_panel("card_glow", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, glow_color);
         var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, light, true);
         card.raycastTarget = true;
         card.color = PlayTheme.with_alpha(PlayTheme.white, empty ? FRAME_ALPHA_FAINT : 1f);
@@ -195,8 +202,8 @@ public static class LobbyPlayerSlots
         if (empty) build_empty_avatar(frame);
         else build_avatar(frame, player);
 
-        if (is_host) build_top_icon(frame, "crown", LobbyUi.ICON_CROWN_PATH, PlayTheme.gold);
-        else build_top_icon(frame, "rhombus", LobbyUi.ICON_RHOMBUS_PATH, empty ? PlayTheme.light_blue : PlayTheme.gold_soft);
+        if (is_host) build_top_icon(frame, "crown", LobbyUi.ICON_CROWN_PATH, PlayTheme.gold, CROWN_LEFT, CROWN_BOTTOM, CROWN_RIGHT, CROWN_TOP);
+        else build_top_icon(frame, "rhombus", LobbyUi.ICON_RHOMBUS_PATH, empty ? PlayTheme.light_blue : PlayTheme.gold_soft, RHOMBUS_LEFT, RHOMBUS_BOTTOM, RHOMBUS_RIGHT, RHOMBUS_TOP);
 
         var you = LobbyState.you;
         var name_value = empty ? INVITE_LABEL : LobbyUi.sanitize(is_you && you != null ? you.name : player.name);
@@ -229,13 +236,13 @@ public static class LobbyPlayerSlots
         return ring;
     }
 
-    static void build_top_icon(RectTransform frame, string name, string path, Color color)
+    static void build_top_icon(RectTransform frame, string name, string path, Color color, float left, float bottom, float right, float top)
     {
         var icon = PlayUi.image(name, frame, PlayUi.sprite(path));
         icon.enabled = icon.sprite != null;
         icon.preserveAspect = true;
         icon.color = color;
-        LobbyUi.place_fraction(icon.rectTransform, RHOMBUS_LEFT, RHOMBUS_BOTTOM, RHOMBUS_RIGHT, RHOMBUS_TOP);
+        LobbyUi.place_fraction(icon.rectTransform, left, bottom, right, top);
         PlayUi.add_shadow(icon, 2f);
     }
 
