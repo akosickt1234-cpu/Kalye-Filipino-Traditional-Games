@@ -7,11 +7,15 @@ public static class LobbyChat
 {
     const string BUTTON_NAME = "chat_button";
     const string EMPTY_TEXT = "No messages yet";
+    const string EMPTY_SUBTEXT = "Be the first to say hi!";
+    const string ELLIPSIS = "...";
     const string TITLE_TEXT = "Lobby Chat";
     const string INPUT_HINT = "Type a message";
     const string SEND_TEXT = "Send";
     const string FALLBACK_NAME = "You";
     const int COLUMN_FONT_SIZE = 28;
+    const int COLUMN_SUB_FONT_SIZE = 24;
+    const float COLUMN_SPLIT = 0.5f;
     const int TITLE_FONT_SIZE = 44;
     const int ROW_FONT_SIZE = 30;
     const int INPUT_FONT_SIZE = 30;
@@ -86,7 +90,7 @@ public static class LobbyChat
         hover.setup(button, icon, PlayTheme.gold, PlayTheme.gold_soft, icon.rectTransform, ICON_HOVER_SCALE, glow);
 
         var column = button_rect.gameObject.AddComponent<LobbyChatColumn>();
-        column.setup(area, COLUMN_FONT_SIZE);
+        column.setup(area, COLUMN_FONT_SIZE, COLUMN_SUB_FONT_SIZE, COLUMN_SPLIT);
 
         var target = button.gameObject;
         button.onClick.AddListener(() => open_window(target));
@@ -113,6 +117,33 @@ public static class LobbyChat
     public static string empty_text
     {
         get { return EMPTY_TEXT; }
+    }
+
+    public static string empty_subtext
+    {
+        get { return EMPTY_SUBTEXT; }
+    }
+
+    internal static string fit_text(Text label, string value, float width)
+    {
+        if (label == null || string.IsNullOrEmpty(value) || width <= 0f) return string.Empty;
+
+        var settings = label.GetGenerationSettings(Vector2.zero);
+        var generator = label.cachedTextGeneratorForLayout;
+        var scale = label.pixelsPerUnit;
+        if (generator.GetPreferredWidth(value, settings) / scale <= width) return value;
+
+        var low = 0;
+        var high = value.Length;
+        while (low < high)
+        {
+            var mid = (low + high + 1) / 2;
+            var candidate = value.Substring(0, mid).TrimEnd() + ELLIPSIS;
+            if (generator.GetPreferredWidth(candidate, settings) / scale <= width) low = mid;
+            else high = mid - 1;
+        }
+
+        return low == 0 ? ELLIPSIS : value.Substring(0, low).TrimEnd() + ELLIPSIS;
     }
 
     static string clean(string value)
@@ -264,16 +295,23 @@ public class LobbyChatColumn : MonoBehaviour
     const float WIDTH_EPSILON = 0.5f;
 
     RectTransform area;
-    PlayMarquee marquee;
-    int font_size;
+    Text title_label;
+    Text sub_label;
+    int title_size;
+    int sub_size;
+    float split;
     float built_width;
-    string display = string.Empty;
-    Color display_color = PlayTheme.text;
+    string title_value = string.Empty;
+    string sub_value = string.Empty;
+    Color title_color = PlayTheme.text;
+    Color sub_color = PlayTheme.text_muted;
 
-    public void setup(RectTransform message_area, int size)
+    public void setup(RectTransform message_area, int title_font_size, int sub_font_size, float split_fraction)
     {
         area = message_area;
-        font_size = size;
+        title_size = title_font_size;
+        sub_size = sub_font_size;
+        split = split_fraction;
         LobbyState.chat_changed += refresh;
         refresh();
     }
@@ -289,7 +327,7 @@ public class LobbyChatColumn : MonoBehaviour
 
         var width = area.rect.width;
         if (width <= 0f) return;
-        if (marquee != null && Mathf.Abs(width - built_width) < WIDTH_EPSILON) return;
+        if (title_label != null && Mathf.Abs(width - built_width) < WIDTH_EPSILON) return;
 
         rebuild(width);
     }
@@ -299,13 +337,18 @@ public class LobbyChatColumn : MonoBehaviour
         var list = LobbyState.messages;
         if (list.Count == 0)
         {
-            display = LobbyChat.empty_text;
-            display_color = PlayTheme.text_muted;
+            title_value = LobbyChat.empty_text;
+            sub_value = LobbyChat.empty_subtext;
+            title_color = PlayTheme.text;
+            sub_color = PlayTheme.text_muted;
         }
         else
         {
-            display = LobbyChat.format_message(list[list.Count - 1]);
-            display_color = PlayTheme.text;
+            var latest = list[list.Count - 1];
+            title_value = LobbyUi.sanitize(latest.name) + ":";
+            sub_value = LobbyUi.sanitize(latest.text).Replace("\r", string.Empty).Replace("\n", " ");
+            title_color = latest.name == LobbyState.SYSTEM_NAME ? PlayTheme.text_muted : PlayTheme.gold;
+            sub_color = PlayTheme.text;
         }
 
         apply();
@@ -313,21 +356,34 @@ public class LobbyChatColumn : MonoBehaviour
 
     void rebuild(float width)
     {
-        if (marquee != null) Destroy(marquee.gameObject);
+        if (title_label != null) Destroy(title_label.gameObject);
+        if (sub_label != null) Destroy(sub_label.gameObject);
 
         built_width = width;
-        marquee = PlayMarquee.create(area, "message", font_size, PlayTheme.text, width, area.rect.height);
-        PlayUi.stretch(marquee.rect);
-        marquee.set_left_aligned(true);
+        title_label = build_line("message_title", title_size, TextAnchor.LowerLeft, 0f, split, 1f);
+        sub_label = build_line("message_sub", sub_size, TextAnchor.UpperLeft, 0f, 0f, split);
         apply();
+    }
+
+    Text build_line(string line_name, int size, TextAnchor anchor, float x_min, float y_min, float y_max)
+    {
+        var label = PlayUi.text(line_name, area, string.Empty, size, PlayTheme.text, anchor);
+        label.horizontalOverflow = HorizontalWrapMode.Overflow;
+        label.verticalOverflow = VerticalWrapMode.Truncate;
+        label.supportRichText = false;
+        LobbyUi.place_fraction(label.rectTransform, x_min, y_min, 1f, y_max);
+        return label;
     }
 
     void apply()
     {
-        if (marquee == null) return;
+        if (title_label == null || sub_label == null) return;
 
-        marquee.set_color(display_color);
-        marquee.set_text(display);
+        var width = area.rect.width;
+        title_label.color = title_color;
+        title_label.text = LobbyChat.fit_text(title_label, title_value, width);
+        sub_label.color = sub_color;
+        sub_label.text = LobbyChat.fit_text(sub_label, sub_value, width);
     }
 }
 
