@@ -13,12 +13,12 @@ public static class LobbyPlayerSlots
     const float CARD_ASPECT = 485f / 768f;
     const float CARD_BORDER_SCALE = 1.8f;
     const float CELL_PAD_X = 0.04f;
-    const float CELL_TOP = 0.84f;
-    const float CELL_BOTTOM = 0.05f;
+    const float CELL_TOP = 0.93f;
+    const float CELL_BOTTOM = 0.07f;
     const float EMBLEM_RIGHT = 0.09f;
     const float TITLE_LEFT = 0.10f;
     const float TITLE_RIGHT = 0.72f;
-    const float TITLE_SPLIT = 0.42f;
+    const float TITLE_SPLIT = 0.38f;
     const float SUBTEXT_RIGHT = 0.57f;
     const float CREST_LEFT = 0.58f;
     const float CREST_RIGHT = 0.78f;
@@ -35,7 +35,7 @@ public static class LobbyPlayerSlots
     const float PLUS_HALF_THICKNESS = 0.025f;
     const float DOT_SIZE = 14f;
     const float STATUS_SPACING = 8f;
-    const int TITLE_MAX_SIZE = 48;
+    const int TITLE_MAX_SIZE = 56;
     const int TITLE_MIN_SIZE = 18;
     const int LABEL_MAX_SIZE = 22;
     const int SUBTEXT_MAX_SIZE = 26;
