@@ -12,8 +12,8 @@ public class LobbyScreen : MonoBehaviour
     const float REFERENCE_HEIGHT = 1080f;
     const float MATCH_WIDTH_OR_HEIGHT = 0.5f;
     const float TOP_BAR_HEIGHT_RATIO = 0.12f;
-    const float PANEL_TOP = 0.20f;
-    const float PANEL_BOTTOM = 0.77f;
+    const float PANEL_TOP = 0.17f;
+    const float PANEL_BOTTOM = 0.79f;
     const float MAIN_LEFT = 0.05f;
     const float MAIN_RIGHT = 0.66f;
     const float FRIENDS_LEFT = 0.70f;
