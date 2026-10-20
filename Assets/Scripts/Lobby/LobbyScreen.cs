@@ -29,7 +29,7 @@ public class LobbyScreen : MonoBehaviour
     const float SLOTS_LEFT = 0.03f;
     const float SLOTS_RIGHT = 0.97f;
     const float SLOTS_TOP = 0.172f;
-    const float SLOTS_BOTTOM = 0.76f;
+    const float SLOTS_BOTTOM = 0.812f;
     const float INFO_TOP = 0.80f;
     const float INFO_BOTTOM = 0.97f;
     const float START_LEFT = 0.32f;

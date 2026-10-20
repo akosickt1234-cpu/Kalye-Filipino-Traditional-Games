@@ -14,9 +14,10 @@ public static class LobbyCode
     const int LABEL_MAX_SIZE = 22;
     const int CODE_MIN_SIZE = 12;
     const int CODE_MAX_SIZE = 30;
-    const float LABEL_BOTTOM = 0.64f;
-    const float ROW_TOP = 0.56f;
-    const float ROW_BOTTOM = 0.04f;
+    const float LABEL_BOTTOM = 0.88f;
+    const float LABEL_TOP = 1.4f;
+    const float ROW_TOP = 0.86f;
+    const float ROW_BOTTOM = 0.14f;
     const float CODE_ROW_RIGHT = 0.52f;
     const float ENTER_LEFT = 0.56f;
     const float ENTER_TEXT_LEFT = 0.12f;
@@ -50,7 +51,7 @@ public static class LobbyCode
     static void build_code(RectTransform slot, LobbyCodeView view)
     {
         var label_area = PlayUi.rect("label_area", slot);
-        LobbyUi.place_fraction(label_area, 0f, LABEL_BOTTOM, CODE_ROW_RIGHT, 1f);
+        LobbyUi.place_fraction(label_area, 0f, LABEL_BOTTOM, CODE_ROW_RIGHT, LABEL_TOP);
 
         var copied = fitted_text("copied_text", label_area, COPIED_TEXT, LABEL_MIN_SIZE, LABEL_MAX_SIZE, PlayTheme.gold_soft, TextAnchor.LowerRight);
         LobbyUi.place_fraction(copied.rectTransform, 0f, 0f, 1f, 1f);
