@@ -23,6 +23,7 @@ public static class LobbyUi
     public const string FRAME_AVATAR_CIRCLE_PATH = "Frames/Play/FrameAvatarRing";
     public const string BACKDROP_PATH = "Background/Lobby/LobbyBackdrop";
     public const float PANEL_BORDER_SCALE = 1.8f;
+    public const float PILL_BORDER = 2f;
     public const float RIM_GLOW_FEATHER = 24f;
     public const float SCROLL_SENSITIVITY = 40f;
     public const float FADE_IN_SECONDS = 0.15f;
@@ -43,15 +44,30 @@ public static class LobbyUi
         return blocker.rectTransform;
     }
 
-    public static Image panel(string name, Transform parent, string sprite_path, float border_scale = 1f)
+    public static Image panel(string name, Transform parent, string sprite_path, float border_scale = 1f, LobbyFrameLight.Style light = LobbyFrameLight.Style.None)
     {
-        var art = PlayUi.sprite(sprite_path);
+        var art = LobbyFrameLight.sprite(sprite_path, light);
         var picture = PlayUi.image(name, parent, art != null ? art : PlayUi.pill(), false);
         picture.type = Image.Type.Sliced;
         picture.color = art != null ? PlayTheme.white : PlayTheme.fill_soft;
         picture.pixelsPerUnitMultiplier = Mathf.Max(0.01f, border_scale);
         PlayUi.stretch(picture.rectTransform);
         return picture;
+    }
+
+    public static Image blue_pill(string name, Transform parent, bool raycast)
+    {
+        var ring = PlayUi.image(name, parent, PlayUi.pill(), raycast);
+        ring.type = Image.Type.Sliced;
+        ring.color = PlayTheme.border_blue;
+
+        var fill = PlayUi.image(name + "_fill", ring.rectTransform, PlayUi.pill());
+        fill.type = Image.Type.Sliced;
+        fill.color = PlayTheme.pill_blue_dark;
+        PlayUi.stretch(fill.rectTransform);
+        fill.rectTransform.offsetMin = new Vector2(PILL_BORDER, PILL_BORDER);
+        fill.rectTransform.offsetMax = new Vector2(-PILL_BORDER, -PILL_BORDER);
+        return ring;
     }
 
     public static void place_fraction(RectTransform r, float x_min, float y_min, float x_max, float y_max)

@@ -29,7 +29,7 @@ public static class LobbyPlayerSlots
     const float PLUS_HALF_THICKNESS = 0.025f;
     const float DOT_SIZE = 14f;
     const float STATUS_SPACING = 8f;
-    const int TITLE_MAX_SIZE = 56;
+    const int TITLE_MAX_SIZE = 48;
     const int TITLE_MIN_SIZE = 18;
     const int LABEL_MAX_SIZE = 22;
     const int SUBTEXT_MAX_SIZE = 26;
@@ -48,7 +48,7 @@ public static class LobbyPlayerSlots
     const float RHOMBUS_BOTTOM = 0.78f;
     const float RHOMBUS_TOP = 0.90f;
     const float RHOMBUS_ALPHA_EMPTY = 0.6f;
-    const float FRAME_ALPHA_FAINT = 0.4f;
+    const float FRAME_ALPHA_FAINT = 0.9f;
     const float AVATAR_ICON_INSET = 0.22f;
     const float HOURGLASS_SIZE = 20f;
     const float NAME_BOTTOM = 0.24f;
@@ -169,7 +169,8 @@ public static class LobbyPlayerSlots
         LobbyUi.place_fraction(frame, CELL_PAD_X, CELL_BOTTOM, 1f - CELL_PAD_X, CELL_TOP);
         fit_aspect(frame, CARD_ASPECT, AspectRatioFitter.AspectMode.FitInParent);
 
-        var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE);
+        var light = empty ? LobbyFrameLight.Style.BlueTopBottom : LobbyFrameLight.Style.GoldTopBottom;
+        var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, light);
         card.raycastTarget = true;
         card.color = PlayTheme.with_alpha(PlayTheme.white, empty ? FRAME_ALPHA_FAINT : 1f);
 
@@ -181,7 +182,7 @@ public static class LobbyPlayerSlots
 
         var you = LobbyState.you;
         var name_value = empty ? INVITE_LABEL : LobbyUi.sanitize(is_you && you != null ? you.name : player.name);
-        var name_color = empty ? PlayTheme.text_muted : PlayTheme.text;
+        var name_color = empty ? PlayTheme.text_muted : is_you ? PlayTheme.gold : PlayTheme.text_white;
         var name_cell = PlayUi.rect("name", frame);
         LobbyUi.place_fraction(name_cell, 0.08f, NAME_BOTTOM, 0.92f, NAME_TOP);
         LobbyPlayerNameFit.attach(name_cell, name_value, name_color, NAME_MIN_SIZE, NAME_MAX_SIZE, NAME_HEIGHT_RATIO);

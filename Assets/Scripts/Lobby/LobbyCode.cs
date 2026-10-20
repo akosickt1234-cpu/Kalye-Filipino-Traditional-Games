@@ -57,9 +57,7 @@ public static class LobbyCode
         var row = PlayUi.rect("code_row", slot);
         LobbyUi.place_fraction(row, 0f, ROW_BOTTOM, CODE_ROW_RIGHT, ROW_TOP);
 
-        var pill = PlayUi.image("code_pill", row, PlayUi.pill());
-        pill.type = Image.Type.Sliced;
-        pill.color = PlayTheme.fill_soft;
+        var pill = LobbyUi.blue_pill("code_pill", row, false);
 
         var key = PlayUi.image("key_icon", pill.rectTransform, PlayUi.sprite(LobbyUi.ICON_KEY_PATH));
         key.enabled = key.sprite != null;
@@ -86,9 +84,7 @@ public static class LobbyCode
         var row = PlayUi.rect("enter_row", slot);
         LobbyUi.place_fraction(row, ENTER_LEFT, ROW_BOTTOM, 1f, ROW_TOP);
 
-        var pill = PlayUi.image("enter_pill", row, PlayUi.pill(), true);
-        pill.type = Image.Type.Sliced;
-        pill.color = PlayTheme.fill_soft;
+        var pill = LobbyUi.blue_pill("enter_pill", row, true);
         PlayUi.stretch(pill.rectTransform);
 
         var label = fitted_text("enter_text", pill.rectTransform, ENTER_TEXT, ENTER_MIN_SIZE, ENTER_MAX_SIZE, PlayTheme.text_white, TextAnchor.MiddleLeft);
@@ -126,9 +122,7 @@ public static class LobbyCode
 
     static Button build_square_button(string name, RectTransform parent, string icon_path)
     {
-        var hit = PlayUi.image(name, parent, PlayUi.pill(), true);
-        hit.type = Image.Type.Sliced;
-        hit.color = PlayTheme.fill_soft;
+        var hit = LobbyUi.blue_pill(name, parent, true);
 
         var button = hit.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
@@ -430,7 +424,7 @@ public class LobbyCodeWindow : MonoBehaviour
         dismiss.navigation = new Navigation { mode = Navigation.Mode.None };
         dismiss.onClick.AddListener(close);
 
-        var window = LobbyUi.panel("code_window", blocker, LobbyUi.PANEL_LOBBY_PATH, LobbyUi.PANEL_BORDER_SCALE);
+        var window = LobbyUi.panel("code_window", blocker, LobbyUi.PANEL_LOBBY_PATH, LobbyUi.PANEL_BORDER_SCALE, LobbyFrameLight.Style.GoldTop);
         window.raycastTarget = true;
         LobbyUi.place_fraction(window.rectTransform, WINDOW_LEFT, WINDOW_BOTTOM, WINDOW_RIGHT, WINDOW_TOP);
 

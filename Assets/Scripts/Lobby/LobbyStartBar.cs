@@ -15,23 +15,28 @@ public static class LobbyStartBar
 public class LobbyStartBarView : MonoBehaviour
 {
     const string BUTTON_PATH = "Buttons/Play/BtnPlayGold";
+    const string ICON_PATH = LobbyUi.ICON_SWORDS_PATH;
     const string START_TEXT = "START MATCH";
     const string WAITING_TEXT = "Waiting for host";
     const string CANCEL_TEXT = "CANCEL";
-    const float BUTTON_ASPECT = 768f / 217f;
+    const float BUTTON_ASPECT = 4f;
     const float ORNAMENT_HEIGHT = 0.3f;
     const float ORNAMENT_LEFT_START = 0.02f;
-    const float ORNAMENT_LEFT_END = 0.20f;
-    const float SLOT_LEFT = 0.22f;
-    const float SLOT_RIGHT = 0.78f;
-    const float LABEL_SIDE = 0.12f;
+    const float ORNAMENT_LEFT_END = 0.18f;
+    const float SLOT_LEFT = 0.20f;
+    const float SLOT_RIGHT = 0.80f;
+    const float ICON_LEFT = 0.12f;
+    const float ICON_BOTTOM = 0.24f;
+    const float ICON_TOP = 0.76f;
+    const float LABEL_LEFT = 0.28f;
+    const float LABEL_RIGHT = 0.88f;
     const float SEARCH_LABEL_BOTTOM = 0.36f;
     const float SEARCH_LABEL_TOP = 0.92f;
     const float CANCEL_BOTTOM = 0.10f;
     const float CANCEL_TOP = 0.40f;
     const float DISABLED_ALPHA = 0.55f;
-    const int LABEL_MIN_SIZE = 16;
-    const int LABEL_MAX_SIZE = 46;
+    const int LABEL_MIN_SIZE = 14;
+    const int LABEL_MAX_SIZE = 34;
     const int CANCEL_MIN_SIZE = 10;
     const int CANCEL_MAX_SIZE = 24;
 
@@ -103,11 +108,14 @@ public class LobbyStartBarView : MonoBehaviour
         glow_group.blocksRaycasts = false;
         glow_group.interactable = false;
 
+        build_icon(button_rect);
+
         label = PlayUi.text("start_label", button_rect, START_TEXT, LABEL_MAX_SIZE, PlayTheme.label_brown, TextAnchor.MiddleCenter);
+        label.fontStyle = FontStyle.Bold;
         fit_text(label, LABEL_MIN_SIZE, LABEL_MAX_SIZE);
 
         cancel_label = PlayUi.text("cancel_label", button_rect, CANCEL_TEXT, CANCEL_MAX_SIZE, PlayTheme.label_brown, TextAnchor.MiddleCenter);
-        LobbyUi.place_fraction(cancel_label.rectTransform, LABEL_SIDE, CANCEL_BOTTOM, 1f - LABEL_SIDE, CANCEL_TOP);
+        LobbyUi.place_fraction(cancel_label.rectTransform, LABEL_LEFT, CANCEL_BOTTOM, LABEL_RIGHT, CANCEL_TOP);
         fit_text(cancel_label, CANCEL_MIN_SIZE, CANCEL_MAX_SIZE);
 
         button = button_rect.gameObject.AddComponent<Button>();
@@ -117,6 +125,25 @@ public class LobbyStartBarView : MonoBehaviour
 
         button_fx = button_rect.gameObject.AddComponent<PlayButtonFx>();
         button_fx.setup(button_rect, glow_group);
+    }
+
+    static void build_icon(RectTransform button_rect)
+    {
+        var slot = PlayUi.rect("start_icon_slot", button_rect);
+        slot.anchorMin = new Vector2(ICON_LEFT, ICON_BOTTOM);
+        slot.anchorMax = new Vector2(ICON_LEFT, ICON_TOP);
+        slot.pivot = new Vector2(0f, 0.5f);
+        slot.offsetMin = Vector2.zero;
+        slot.offsetMax = Vector2.zero;
+        var fit = slot.gameObject.AddComponent<AspectRatioFitter>();
+        fit.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
+        fit.aspectRatio = 1f;
+
+        var icon = PlayUi.image("start_icon", slot, PlayUi.sprite(ICON_PATH));
+        icon.enabled = icon.sprite != null;
+        icon.preserveAspect = true;
+        icon.color = PlayTheme.label_brown;
+        PlayUi.stretch(icon.rectTransform);
     }
 
     void on_click()
@@ -138,8 +165,8 @@ public class LobbyStartBarView : MonoBehaviour
         else if (searching) label.text = "SEARCHING " + LobbyState.opponents_found + "/" + LobbyState.SEARCH_TARGET;
         else label.text = START_TEXT;
 
-        if (searching) LobbyUi.place_fraction(label.rectTransform, LABEL_SIDE, SEARCH_LABEL_BOTTOM, 1f - LABEL_SIDE, SEARCH_LABEL_TOP);
-        else LobbyUi.place_fraction(label.rectTransform, LABEL_SIDE, 0f, 1f - LABEL_SIDE, 1f);
+        if (searching) LobbyUi.place_fraction(label.rectTransform, LABEL_LEFT, SEARCH_LABEL_BOTTOM, LABEL_RIGHT, SEARCH_LABEL_TOP);
+        else LobbyUi.place_fraction(label.rectTransform, LABEL_LEFT, 0f, LABEL_RIGHT, 1f);
 
         cancel_label.gameObject.SetActive(searching);
 
