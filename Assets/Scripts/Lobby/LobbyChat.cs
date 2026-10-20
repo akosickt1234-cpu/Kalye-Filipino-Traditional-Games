@@ -23,10 +23,8 @@ public static class LobbyChat
     const int MAX_LENGTH = 200;
     const int ROW_PADDING = 12;
     const float ROW_SPACING = 10f;
-    const float SCROLL_SENSITIVITY = 40f;
     const float ICON_HOVER_SCALE = 1.1f;
     const float SEND_HOVER_SCALE = 1.04f;
-    const int CARET_WIDTH = 2;
 
     const float ICON_LEFT = 0.03f;
     const float ICON_RIGHT = 0.19f;
@@ -84,7 +82,7 @@ public static class LobbyChat
 
         var button = button_rect.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
-        button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(button);
 
         var hover = button_rect.gameObject.AddComponent<LobbyChatHover>();
         hover.setup(button, icon, PlayTheme.gold, PlayTheme.gold_soft, icon.rectTransform, ICON_HOVER_SCALE, glow);
@@ -212,7 +210,7 @@ public static class LobbyChat
         scroll.horizontal = false;
         scroll.vertical = true;
         scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = SCROLL_SENSITIVITY;
+        scroll.scrollSensitivity = LobbyUi.SCROLL_SENSITIVITY;
         scroll.viewport = viewport;
         scroll.content = content;
     }
@@ -241,14 +239,14 @@ public static class LobbyChat
 
         input = background.gameObject.AddComponent<InputField>();
         input.targetGraphic = background;
-        input.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(input);
         input.textComponent = typed;
         input.placeholder = placeholder;
         input.lineType = InputField.LineType.SingleLine;
         input.characterLimit = MAX_LENGTH;
         input.customCaretColor = true;
         input.caretColor = PlayTheme.gold;
-        input.caretWidth = CARET_WIDTH;
+        input.caretWidth = LobbyUi.CARET_WIDTH;
         input.selectionColor = PlayTheme.glow;
         input.onSubmit.AddListener(owner.submit);
         input.onValueChanged.AddListener(owner.sync_send);
@@ -268,7 +266,7 @@ public static class LobbyChat
 
         send = background.gameObject.AddComponent<Button>();
         send.targetGraphic = background;
-        send.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(send);
         send.onClick.AddListener(owner.send);
 
         var hover = background.gameObject.AddComponent<LobbyChatHover>();
@@ -389,8 +387,6 @@ public class LobbyChatColumn : MonoBehaviour
 
 public class LobbyChatWindow : MonoBehaviour
 {
-    const int FOCUS_DELAY_FRAMES = 2;
-
     public static LobbyChatWindow current { get; private set; }
 
     RectTransform blocker;
@@ -411,7 +407,7 @@ public class LobbyChatWindow : MonoBehaviour
         var blocker_image = blocker.GetComponent<Image>();
         var close_button = blocker.gameObject.AddComponent<Button>();
         close_button.targetGraphic = blocker_image;
-        close_button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(close_button);
         close_button.navigation = new Navigation { mode = Navigation.Mode.None };
         close_button.onClick.AddListener(close);
 
@@ -420,7 +416,7 @@ public class LobbyChatWindow : MonoBehaviour
         LobbyState.chat_changed += refresh;
         sync_send(input.text);
         refresh();
-        focus_wait = FOCUS_DELAY_FRAMES;
+        focus_wait = LobbyUi.FOCUS_DELAY_FRAMES;
     }
 
     void OnDestroy()
@@ -488,7 +484,7 @@ public class LobbyChatWindow : MonoBehaviour
             input.text = string.Empty;
         }
 
-        focus_wait = FOCUS_DELAY_FRAMES;
+        focus_wait = LobbyUi.FOCUS_DELAY_FRAMES;
     }
 
     public void sync_send(string value)
@@ -532,8 +528,6 @@ public class LobbyChatWindow : MonoBehaviour
 
 public class LobbyChatHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
-    const float FADE_IN_SECONDS = 0.15f;
-    const float FADE_OUT_SECONDS = 0.1f;
     const float DISABLED_ALPHA = 0.45f;
 
     Selectable selectable;
@@ -575,7 +569,7 @@ public class LobbyChatHover : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
         if (!Mathf.Approximately(amount, target))
         {
-            var seconds = active ? FADE_IN_SECONDS : FADE_OUT_SECONDS;
+            var seconds = active ? LobbyUi.FADE_IN_SECONDS : LobbyUi.FADE_OUT_SECONDS;
             amount = Mathf.MoveTowards(amount, target, Time.unscaledDeltaTime / seconds);
         }
 

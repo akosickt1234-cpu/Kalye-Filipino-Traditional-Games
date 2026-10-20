@@ -104,7 +104,7 @@ public static class LobbyCode
 
         var button = pill.gameObject.AddComponent<Button>();
         button.targetGraphic = pill;
-        button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(button);
 
         var hover = pill.gameObject.AddComponent<LobbyChatHover>();
         hover.setup(button, arrow, PlayTheme.gold, PlayTheme.gold_soft, arrow.rectTransform, ENTER_HOVER_SCALE, null);
@@ -132,7 +132,7 @@ public static class LobbyCode
 
         var button = hit.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
-        button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(button);
 
         var glow = PlayUi.image("glow", hit.rectTransform, PlayUi.radial_glow());
         glow.color = PlayTheme.clear;
@@ -215,8 +215,6 @@ public class LobbyCodeRow : MonoBehaviour
 
 public class LobbyCodeButtonHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
-    const float FADE_IN_SECONDS = 0.15f;
-    const float FADE_OUT_SECONDS = 0.1f;
     const float ACTIVE_SCALE = 1.08f;
 
     Selectable selectable;
@@ -248,7 +246,7 @@ public class LobbyCodeButtonHover : MonoBehaviour, IPointerEnterHandler, IPointe
         var target = active ? 1f : 0f;
         if (Mathf.Approximately(amount, target)) return;
 
-        var seconds = active ? FADE_IN_SECONDS : FADE_OUT_SECONDS;
+        var seconds = active ? LobbyUi.FADE_IN_SECONDS : LobbyUi.FADE_OUT_SECONDS;
         amount = Mathf.MoveTowards(amount, target, Time.unscaledDeltaTime / seconds);
         apply(amount);
     }
@@ -356,8 +354,6 @@ public class LobbyCodeWindow : MonoBehaviour
     const int JOIN_MIN_SIZE = 12;
     const int JOIN_MAX_SIZE = 34;
     const int CODE_LENGTH = 9;
-    const int FOCUS_DELAY_FRAMES = 2;
-    const int CARET_WIDTH = 2;
     const float JOIN_DELAY_SECONDS = 0.4f;
     const float SPINNER_DEGREES_PER_SECOND = 360f;
     const float FOCUS_FILL_ALPHA = 0.22f;
@@ -430,7 +426,7 @@ public class LobbyCodeWindow : MonoBehaviour
         var blocker_image = blocker.GetComponent<Image>();
         var dismiss = blocker.gameObject.AddComponent<Button>();
         dismiss.targetGraphic = blocker_image;
-        dismiss.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(dismiss);
         dismiss.navigation = new Navigation { mode = Navigation.Mode.None };
         dismiss.onClick.AddListener(close);
 
@@ -446,7 +442,7 @@ public class LobbyCodeWindow : MonoBehaviour
         link_focus();
 
         apply_busy();
-        focus_wait = FOCUS_DELAY_FRAMES;
+        focus_wait = LobbyUi.FOCUS_DELAY_FRAMES;
     }
 
     void OnDestroy()
@@ -543,7 +539,7 @@ public class LobbyCodeWindow : MonoBehaviour
 
         input = input_pill.gameObject.AddComponent<InputField>();
         input.targetGraphic = input_pill;
-        input.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(input);
         input.textComponent = typed;
         input.placeholder = placeholder;
         input.lineType = InputField.LineType.SingleLine;
@@ -551,7 +547,7 @@ public class LobbyCodeWindow : MonoBehaviour
         input.characterLimit = CODE_LENGTH;
         input.customCaretColor = true;
         input.caretColor = PlayTheme.gold;
-        input.caretWidth = CARET_WIDTH;
+        input.caretWidth = LobbyUi.CARET_WIDTH;
         input.selectionColor = PlayTheme.with_alpha(PlayTheme.gold, SELECTION_ALPHA);
         input.onValueChanged.AddListener(on_input_changed);
         input.onSubmit.AddListener(submit);
@@ -585,7 +581,7 @@ public class LobbyCodeWindow : MonoBehaviour
 
         join_button = background.gameObject.AddComponent<Button>();
         join_button.targetGraphic = background;
-        join_button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(join_button);
         join_button.onClick.AddListener(start_join);
 
         var hover = background.gameObject.AddComponent<LobbyChatHover>();
@@ -608,7 +604,7 @@ public class LobbyCodeWindow : MonoBehaviour
 
         close_button = hit.gameObject.AddComponent<Button>();
         close_button.targetGraphic = hit;
-        close_button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(close_button);
         close_button.onClick.AddListener(close);
 
         var hover = hit.gameObject.AddComponent<LobbyChatHover>();
