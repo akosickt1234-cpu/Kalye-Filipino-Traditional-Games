@@ -13,7 +13,6 @@ public static class LobbyTopBar
     private const float LINE_HEIGHT = 3f;
     private const float ORNAMENT_WIDTH = 160f;
     private const float ORNAMENT_DIAMOND_HEIGHT = 0.5f;
-    private const float BACK_FILL_INSET = 0.1f;
 
     public static void build(RectTransform root)
     {
@@ -37,13 +36,13 @@ public static class LobbyTopBar
 
         Image star = PlayUi.image("TitleStar", crumb, PlayUi.sprite(LobbyUi.ICON_SUN_PATH));
         star.enabled = star.sprite != null;
-        star.color = PlayTheme.gold;
+        star.color = PlayTheme.title_accent;
         star.preserveAspect = true;
         star.raycastTarget = false;
         LayoutElement star_element = star.gameObject.AddComponent<LayoutElement>();
         star_element.flexibleWidth = 0f;
 
-        Text label = PlayUi.text("BreadcrumbText", crumb, string.Empty, 24, PlayTheme.text, TextAnchor.MiddleLeft);
+        Text label = PlayUi.text("BreadcrumbText", crumb, string.Empty, 24, PlayTheme.lobby_text, TextAnchor.MiddleLeft);
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
         label.verticalOverflow = VerticalWrapMode.Overflow;
         PlayUi.add_shadow(label);
@@ -96,7 +95,7 @@ public static class LobbyTopBar
 
     private static void build_ornament(RectTransform parent, string object_name)
     {
-        RectTransform ornament = LobbyOrnament.diamond_tail(parent, object_name, PlayTheme.gold, false, ORNAMENT_DIAMOND_HEIGHT);
+        RectTransform ornament = LobbyOrnament.diamond_tail(parent, object_name, PlayTheme.title_accent, false, ORNAMENT_DIAMOND_HEIGHT);
         LayoutElement element = ornament.gameObject.AddComponent<LayoutElement>();
         element.minWidth = ORNAMENT_WIDTH;
         element.preferredWidth = ORNAMENT_WIDTH;
@@ -124,9 +123,11 @@ public static class LobbyTopBar
 
         if (with_ring)
         {
-            Image fill = PlayUi.circle("Fill", hit.rectTransform, PlayTheme.panel_blue);
-            fill.preserveAspect = false;
-            anchor_fraction(fill.rectTransform, BACK_FILL_INSET, BACK_FILL_INSET, 1f - BACK_FILL_INSET, 1f - BACK_FILL_INSET);
+            Image fill = PlayUi.image("Fill", hit.rectTransform, PlayUi.pill());
+            fill.type = Image.Type.Sliced;
+            fill.color = PlayTheme.code_capsule;
+            fill.raycastTarget = false;
+            PlayUi.stretch(fill.rectTransform);
         }
 
         Image glow = PlayUi.image("Glow", hit.rectTransform, PlayUi.radial_glow());
@@ -135,14 +136,12 @@ public static class LobbyTopBar
 
         if (with_ring)
         {
-            Image frame = PlayUi.image("Frame", hit.rectTransform, PlayUi.sprite(LobbyUi.BACK_FRAME_PATH));
-            frame.enabled = frame.sprite != null;
-            PlayUi.stretch(frame.rectTransform);
+            LobbyCode.add_frame(hit.rectTransform, PlayTheme.border_highlight);
         }
 
         Image icon = PlayUi.image("Icon", hit.rectTransform, PlayUi.sprite(icon_path));
         icon.enabled = icon.sprite != null;
-        icon.color = PlayTheme.icon;
+        icon.color = PlayTheme.lobby_gold_icon;
         icon.preserveAspect = true;
         float margin = (1f - ICON_GLYPH_RATIO) * 0.5f;
         anchor_fraction(icon.rectTransform, margin, margin, 1f - margin, 1f - margin);
