@@ -59,6 +59,12 @@ public static class LobbyPlayerSlots
     const float RHOMBUS_TOP = 0.935f;
     const float CARD_GLOW_ALPHA = 0.32f;
     const float EMPTY_GLOW_ALPHA = 0.28f;
+    const float SPIN_SPEED = 0.9f;
+    const float SPIN_PHASE_STEP = 1.1f;
+    const float SPIN_FRAME_INTENSITY = 0.9f;
+    const float SPIN_GLOW_INTENSITY = 1f;
+    static readonly Color SPIN_LIGHT_GOLD = new Color(1f, 0.96f, 0.8f, 1f);
+    static readonly Color SPIN_LIGHT_BLUE = new Color(0.8f, 0.92f, 1f, 1f);
     const float FRAME_ALPHA_FAINT = 0.9f;
     const float AVATAR_ICON_INSET = 0.22f;
     const float HOURGLASS_SIZE = 20f;
@@ -102,7 +108,7 @@ public static class LobbyPlayerSlots
             var player = ordered[i];
             var cell = PlayUi.rect("slot_" + i, row_root);
             LobbyUi.place_fraction(cell, i / (float)count, 0f, (i + 1) / (float)count, 1f);
-            build_card(cell, player != null && !player.is_empty ? player : null);
+            build_card(cell, player != null && !player.is_empty ? player : null, i);
         }
     }
 
@@ -182,7 +188,7 @@ public static class LobbyPlayerSlots
         LobbyUi.place_fraction(tail, 0f, SHOW_SUBTEXT ? SUBTEXT_CREST_BOTTOM : CREST_BOTTOM, 1f, SHOW_SUBTEXT ? SUBTEXT_CREST_TOP : CREST_TOP);
     }
 
-    static void build_card(RectTransform cell, LobbyPlayer player)
+    static void build_card(RectTransform cell, LobbyPlayer player, int card_index)
     {
         var empty = player == null;
         var is_you = !empty && player.is_you;
@@ -194,10 +200,15 @@ public static class LobbyPlayerSlots
 
         var light = empty ? LobbyFrameLight.Style.BlueCard : LobbyFrameLight.Style.GoldCard;
         var glow_color = is_you ? PlayTheme.with_alpha(PlayTheme.gold, YOU_GLOW_ALPHA) : empty ? PlayTheme.with_alpha(PlayTheme.light_blue, EMPTY_GLOW_ALPHA) : PlayTheme.with_alpha(PlayTheme.gold, CARD_GLOW_ALPHA);
-        LobbyUi.glow_panel("card_glow", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, glow_color);
+        var glow = LobbyUi.glow_panel("card_glow", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, glow_color);
         var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, light, true);
         card.raycastTarget = true;
         card.color = PlayTheme.with_alpha(PlayTheme.white, empty ? FRAME_ALPHA_FAINT : 1f);
+
+        var beam_color = empty ? SPIN_LIGHT_BLUE : SPIN_LIGHT_GOLD;
+        var beam_phase = card_index * SPIN_PHASE_STEP;
+        LobbyFrameSpin.attach(glow, beam_color, SPIN_SPEED, beam_phase, SPIN_GLOW_INTENSITY, true);
+        LobbyFrameSpin.attach(card, beam_color, SPIN_SPEED, beam_phase, SPIN_FRAME_INTENSITY, false);
 
         if (empty) build_empty_avatar(frame);
         else build_avatar(frame, player);
