@@ -85,7 +85,7 @@ public static class LobbyUi
         PlayUi.stretch(picture.rectTransform);
         if (art == null) return picture;
 
-        var reach = LobbyFrameLight.GLOW_PAD * Mathf.Max(0.01f, border_scale) * CANVAS_REFERENCE_PPU / art.pixelsPerUnit;
+        var reach = LobbyFrameLight.GLOW_PAD * CANVAS_REFERENCE_PPU / (art.pixelsPerUnit * Mathf.Max(0.01f, border_scale));
         picture.rectTransform.offsetMin = new Vector2(-reach, -reach);
         picture.rectTransform.offsetMax = new Vector2(reach, reach);
         return picture;
