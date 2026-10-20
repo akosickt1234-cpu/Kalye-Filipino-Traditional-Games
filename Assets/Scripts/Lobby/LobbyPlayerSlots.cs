@@ -5,13 +5,16 @@ using UnityEngine.UI;
 public static class LobbyPlayerSlots
 {
     const string TITLE = "GATHER YOUR TEAM";
-    const bool SHOW_SUBTEXT = false;
+    const bool SHOW_SUBTEXT = true;
     const string SUBTEXT = "Play together. Make new memories.";
     const string INVITE_LABEL = "Invite Friend";
     const string READY_LABEL = "Ready";
     const string WAITING_LABEL = "Waiting...";
     const float CARD_ASPECT = 485f / 768f;
     const float CARD_BORDER_SCALE = 1.8f;
+    const float SLOT_GLOW_ALPHA = 0.17f;
+    const float SLOT_GLOW_BLUR = 6f;
+    const float CARD_FILL_INSET = 0.02f;
     const float CELL_PAD_X = 0.04f;
     const float CELL_TOP = 0.90f;
     const float CELL_BOTTOM = 0.05f;
@@ -120,7 +123,7 @@ public static class LobbyPlayerSlots
 
         var title_cell = PlayUi.rect("title_cell", heading_slot);
         LobbyUi.place_fraction(title_cell, TITLE_LEFT, SHOW_SUBTEXT ? TITLE_SPLIT : 0f, TITLE_RIGHT, 1f);
-        var title = PlayUi.text("title", title_cell, TITLE, TITLE_MAX_SIZE, PlayTheme.text_white, TextAnchor.MiddleLeft);
+        var title = PlayUi.text("title", title_cell, TITLE, TITLE_MAX_SIZE, PlayTheme.lobby_text, TextAnchor.MiddleLeft);
         fit_text(title, TITLE_MIN_SIZE, TITLE_MAX_SIZE);
         PlayUi.stretch(title.rectTransform);
         PlayUi.add_shadow(title);
@@ -129,7 +132,7 @@ public static class LobbyPlayerSlots
         {
             var subtext_cell = PlayUi.rect("subtext_cell", heading_slot);
             LobbyUi.place_fraction(subtext_cell, TITLE_LEFT, 0f, TITLE_RIGHT, TITLE_SPLIT);
-            var subtext = PlayUi.text("subtext", subtext_cell, SUBTEXT, SUBTEXT_MAX_SIZE, PlayTheme.text_muted, TextAnchor.UpperLeft);
+            var subtext = PlayUi.text("subtext", subtext_cell, SUBTEXT, SUBTEXT_MAX_SIZE, PlayTheme.lobby_text_muted, TextAnchor.UpperLeft);
             fit_text(subtext, SUBTEXT_MIN_SIZE, SUBTEXT_MAX_SIZE);
             PlayUi.stretch(subtext.rectTransform);
         }
@@ -148,14 +151,14 @@ public static class LobbyPlayerSlots
         var sun = PlayUi.image("sun", emblem, PlayUi.sprite(LobbyUi.ICON_SUN_PATH));
         sun.enabled = sun.sprite != null;
         sun.preserveAspect = true;
-        sun.color = PlayTheme.gold;
+        sun.color = PlayTheme.lobby_gold_icon;
         PlayUi.stretch(sun.rectTransform);
         PlayUi.add_shadow(sun, 2f);
     }
 
     static void build_crest(RectTransform cell)
     {
-        var tail = LobbyOrnament.diamond_tail(cell, "crest_tail", PlayTheme.gold, false);
+        var tail = LobbyOrnament.diamond_tail(cell, "crest_tail", PlayTheme.title_accent, false);
         LobbyUi.place_fraction(tail, 0f, CREST_BOTTOM, 1f, CREST_TOP);
     }
 
@@ -169,22 +172,32 @@ public static class LobbyPlayerSlots
         LobbyUi.place_fraction(frame, CELL_PAD_X, CELL_BOTTOM, 1f - CELL_PAD_X, CELL_TOP);
         fit_aspect(frame, CARD_ASPECT, AspectRatioFitter.AspectMode.FitInParent);
 
-        var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE);
+        var glow = LobbyUi.glow("slot_glow", frame, PlayTheme.slot_glow, SLOT_GLOW_ALPHA, SLOT_GLOW_BLUR);
+        glow.raycastTarget = false;
+
+        var fill = LobbyUi.gradient_image("card_fill", frame, PlayTheme.slot_stops, true);
+        fill.raycastTarget = false;
+        PlayUi.stretch(fill.rectTransform);
+        fill.rectTransform.anchorMin = new Vector2(CARD_FILL_INSET, CARD_FILL_INSET);
+        fill.rectTransform.anchorMax = new Vector2(1f - CARD_FILL_INSET, 1f - CARD_FILL_INSET);
+        fill.rectTransform.offsetMin = Vector2.zero;
+        fill.rectTransform.offsetMax = Vector2.zero;
+
+        var card = LobbyUi.panel("card_frame", frame, is_host ? LobbyUi.FRAME_PLAYER_CARD_HOST_PATH : LobbyUi.FRAME_PLAYER_CARD_BLUE_PATH, CARD_BORDER_SCALE);
         card.raycastTarget = true;
         card.color = PlayTheme.with_alpha(PlayTheme.white, empty ? FRAME_ALPHA_FAINT : 1f);
 
         if (empty) build_empty_avatar(frame);
         else build_avatar(frame, player);
 
-        if (is_host) build_top_icon(frame, "crown", LobbyUi.ICON_CROWN_PATH, PlayTheme.gold);
-        else build_top_icon(frame, "rhombus", LobbyUi.ICON_RHOMBUS_PATH, empty ? PlayTheme.with_alpha(PlayTheme.gold_soft, RHOMBUS_ALPHA_EMPTY) : PlayTheme.gold_soft);
+        if (is_host) build_top_icon(frame, "crown", LobbyUi.ICON_CROWN_PATH, PlayTheme.crown);
+        else build_top_icon(frame, "rhombus", LobbyUi.ICON_RHOMBUS_PATH, empty ? PlayTheme.with_alpha(PlayTheme.lobby_gold_icon, RHOMBUS_ALPHA_EMPTY) : PlayTheme.lobby_gold_icon);
 
         var you = LobbyState.you;
         var name_value = empty ? INVITE_LABEL : LobbyUi.sanitize(is_you && you != null ? you.name : player.name);
-        var name_color = empty ? PlayTheme.text_muted : PlayTheme.text;
         var name_cell = PlayUi.rect("name", frame);
         LobbyUi.place_fraction(name_cell, 0.08f, NAME_BOTTOM, 0.92f, NAME_TOP);
-        LobbyPlayerNameFit.attach(name_cell, name_value, name_color, NAME_MIN_SIZE, NAME_MAX_SIZE, NAME_HEIGHT_RATIO);
+        LobbyPlayerNameFit.attach(name_cell, name_value, PlayTheme.lobby_text, NAME_MIN_SIZE, NAME_MAX_SIZE, NAME_HEIGHT_RATIO);
 
         var ready = !empty && player.ready;
         build_status(frame, ready);
@@ -243,11 +256,11 @@ public static class LobbyPlayerSlots
             var fallback = PlayUi.image("avatar_default", fill.rectTransform, PlayUi.sprite(LobbyUi.ICON_AVATAR_DEFAULT_PATH));
             fallback.enabled = fallback.sprite != null;
             fallback.preserveAspect = true;
-            fallback.color = PlayTheme.icon;
+            fallback.color = PlayTheme.lobby_text_muted;
             LobbyUi.place_fraction(fallback.rectTransform, AVATAR_ICON_INSET, AVATAR_ICON_INSET, 1f - AVATAR_ICON_INSET, 1f - AVATAR_ICON_INSET);
         }
 
-        build_circle_frame(holder, PlayTheme.white);
+        build_circle_frame(holder, PlayTheme.avatar_ring);
     }
 
     static void build_empty_avatar(RectTransform frame)
@@ -258,14 +271,14 @@ public static class LobbyPlayerSlots
         fill.preserveAspect = false;
         LobbyUi.place_fraction(fill.rectTransform, AVATAR_FILL_INSET, AVATAR_FILL_INSET, 1f - AVATAR_FILL_INSET, 1f - AVATAR_FILL_INSET);
 
-        build_circle_frame(holder, PlayTheme.with_alpha(PlayTheme.white, RING_ALPHA));
+        build_circle_frame(holder, PlayTheme.with_alpha(PlayTheme.avatar_ring, RING_ALPHA));
 
         var horizontal = PlayUi.image("plus_horizontal", holder, null);
-        horizontal.color = PlayTheme.text_muted;
+        horizontal.color = PlayTheme.plus_icon;
         LobbyUi.place_fraction(horizontal.rectTransform, PLUS_MIN, 0.5f - PLUS_HALF_THICKNESS, PLUS_MAX, 0.5f + PLUS_HALF_THICKNESS);
 
         var vertical = PlayUi.image("plus_vertical", holder, null);
-        vertical.color = PlayTheme.text_muted;
+        vertical.color = PlayTheme.plus_icon;
         LobbyUi.place_fraction(vertical.rectTransform, 0.5f - PLUS_HALF_THICKNESS, PLUS_MIN, 0.5f + PLUS_HALF_THICKNESS, PLUS_MAX);
 
     }
@@ -287,7 +300,7 @@ public static class LobbyPlayerSlots
         {
             var dot = PlayUi.image("status_dot", row, PlayUi.pill());
             dot.type = Image.Type.Sliced;
-            dot.color = PlayTheme.success;
+            dot.color = PlayTheme.lobby_ready;
             var dot_layout = dot.gameObject.AddComponent<LayoutElement>();
             dot_layout.preferredWidth = DOT_SIZE;
             dot_layout.preferredHeight = DOT_SIZE;
@@ -297,13 +310,13 @@ public static class LobbyPlayerSlots
             var hourglass = PlayUi.image("status_hourglass", row, PlayUi.sprite(LobbyUi.ICON_HOURGLASS_PATH));
             hourglass.enabled = hourglass.sprite != null;
             hourglass.preserveAspect = true;
-            hourglass.color = PlayTheme.text_muted;
+            hourglass.color = PlayTheme.lobby_text_muted;
             var hourglass_layout = hourglass.gameObject.AddComponent<LayoutElement>();
             hourglass_layout.preferredWidth = HOURGLASS_SIZE;
             hourglass_layout.preferredHeight = HOURGLASS_SIZE;
         }
 
-        var label = PlayUi.text("status_text", row, ready ? READY_LABEL : WAITING_LABEL, STATUS_SIZE, ready ? PlayTheme.success : PlayTheme.text_muted, TextAnchor.MiddleLeft);
+        var label = PlayUi.text("status_text", row, ready ? READY_LABEL : WAITING_LABEL, STATUS_SIZE, ready ? PlayTheme.lobby_ready : PlayTheme.lobby_text_muted, TextAnchor.MiddleLeft);
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
         label.verticalOverflow = VerticalWrapMode.Overflow;
     }
