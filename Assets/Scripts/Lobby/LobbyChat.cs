@@ -74,7 +74,7 @@ public static class LobbyChat
         var icon = PlayUi.image("icon_chat", button_rect, PlayUi.sprite(LobbyUi.ICON_CHAT_PATH));
         LobbyUi.place_fraction(icon.rectTransform, ICON_LEFT, ICON_BOTTOM, ICON_RIGHT, ICON_TOP);
         icon.preserveAspect = true;
-        icon.color = PlayTheme.gold;
+        icon.color = PlayTheme.light_blue;
         PlayUi.add_shadow(icon);
 
         var area = PlayUi.rect("message_area", button_rect);
@@ -85,7 +85,7 @@ public static class LobbyChat
         LobbyUi.no_transition(button);
 
         var hover = button_rect.gameObject.AddComponent<LobbyChatHover>();
-        hover.setup(button, icon, PlayTheme.gold, PlayTheme.gold_soft, icon.rectTransform, ICON_HOVER_SCALE, glow);
+        hover.setup(button, icon, PlayTheme.light_blue, PlayTheme.text_white, icon.rectTransform, ICON_HOVER_SCALE, glow);
 
         var column = button_rect.gameObject.AddComponent<LobbyChatColumn>();
         column.setup(area, COLUMN_FONT_SIZE, COLUMN_SUB_FONT_SIZE, COLUMN_SPLIT);
@@ -157,7 +157,7 @@ public static class LobbyChat
 
     internal static void build_window(LobbyChatWindow owner, RectTransform blocker, out ScrollRect scroll, out RectTransform content, out InputField input, out Button send)
     {
-        var window = LobbyUi.panel("chat_window", blocker, LobbyUi.PANEL_LOBBY_PATH, LobbyUi.PANEL_BORDER_SCALE);
+        var window = LobbyUi.panel("chat_window", blocker, LobbyUi.PANEL_LOBBY_PATH, LobbyUi.PANEL_BORDER_SCALE, LobbyFrameLight.Style.GoldTop);
         window.raycastTarget = true;
         LobbyUi.place_fraction(window.rectTransform, WINDOW_LEFT, WINDOW_BOTTOM, WINDOW_RIGHT, WINDOW_TOP);
 
@@ -301,8 +301,8 @@ public class LobbyChatColumn : MonoBehaviour
     float built_width;
     string title_value = string.Empty;
     string sub_value = string.Empty;
-    Color title_color = PlayTheme.text;
-    Color sub_color = PlayTheme.text_muted;
+    Color title_color = PlayTheme.text_white;
+    Color sub_color = PlayTheme.light_blue;
 
     public void setup(RectTransform message_area, int title_font_size, int sub_font_size, float split_fraction)
     {
@@ -337,16 +337,12 @@ public class LobbyChatColumn : MonoBehaviour
         {
             title_value = LobbyChat.empty_text;
             sub_value = LobbyChat.empty_subtext;
-            title_color = PlayTheme.text;
-            sub_color = PlayTheme.text_muted;
         }
         else
         {
             var latest = list[list.Count - 1];
             title_value = LobbyUi.sanitize(latest.name) + ":";
             sub_value = LobbyUi.sanitize(latest.text).Replace("\r", string.Empty).Replace("\n", " ");
-            title_color = latest.name == LobbyState.SYSTEM_NAME ? PlayTheme.text_muted : PlayTheme.gold;
-            sub_color = PlayTheme.text;
         }
 
         apply();
