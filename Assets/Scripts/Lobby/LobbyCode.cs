@@ -29,7 +29,10 @@ public static class LobbyCode
     const float KEY_RIGHT = 0.16f;
     const float KEY_VERTICAL_PADDING = 0.2f;
     const float CODE_TEXT_LEFT = 0.19f;
-    const float CODE_TEXT_RIGHT = 0.96f;
+    const float CODE_TEXT_RIGHT = 0.80f;
+    const float COPY_LEFT = 0.82f;
+    const float COPY_RIGHT = 0.97f;
+    const float COPY_VERTICAL_PADDING = 0.08f;
     const float ICON_GLYPH_RATIO = 0.5f;
     const float GLOW_RATIO = 1.5f;
 
@@ -58,6 +61,7 @@ public static class LobbyCode
         LobbyUi.place_fraction(row, 0f, ROW_BOTTOM, CODE_ROW_RIGHT, ROW_TOP);
 
         var pill = LobbyUi.blue_pill("code_pill", row, false);
+        PlayUi.stretch(pill.rectTransform);
 
         var key = PlayUi.image("key_icon", pill.rectTransform, PlayUi.sprite(LobbyUi.ICON_KEY_PATH));
         key.enabled = key.sprite != null;
@@ -69,10 +73,9 @@ public static class LobbyCode
         LobbyUi.place_fraction(code.rectTransform, CODE_TEXT_LEFT, 0.08f, CODE_TEXT_RIGHT, 0.92f);
         PlayUi.add_shadow(code, 2f);
 
-        var copy_button = build_square_button("copy_button", row, LobbyUi.ICON_COPY_PATH);
-
-        var layout = row.gameObject.AddComponent<LobbyCodeRow>();
-        layout.setup(pill.rectTransform, new List<RectTransform> { (RectTransform)copy_button.transform });
+        var copy_area = PlayUi.rect("copy_area", pill.rectTransform);
+        LobbyUi.place_fraction(copy_area, COPY_LEFT, COPY_VERTICAL_PADDING, COPY_RIGHT, 1f - COPY_VERTICAL_PADDING);
+        var copy_button = build_square_button("copy_button", copy_area, LobbyUi.ICON_COPY_PATH);
 
         view.code_text = code;
         view.copied_text = copied;
@@ -122,7 +125,12 @@ public static class LobbyCode
 
     static Button build_square_button(string name, RectTransform parent, string icon_path)
     {
-        var hit = LobbyUi.blue_pill(name, parent, true);
+        var hit = PlayUi.image(name, parent, null, true);
+        hit.color = PlayTheme.clear;
+        PlayUi.stretch(hit.rectTransform);
+        var fit = hit.gameObject.AddComponent<AspectRatioFitter>();
+        fit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+        fit.aspectRatio = 1f;
 
         var button = hit.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
@@ -154,56 +162,6 @@ public static class LobbyCode
         label.resizeTextMinSize = min_size;
         label.resizeTextMaxSize = max_size;
         return label;
-    }
-}
-
-public class LobbyCodeRow : MonoBehaviour
-{
-    const float GAP_RATIO = 0.14f;
-
-    RectTransform row_rect;
-    RectTransform body;
-    List<RectTransform> squares;
-
-    public void setup(RectTransform body_rect, List<RectTransform> square_list)
-    {
-        row_rect = (RectTransform)transform;
-        body = body_rect;
-        squares = square_list;
-        apply();
-    }
-
-    void OnEnable()
-    {
-        apply();
-    }
-
-    void OnRectTransformDimensionsChange()
-    {
-        apply();
-    }
-
-    void apply()
-    {
-        if (row_rect == null || body == null || squares == null) return;
-
-        var rect = row_rect.rect;
-        if (rect.width <= 0.01f || rect.height <= 0.01f) return;
-
-        var side = Mathf.Min(1f, rect.height / rect.width);
-        var gap = side * GAP_RATIO;
-        var edge = 1f;
-
-        for (var i = 0; i < squares.Count; i++)
-        {
-            var square = squares[i];
-            if (square == null) continue;
-
-            LobbyUi.place_fraction(square, edge - side, 0f, edge, 1f);
-            edge -= side + gap;
-        }
-
-        LobbyUi.place_fraction(body, 0f, 0f, Mathf.Max(0f, edge), 1f);
     }
 }
 
