@@ -16,6 +16,10 @@ public static class LobbyUi
     public const string ICON_ARROW_RIGHT_PATH = "Icons/Lobby/IconArrowRight";
     public const string ICON_SUN_PATH = "Icons/Lobby/IconSun";
     public const string ICON_RHOMBUS_PATH = "Icons/Lobby/IconRhombus";
+    public const string ICON_SWORDS_PATH = "Icons/Lobby/IconSwords";
+    public const string ICON_HOURGLASS_PATH = "Icons/Lobby/IconHourglass";
+    public const string ICON_USER_PLUS_PATH = "Icons/Lobby/IconUserPlus";
+    public const string ICON_AVATAR_DEFAULT_PATH = "Icons/Lobby/IconAvatarDefault";
     public const string FRAME_AVATAR_CIRCLE_PATH = "Frames/Play/FrameAvatarRing";
     public const string BACKDROP_PATH = "Background/Lobby/LobbyBackdrop";
     public const float PANEL_BORDER_SCALE = 1.8f;
