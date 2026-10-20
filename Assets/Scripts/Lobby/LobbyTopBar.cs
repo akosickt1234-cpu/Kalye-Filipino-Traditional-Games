@@ -12,8 +12,8 @@ public static class LobbyTopBar
     private const float GLOW_OVERSHOOT = 0.55f;
     private const float LINE_GAP = 8f;
     private const float LINE_HEIGHT = 3f;
-    private const float CREST_WIDTH = 96f;
-    private const float CREST_ARROW_HEIGHT = 0.5f;
+    private const float ORNAMENT_WIDTH = 160f;
+    private const float ORNAMENT_DIAMOND_HEIGHT = 0.5f;
     private const float BACK_FILL_INSET = 0.1f;
 
     public static void build(RectTransform root)
@@ -36,21 +36,27 @@ public static class LobbyTopBar
         group.childForceExpandWidth = false;
         group.childForceExpandHeight = true;
 
-        build_crest(crumb, "CrestLeft", true);
+        Image star = PlayUi.image("TitleStar", crumb, PlayUi.sprite(LobbyUi.ICON_SUN_PATH));
+        star.enabled = star.sprite != null;
+        star.color = PlayTheme.gold;
+        star.preserveAspect = true;
+        star.raycastTarget = false;
+        LayoutElement star_element = star.gameObject.AddComponent<LayoutElement>();
+        star_element.flexibleWidth = 0f;
 
-        Text label = PlayUi.text("BreadcrumbText", crumb, string.Empty, 24, PlayTheme.text, TextAnchor.MiddleCenter);
+        Text label = PlayUi.text("BreadcrumbText", crumb, string.Empty, 24, PlayTheme.text, TextAnchor.MiddleLeft);
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
         label.verticalOverflow = VerticalWrapMode.Overflow;
         PlayUi.add_shadow(label);
 
-        build_crest(crumb, "CrestRight", false);
+        build_ornament(crumb, "TitleOrnament");
 
         Button private_lobby = build_circle(bar, "ButtonPrivateLobby", LobbyUi.ICON_PRIVATE_LOBBY_PATH, 0f, false, on_private_lobby);
         Button settings = build_circle(bar, "ButtonSettings", SETTINGS_ICON_PATH, 0f, false, on_settings);
         Button minimize = build_circle(bar, "ButtonMinimize", LobbyUi.ICON_MINIMIZE_PATH, 0f, false, on_minimize);
 
         LobbyTopBarLayout layout = bar.gameObject.AddComponent<LobbyTopBarLayout>();
-        layout.setup(bar, back.GetComponent<RectTransform>(), crumb, group, label, new[]
+        layout.setup(bar, back.GetComponent<RectTransform>(), crumb, group, label, star_element, new[]
         {
             private_lobby.GetComponent<RectTransform>(),
             settings.GetComponent<RectTransform>(),
@@ -89,12 +95,12 @@ public static class LobbyTopBar
         PlayFocus.clear_selection();
     }
 
-    private static void build_crest(RectTransform parent, string object_name, bool diamond_on_right)
+    private static void build_ornament(RectTransform parent, string object_name)
     {
-        RectTransform crest = LobbyOrnament.diamond_tail(parent, object_name, PlayTheme.gold, diamond_on_right, CREST_ARROW_HEIGHT);
-        LayoutElement element = crest.gameObject.AddComponent<LayoutElement>();
-        element.minWidth = CREST_WIDTH;
-        element.preferredWidth = CREST_WIDTH;
+        RectTransform ornament = LobbyOrnament.diamond_tail(parent, object_name, PlayTheme.gold, false, ORNAMENT_DIAMOND_HEIGHT);
+        LayoutElement element = ornament.gameObject.AddComponent<LayoutElement>();
+        element.minWidth = ORNAMENT_WIDTH;
+        element.preferredWidth = ORNAMENT_WIDTH;
         element.flexibleWidth = 0f;
     }
 
@@ -172,9 +178,10 @@ public class LobbyTopBarLayout : MonoBehaviour
     private const float CRUMB_GAP_RATIO = 0.15f;
     private const float CRUMB_SPACING_RATIO = 0.1f;
     private const float TEXT_RATIO = 0.26f;
-    private const float CRUMB_RIGHT_ANCHOR = 0.55f;
+    private const float STAR_RATIO = 0.32f;
+    private const float CRUMB_RIGHT_ANCHOR = 0.7f;
     private const int MIN_TEXT_SIZE = 12;
-    private const string SEPARATOR = "/LOBBY";
+    private const string SEPARATOR = " LOBBY";
     private const string LOBBY_ONLY = "LOBBY";
     private const char HAIR_SPACE = ' ';
 
@@ -183,17 +190,19 @@ public class LobbyTopBarLayout : MonoBehaviour
     private RectTransform crumb;
     private HorizontalLayoutGroup crumb_group;
     private Text crumb_text;
+    private LayoutElement star_element;
     private RectTransform[] right_buttons;
     private bool ready;
     private int applied_text_size;
 
-    public void setup(RectTransform bar_rect, RectTransform back_rect, RectTransform crumb_rect, HorizontalLayoutGroup group, Text label, RectTransform[] buttons)
+    public void setup(RectTransform bar_rect, RectTransform back_rect, RectTransform crumb_rect, HorizontalLayoutGroup group, Text label, LayoutElement star, RectTransform[] buttons)
     {
         bar = bar_rect;
         back = back_rect;
         crumb = crumb_rect;
         crumb_group = group;
         crumb_text = label;
+        star_element = star;
         right_buttons = buttons;
         ready = true;
 
@@ -271,6 +280,10 @@ public class LobbyTopBarLayout : MonoBehaviour
         crumb.offsetMin = new Vector2(crumb_left, -size * 0.5f);
         crumb.offsetMax = new Vector2(0f, size * 0.5f);
         crumb_group.spacing = height * CRUMB_SPACING_RATIO;
+
+        float star_size = height * STAR_RATIO;
+        star_element.minWidth = star_size;
+        star_element.preferredWidth = star_size;
 
         int text_size = Mathf.Max(MIN_TEXT_SIZE, Mathf.RoundToInt(height * TEXT_RATIO));
         if (text_size != applied_text_size)
