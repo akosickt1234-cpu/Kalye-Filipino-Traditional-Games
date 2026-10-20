@@ -112,7 +112,7 @@ public class LobbyStartBarView : MonoBehaviour
 
         button = button_rect.gameObject.AddComponent<Button>();
         button.targetGraphic = face;
-        button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(button);
         button.onClick.AddListener(on_click);
 
         button_fx = button_rect.gameObject.AddComponent<PlayButtonFx>();

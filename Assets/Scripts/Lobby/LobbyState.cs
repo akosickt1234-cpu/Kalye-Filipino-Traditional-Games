@@ -36,7 +36,6 @@ public static class LobbyState
     public const string JOIN_OK = "ok";
     public const string SYSTEM_NAME = "System";
     public const int SEARCH_TARGET = 5;
-    const string PLAY_SCENE = "Play";
     const string MATCH_SCENE = "Match";
     const string CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const int CODE_GROUP_LENGTH = 4;
@@ -158,7 +157,7 @@ public static class LobbyState
     public static void minimize()
     {
         if (!in_lobby) return;
-        LobbyUi.go_to_scene(PLAY_SCENE);
+        LobbyUi.go_to_scene(LobbyUi.PLAY_SCENE);
     }
 
     public static void leave()
