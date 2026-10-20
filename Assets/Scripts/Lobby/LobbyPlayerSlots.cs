@@ -23,7 +23,8 @@ public static class LobbyPlayerSlots
     const float CREST_RIGHT = 0.92f;
     const float CREST_BOTTOM = 0.32f;
     const float CREST_TOP = 0.68f;
-    const float RING_ALPHA = 0.4f;
+    const float RING_ALPHA = 0.9f;
+    const float YOU_GLOW_ALPHA = 0.6f;
     const float PLUS_MIN = 0.30f;
     const float PLUS_MAX = 0.70f;
     const float PLUS_HALF_THICKNESS = 0.025f;
@@ -47,7 +48,6 @@ public static class LobbyPlayerSlots
     const float RHOMBUS_RIGHT = 0.66f;
     const float RHOMBUS_BOTTOM = 0.78f;
     const float RHOMBUS_TOP = 0.90f;
-    const float RHOMBUS_ALPHA_EMPTY = 0.6f;
     const float FRAME_ALPHA_FAINT = 0.9f;
     const float AVATAR_ICON_INSET = 0.22f;
     const float HOURGLASS_SIZE = 20f;
@@ -170,6 +170,7 @@ public static class LobbyPlayerSlots
         fit_aspect(frame, CARD_ASPECT, AspectRatioFitter.AspectMode.FitInParent);
 
         var light = empty ? LobbyFrameLight.Style.BlueTopBottom : LobbyFrameLight.Style.GoldTopBottom;
+        if (is_you) LobbyUi.rim_glow("you_glow", frame, PlayTheme.with_alpha(PlayTheme.gold, YOU_GLOW_ALPHA));
         var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, light);
         card.raycastTarget = true;
         card.color = PlayTheme.with_alpha(PlayTheme.white, empty ? FRAME_ALPHA_FAINT : 1f);
@@ -178,17 +179,17 @@ public static class LobbyPlayerSlots
         else build_avatar(frame, player);
 
         if (is_host) build_top_icon(frame, "crown", LobbyUi.ICON_CROWN_PATH, PlayTheme.gold);
-        else build_top_icon(frame, "rhombus", LobbyUi.ICON_RHOMBUS_PATH, empty ? PlayTheme.with_alpha(PlayTheme.gold_soft, RHOMBUS_ALPHA_EMPTY) : PlayTheme.gold_soft);
+        else build_top_icon(frame, "rhombus", LobbyUi.ICON_RHOMBUS_PATH, empty ? PlayTheme.light_blue : PlayTheme.gold_soft);
 
         var you = LobbyState.you;
         var name_value = empty ? INVITE_LABEL : LobbyUi.sanitize(is_you && you != null ? you.name : player.name);
-        var name_color = empty ? PlayTheme.text_muted : is_you ? PlayTheme.gold : PlayTheme.text_white;
+        var name_color = empty ? PlayTheme.light_blue : is_you ? PlayTheme.gold : PlayTheme.text_white;
         var name_cell = PlayUi.rect("name", frame);
         LobbyUi.place_fraction(name_cell, 0.08f, NAME_BOTTOM, 0.92f, NAME_TOP);
         LobbyPlayerNameFit.attach(name_cell, name_value, name_color, NAME_MIN_SIZE, NAME_MAX_SIZE, NAME_HEIGHT_RATIO);
 
         var ready = !empty && player.ready;
-        build_status(frame, ready);
+        build_status(frame, ready, empty);
     }
 
     static RectTransform build_avatar_holder(RectTransform frame, string name)
@@ -201,9 +202,9 @@ public static class LobbyPlayerSlots
         return holder;
     }
 
-    static Image build_circle_frame(RectTransform holder, Color color)
+    static Image build_circle_frame(RectTransform holder, Color color, LobbyFrameLight.Style light)
     {
-        var ring = PlayUi.image("avatar_ring", holder, PlayUi.sprite(LobbyUi.FRAME_AVATAR_CIRCLE_PATH));
+        var ring = PlayUi.image("avatar_ring", holder, LobbyFrameLight.sprite(LobbyUi.FRAME_AVATAR_CIRCLE_PATH, light));
         ring.enabled = ring.sprite != null;
         ring.preserveAspect = true;
         ring.color = color;
@@ -248,7 +249,7 @@ public static class LobbyPlayerSlots
             LobbyUi.place_fraction(fallback.rectTransform, AVATAR_ICON_INSET, AVATAR_ICON_INSET, 1f - AVATAR_ICON_INSET, 1f - AVATAR_ICON_INSET);
         }
 
-        build_circle_frame(holder, PlayTheme.white);
+        build_circle_frame(holder, PlayTheme.white, LobbyFrameLight.Style.GoldTopBottom);
     }
 
     static void build_empty_avatar(RectTransform frame)
@@ -259,19 +260,19 @@ public static class LobbyPlayerSlots
         fill.preserveAspect = false;
         LobbyUi.place_fraction(fill.rectTransform, AVATAR_FILL_INSET, AVATAR_FILL_INSET, 1f - AVATAR_FILL_INSET, 1f - AVATAR_FILL_INSET);
 
-        build_circle_frame(holder, PlayTheme.with_alpha(PlayTheme.white, RING_ALPHA));
+        build_circle_frame(holder, PlayTheme.with_alpha(PlayTheme.white, RING_ALPHA), LobbyFrameLight.Style.BlueTopBottom);
 
         var horizontal = PlayUi.image("plus_horizontal", holder, null);
-        horizontal.color = PlayTheme.text_muted;
+        horizontal.color = PlayTheme.light_blue;
         LobbyUi.place_fraction(horizontal.rectTransform, PLUS_MIN, 0.5f - PLUS_HALF_THICKNESS, PLUS_MAX, 0.5f + PLUS_HALF_THICKNESS);
 
         var vertical = PlayUi.image("plus_vertical", holder, null);
-        vertical.color = PlayTheme.text_muted;
+        vertical.color = PlayTheme.light_blue;
         LobbyUi.place_fraction(vertical.rectTransform, 0.5f - PLUS_HALF_THICKNESS, PLUS_MIN, 0.5f + PLUS_HALF_THICKNESS, PLUS_MAX);
 
     }
 
-    static void build_status(RectTransform frame, bool ready)
+    static void build_status(RectTransform frame, bool ready, bool empty)
     {
         var row = PlayUi.rect("status", frame);
         LobbyUi.place_fraction(row, 0.05f, STATUS_BOTTOM, 0.95f, STATUS_TOP);
@@ -298,13 +299,13 @@ public static class LobbyPlayerSlots
             var hourglass = PlayUi.image("status_hourglass", row, PlayUi.sprite(LobbyUi.ICON_HOURGLASS_PATH));
             hourglass.enabled = hourglass.sprite != null;
             hourglass.preserveAspect = true;
-            hourglass.color = PlayTheme.text_muted;
+            hourglass.color = empty ? PlayTheme.light_blue : PlayTheme.text_muted;
             var hourglass_layout = hourglass.gameObject.AddComponent<LayoutElement>();
             hourglass_layout.preferredWidth = HOURGLASS_SIZE;
             hourglass_layout.preferredHeight = HOURGLASS_SIZE;
         }
 
-        var label = PlayUi.text("status_text", row, ready ? READY_LABEL : WAITING_LABEL, STATUS_SIZE, ready ? PlayTheme.success : PlayTheme.text_muted, TextAnchor.MiddleLeft);
+        var label = PlayUi.text("status_text", row, ready ? READY_LABEL : WAITING_LABEL, STATUS_SIZE, ready ? PlayTheme.success : empty ? PlayTheme.light_blue : PlayTheme.text_muted, TextAnchor.MiddleLeft);
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
         label.verticalOverflow = VerticalWrapMode.Overflow;
     }
