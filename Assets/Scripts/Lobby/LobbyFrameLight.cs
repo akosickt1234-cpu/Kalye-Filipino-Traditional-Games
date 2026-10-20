@@ -29,13 +29,13 @@ public static class LobbyFrameLight
     const float BLUE_HUE = 0.585f;
     const float BLUE_SATURATION = 1.25f;
     const float RING_ALPHA_GAIN = 2f;
-    const int GLOW_BLUR_RADIUS = 6;
+    const int GLOW_BLUR_RADIUS = 9;
     const int GLOW_BLUR_PASSES = 3;
-    const float GLOW_PEAK = 0.9f;
-    const float GLOW_FALLOFF = 1.35f;
-    const float GLOW_SIDE_LEVEL = 0.5f;
+    const float GLOW_PEAK = 1f;
+    const float GLOW_FALLOFF = 1f;
+    const float GLOW_SIDE_LEVEL = 0.85f;
 
-    public const int GLOW_PAD = 28;
+    public const int GLOW_PAD = 44;
 
     static readonly Color gold_light = new Color(1f, 0.96f, 0.80f, 1f);
     static readonly Color blue_light = new Color(0.80f, 0.92f, 1f, 1f);
