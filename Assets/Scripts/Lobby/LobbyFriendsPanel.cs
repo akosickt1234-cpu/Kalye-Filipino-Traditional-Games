@@ -264,6 +264,7 @@ public class LobbyFriendRow
     const string OFFLINE_LABEL = "Offline";
     const float OFFLINE_ALPHA = 0.55f;
     const float DISABLED_ALPHA = 0.6f;
+    const float INVITE_GLOW_ALPHA = 0.35f;
     const float INNER_LEFT = 0.02f;
     const float INNER_RIGHT = 0.98f;
     const float RING_THICKNESS = 2f;
@@ -439,7 +440,7 @@ public class LobbyFriendRow
         var glow = glow_rect.gameObject.AddComponent<Image>();
         glow.sprite = PlayUi.pill();
         glow.type = Image.Type.Sliced;
-        glow.color = PlayTheme.slot_glow;
+        glow.color = PlayTheme.with_alpha(PlayTheme.border_highlight, INVITE_GLOW_ALPHA);
         glow.raycastTarget = false;
         var glow_group = glow_rect.gameObject.AddComponent<CanvasGroup>();
         glow_group.alpha = 0f;
