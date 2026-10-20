@@ -32,10 +32,10 @@ public class LobbyScreen : MonoBehaviour
     const float SLOTS_BOTTOM = 0.76f;
     const float INFO_TOP = 0.80f;
     const float INFO_BOTTOM = 0.97f;
-    const float START_LEFT = 0.34f;
-    const float START_RIGHT = 0.66f;
-    const float BOTTOM_TOP = 0.82f;
-    const float BOTTOM_BOTTOM = 0.94f;
+    const float START_LEFT = 0.24f;
+    const float START_RIGHT = 0.76f;
+    const float BOTTOM_TOP = 0.79f;
+    const float BOTTOM_BOTTOM = 0.98f;
     const float COLUMN_COUNT = 3f;
 
     public static RectTransform overlay_root { get; private set; }
@@ -53,7 +53,9 @@ public class LobbyScreen : MonoBehaviour
 
         var top_bar = create_region("top_bar", root, 0f, 1f - TOP_BAR_HEIGHT_RATIO, 1f, 1f);
 
-        var main_panel = LobbyUi.panel("main_panel", root, LobbyUi.PANEL_LOBBY_PATH, LobbyUi.PANEL_BORDER_SCALE);
+        var panel_path = PlayUi.sprite(LobbyUi.PANEL_LOBBY_BLUE_PATH) != null ? LobbyUi.PANEL_LOBBY_BLUE_PATH : LobbyUi.PANEL_LOBBY_PATH;
+        var main_panel = LobbyUi.panel("main_panel", root, panel_path, LobbyUi.PANEL_BORDER_SCALE);
+        LobbyUi.decorate_panel(main_panel, PlayTheme.lobby_panel_stops, PlayTheme.panel_inner_glow);
         place_from_top(main_panel.rectTransform, MAIN_LEFT, PANEL_TOP, MAIN_RIGHT, PANEL_BOTTOM);
 
         var heading_slot = create_region("heading_slot", main_panel.rectTransform, HEADING_LEFT, 1f - HEADING_BOTTOM, HEADING_RIGHT, 1f - HEADING_TOP);
@@ -64,7 +66,8 @@ public class LobbyScreen : MonoBehaviour
         var count_col = create_column("count_col", info_row, 1);
         var mode_col = create_column("mode_col", info_row, 2);
 
-        var friends_panel = LobbyUi.panel("friends_panel", root, LobbyUi.PANEL_LOBBY_PATH, LobbyUi.PANEL_BORDER_SCALE);
+        var friends_panel = LobbyUi.panel("friends_panel", root, panel_path, LobbyUi.PANEL_BORDER_SCALE);
+        LobbyUi.decorate_panel(friends_panel, PlayTheme.lobby_panel_stops, PlayTheme.panel_inner_glow);
         place_from_top(friends_panel.rectTransform, FRIENDS_LEFT, PANEL_TOP, FRIENDS_RIGHT, PANEL_BOTTOM);
 
         var start_bar = create_region("start_bar", root, START_LEFT, 1f - BOTTOM_BOTTOM, START_RIGHT, 1f - BOTTOM_TOP);
