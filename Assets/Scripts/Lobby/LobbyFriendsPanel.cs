@@ -266,7 +266,7 @@ public class LobbyFriendsView : MonoBehaviour
         rhombus.preserveAspect = true;
         rhombus.color = PlayTheme.gold;
         rhombus.raycastTarget = false;
-        PlayUi.place(rhombus.rectTransform, new Vector2(0.5f, 0.38f), new Vector2(0.5f, 0.38f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(EMPTY_RHOMBUS_SIZE, EMPTY_RHOMBUS_SIZE));
+        PlayUi.place(rhombus.rectTransform, new Vector2(0.5f, 0.38f), new Vector2(0.5f, 0.38f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(LobbyFriendsPanel.EMPTY_RHOMBUS_SIZE, LobbyFriendsPanel.EMPTY_RHOMBUS_SIZE));
 
         var hint = PlayUi.text("friends_empty_hint", empty_root, LobbyFriendsPanel.EMPTY_HINT_TEXT, 22, tint, TextAnchor.UpperCenter);
         LobbyUi.place_fraction(hint.rectTransform, 0.05f, 0f, 0.95f, 0.34f);
