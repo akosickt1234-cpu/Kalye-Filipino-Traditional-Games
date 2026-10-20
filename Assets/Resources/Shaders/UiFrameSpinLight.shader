@@ -7,11 +7,11 @@ Shader "Kalye/ui_frame_spin_light"
         _LightColor ("Light Color", Color) = (1,0.96,0.8,1)
         _Intensity ("Light Intensity", Range(0, 2)) = 0.9
         _WhiteMix ("White Mix", Range(0, 1)) = 0.12
-        _GlowGain ("Glow Gain", Range(1, 3)) = 1.8
+        _GlowGain ("Glow Gain", Range(1, 3)) = 1.4
         _Power ("Beam Sharpness", Range(1, 16)) = 5
         _Echo ("Opposite Beam", Range(0, 1)) = 0.4
         _AlphaMix ("Alpha Mix", Range(0, 1)) = 0
-        _AlphaFloor ("Alpha Floor", Range(0, 1)) = 0.35
+        _AlphaFloor ("Alpha Floor", Range(0, 1)) = 0.8
         _Angle ("Angle", Float) = 0
         _Size ("Size", Vector) = (1,1,0,0)
     }

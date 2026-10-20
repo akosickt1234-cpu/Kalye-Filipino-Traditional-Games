@@ -29,7 +29,7 @@ public static class LobbyPlayerSlots
     const float CREST_BOTTOM = 0.32f;
     const float CREST_TOP = 0.68f;
     const float RING_ALPHA = 0.9f;
-    const float YOU_GLOW_ALPHA = 0.8f;
+    const float YOU_GLOW_ALPHA = 0.95f;
     const float PLUS_MIN = 0.30f;
     const float PLUS_MAX = 0.70f;
     const float PLUS_HALF_THICKNESS = 0.025f;
@@ -57,12 +57,14 @@ public static class LobbyPlayerSlots
     const float RHOMBUS_RIGHT = 0.72f;
     const float RHOMBUS_BOTTOM = 0.77f;
     const float RHOMBUS_TOP = 0.935f;
-    const float CARD_GLOW_ALPHA = 0.5f;
-    const float EMPTY_GLOW_ALPHA = 0.28f;
+    const float CARD_GLOW_ALPHA = 0.65f;
+    const float EMPTY_GLOW_ALPHA = 0.6f;
     const float SPIN_SPEED = 0.9f;
     const float SPIN_PHASE_STEP = 1.1f;
     const float SPIN_FRAME_INTENSITY = 0.6f;
-    const float SPIN_GLOW_INTENSITY = 0.5f;
+    const float SPIN_GLOW_INTENSITY = 0.3f;
+    static readonly Color GLOW_GOLD_COLOR = new Color(1f, 0.72f, 0.18f, 1f);
+    static readonly Color GLOW_BLUE_COLOR = new Color(0.3f, 0.62f, 1f, 1f);
     static readonly Color SPIN_LIGHT_GOLD = new Color(1f, 0.74f, 0.2f, 1f);
     static readonly Color SPIN_LIGHT_BLUE = new Color(0.4f, 0.7f, 1f, 1f);
     const float FRAME_ALPHA_FAINT = 0.9f;
@@ -199,7 +201,7 @@ public static class LobbyPlayerSlots
         fit_aspect(frame, CARD_ASPECT, AspectRatioFitter.AspectMode.FitInParent);
 
         var light = empty ? LobbyFrameLight.Style.BlueCard : LobbyFrameLight.Style.GoldCard;
-        var glow_color = is_you ? PlayTheme.with_alpha(PlayTheme.gold, YOU_GLOW_ALPHA) : empty ? PlayTheme.with_alpha(PlayTheme.light_blue, EMPTY_GLOW_ALPHA) : PlayTheme.with_alpha(PlayTheme.gold, CARD_GLOW_ALPHA);
+        var glow_color = is_you ? GLOW_GOLD_COLOR * new Color(1f, 1f, 1f, YOU_GLOW_ALPHA) : empty ? GLOW_BLUE_COLOR * new Color(1f, 1f, 1f, EMPTY_GLOW_ALPHA) : GLOW_GOLD_COLOR * new Color(1f, 1f, 1f, CARD_GLOW_ALPHA);
         var glow = LobbyUi.glow_panel("card_glow", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, glow_color);
         var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, light, true);
         card.raycastTarget = true;
