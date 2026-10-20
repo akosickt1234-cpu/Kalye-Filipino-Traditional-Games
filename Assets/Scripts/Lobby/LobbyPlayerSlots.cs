@@ -5,8 +5,8 @@ using UnityEngine.UI;
 public static class LobbyPlayerSlots
 {
     const string TITLE = "GATHER YOUR TEAM";
-    const bool SHOW_SUBTEXT = false;
-    const string SUBTEXT = "Play together. Make new memories.";
+    const bool SHOW_SUBTEXT = true;
+    const string SUBTEXT = "Play together, Make new memories";
     const string INVITE_LABEL = "Invite Friend";
     const string READY_LABEL = "Ready";
     const string WAITING_LABEL = "Waiting...";
@@ -19,8 +19,13 @@ public static class LobbyPlayerSlots
     const float TITLE_LEFT = 0.10f;
     const float TITLE_RIGHT = 0.72f;
     const float TITLE_SPLIT = 0.42f;
-    const float CREST_LEFT = 0.73f;
+    const float SUBTEXT_RIGHT = 0.57f;
+    const float CREST_LEFT = 0.58f;
     const float CREST_RIGHT = 0.92f;
+    const float SUBTEXT_CREST_BOTTOM = 0.25f;
+    const float SUBTEXT_CREST_TOP = 0.75f;
+    const float DIVIDER_THICKNESS = 2f;
+    const float DIVIDER_ALPHA = 0.6f;
     const float CREST_BOTTOM = 0.32f;
     const float CREST_TOP = 0.68f;
     const float RING_ALPHA = 0.9f;
@@ -62,6 +67,8 @@ public static class LobbyPlayerSlots
     {
         if (heading_slot != null) build_heading(heading_slot);
         if (slots_row == null) return;
+
+        build_top_divider(slots_row);
 
         row_root = slots_row;
         LobbyState.players_changed -= rebuild;
@@ -112,6 +119,16 @@ public static class LobbyPlayerSlots
         return result;
     }
 
+    static void build_top_divider(RectTransform row)
+    {
+        var parent = row.parent as RectTransform;
+        if (parent == null) return;
+
+        var color = PlayTheme.with_alpha(PlayTheme.border_blue, DIVIDER_ALPHA);
+        var line = PlayOrnament.line(parent, "cards_top_line", 100f, DIVIDER_THICKNESS, color, true, true);
+        PlayUi.place(line.rectTransform, new Vector2(row.anchorMin.x, row.anchorMax.y), new Vector2(row.anchorMax.x, row.anchorMax.y), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(0f, DIVIDER_THICKNESS));
+    }
+
     static void build_heading(RectTransform heading_slot)
     {
         var emblem_cell = PlayUi.rect("emblem_cell", heading_slot);
@@ -128,14 +145,14 @@ public static class LobbyPlayerSlots
         if (SHOW_SUBTEXT)
         {
             var subtext_cell = PlayUi.rect("subtext_cell", heading_slot);
-            LobbyUi.place_fraction(subtext_cell, TITLE_LEFT, 0f, TITLE_RIGHT, TITLE_SPLIT);
-            var subtext = PlayUi.text("subtext", subtext_cell, SUBTEXT, SUBTEXT_MAX_SIZE, PlayTheme.text_muted, TextAnchor.UpperLeft);
+            LobbyUi.place_fraction(subtext_cell, TITLE_LEFT, 0f, SUBTEXT_RIGHT, TITLE_SPLIT);
+            var subtext = PlayUi.text("subtext", subtext_cell, SUBTEXT, SUBTEXT_MAX_SIZE, PlayTheme.text_muted, TextAnchor.MiddleLeft);
             fit_text(subtext, SUBTEXT_MIN_SIZE, SUBTEXT_MAX_SIZE);
             PlayUi.stretch(subtext.rectTransform);
         }
 
         var crest_cell = PlayUi.rect("crest_cell", heading_slot);
-        LobbyUi.place_fraction(crest_cell, CREST_LEFT, 0f, CREST_RIGHT, 1f);
+        LobbyUi.place_fraction(crest_cell, CREST_LEFT, 0f, CREST_RIGHT, SHOW_SUBTEXT ? TITLE_SPLIT : 1f);
         build_crest(crest_cell);
     }
 
@@ -156,7 +173,7 @@ public static class LobbyPlayerSlots
     static void build_crest(RectTransform cell)
     {
         var tail = LobbyOrnament.diamond_tail(cell, "crest_tail", PlayTheme.gold, false);
-        LobbyUi.place_fraction(tail, 0f, CREST_BOTTOM, 1f, CREST_TOP);
+        LobbyUi.place_fraction(tail, 0f, SHOW_SUBTEXT ? SUBTEXT_CREST_BOTTOM : CREST_BOTTOM, 1f, SHOW_SUBTEXT ? SUBTEXT_CREST_TOP : CREST_TOP);
     }
 
     static void build_card(RectTransform cell, LobbyPlayer player)
@@ -170,8 +187,8 @@ public static class LobbyPlayerSlots
         fit_aspect(frame, CARD_ASPECT, AspectRatioFitter.AspectMode.FitInParent);
 
         var light = empty ? LobbyFrameLight.Style.BlueTopBottom : LobbyFrameLight.Style.GoldTopBottom;
-        if (is_you) LobbyUi.rim_glow("you_glow", frame, PlayTheme.with_alpha(PlayTheme.gold, YOU_GLOW_ALPHA));
-        var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, light);
+        if (is_you) LobbyUi.glow_panel("you_glow", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, PlayTheme.with_alpha(PlayTheme.gold, YOU_GLOW_ALPHA));
+        var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, light, true);
         card.raycastTarget = true;
         card.color = PlayTheme.with_alpha(PlayTheme.white, empty ? FRAME_ALPHA_FAINT : 1f);
 
@@ -183,7 +200,7 @@ public static class LobbyPlayerSlots
 
         var you = LobbyState.you;
         var name_value = empty ? INVITE_LABEL : LobbyUi.sanitize(is_you && you != null ? you.name : player.name);
-        var name_color = empty ? PlayTheme.light_blue : is_you ? PlayTheme.gold : PlayTheme.text_white;
+        var name_color = empty ? PlayTheme.text_white : is_you ? PlayTheme.gold : PlayTheme.text_white;
         var name_cell = PlayUi.rect("name", frame);
         LobbyUi.place_fraction(name_cell, 0.08f, NAME_BOTTOM, 0.92f, NAME_TOP);
         LobbyPlayerNameFit.attach(name_cell, name_value, name_color, NAME_MIN_SIZE, NAME_MAX_SIZE, NAME_HEIGHT_RATIO);

@@ -7,33 +7,32 @@ using UnityEngine.UI;
 public static class LobbyCode
 {
     const string COPIED_TEXT = "Copied";
-    const string ENTER_TEXT = "Enter Lobby Code";
+    const string ENTER_TEXT = "Enter Lobby";
     const int ENTER_MIN_SIZE = 10;
     const int ENTER_MAX_SIZE = 26;
     const int LABEL_MIN_SIZE = 10;
     const int LABEL_MAX_SIZE = 22;
     const int CODE_MIN_SIZE = 12;
-    const int CODE_MAX_SIZE = 40;
+    const int CODE_MAX_SIZE = 30;
     const float LABEL_BOTTOM = 0.64f;
     const float ROW_TOP = 0.56f;
     const float ROW_BOTTOM = 0.04f;
     const float CODE_ROW_RIGHT = 0.52f;
     const float ENTER_LEFT = 0.56f;
-    const float ENTER_TEXT_LEFT = 0.08f;
-    const float ENTER_TEXT_RIGHT = 0.78f;
-    const float ENTER_ARROW_LEFT = 0.80f;
-    const float ENTER_ARROW_RIGHT = 0.95f;
-    const float ENTER_ARROW_PADDING = 0.22f;
+    const float ENTER_TEXT_LEFT = 0.12f;
+    const float ENTER_TEXT_RIGHT = 0.74f;
+    const float ENTER_ARROW_LEFT = 0.76f;
+    const float ENTER_ARROW_RIGHT = 0.90f;
+    const float ICON_VERTICAL_PADDING = 0.2f;
     const float ENTER_HOVER_SCALE = 1.1f;
-    const float KEY_LEFT = 0.04f;
-    const float KEY_RIGHT = 0.16f;
-    const float KEY_VERTICAL_PADDING = 0.2f;
-    const float CODE_TEXT_LEFT = 0.19f;
-    const float CODE_TEXT_RIGHT = 0.80f;
-    const float COPY_LEFT = 0.82f;
-    const float COPY_RIGHT = 0.97f;
+    const float KEY_LEFT = 0.07f;
+    const float KEY_RIGHT = 0.19f;
+    const float CODE_TEXT_LEFT = 0.22f;
+    const float CODE_TEXT_RIGHT = 0.76f;
+    const float COPY_LEFT = 0.78f;
+    const float COPY_RIGHT = 0.93f;
     const float COPY_VERTICAL_PADDING = 0.08f;
-    const float ICON_GLYPH_RATIO = 0.5f;
+    const float ICON_GLYPH_RATIO = (1f - ICON_VERTICAL_PADDING * 2f) / (1f - COPY_VERTICAL_PADDING * 2f);
     const float GLOW_RATIO = 1.5f;
 
     public static void build(RectTransform code_slot)
@@ -67,7 +66,7 @@ public static class LobbyCode
         key.enabled = key.sprite != null;
         key.color = PlayTheme.gold;
         key.preserveAspect = true;
-        LobbyUi.place_fraction(key.rectTransform, KEY_LEFT, KEY_VERTICAL_PADDING, KEY_RIGHT, 1f - KEY_VERTICAL_PADDING);
+        LobbyUi.place_fraction(key.rectTransform, KEY_LEFT, ICON_VERTICAL_PADDING, KEY_RIGHT, 1f - ICON_VERTICAL_PADDING);
 
         var code = fitted_text("code_text", pill.rectTransform, LobbyState.lobby_code, CODE_MIN_SIZE, CODE_MAX_SIZE, PlayTheme.text_white, TextAnchor.MiddleCenter);
         LobbyUi.place_fraction(code.rectTransform, CODE_TEXT_LEFT, 0.08f, CODE_TEXT_RIGHT, 0.92f);
@@ -98,7 +97,7 @@ public static class LobbyCode
         arrow.enabled = arrow.sprite != null;
         arrow.color = PlayTheme.gold;
         arrow.preserveAspect = true;
-        LobbyUi.place_fraction(arrow.rectTransform, ENTER_ARROW_LEFT, ENTER_ARROW_PADDING, ENTER_ARROW_RIGHT, 1f - ENTER_ARROW_PADDING);
+        LobbyUi.place_fraction(arrow.rectTransform, ENTER_ARROW_LEFT, ICON_VERTICAL_PADDING, ENTER_ARROW_RIGHT, 1f - ICON_VERTICAL_PADDING);
         PlayUi.add_shadow(arrow, 2f);
 
         var button = pill.gameObject.AddComponent<Button>();

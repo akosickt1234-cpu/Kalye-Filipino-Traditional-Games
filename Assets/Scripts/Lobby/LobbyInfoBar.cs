@@ -83,7 +83,7 @@ public static class LobbyInfoBar
         var holder = PlayUi.rect("info_divider", column);
         PlayUi.place(holder, new Vector2(0f, DIVIDER_V_MIN), new Vector2(0f, DIVIDER_V_MAX), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(DIVIDER_THICKNESS, 0f));
 
-        var color = PlayTheme.with_alpha(PlayTheme.gold, DIVIDER_ALPHA);
+        var color = PlayTheme.with_alpha(PlayTheme.border_blue, DIVIDER_ALPHA);
         var line = PlayOrnament.line(holder, "info_divider_line", 0f, DIVIDER_THICKNESS, color, true, true);
         line.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 90f);
 
@@ -93,7 +93,7 @@ public static class LobbyInfoBar
 
     static void build_top_line(RectTransform row)
     {
-        var color = PlayTheme.with_alpha(PlayTheme.gold, DIVIDER_ALPHA);
+        var color = PlayTheme.with_alpha(PlayTheme.border_blue, DIVIDER_ALPHA);
         var line = PlayOrnament.line(row, "info_top_line", 0f, TOP_LINE_THICKNESS, color, true, true);
         var rect = line.rectTransform;
         rect.anchorMin = new Vector2(0f, TOP_LINE_ANCHOR);
