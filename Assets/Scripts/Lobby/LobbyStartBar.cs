@@ -14,14 +14,18 @@ public static class LobbyStartBar
 
 public class LobbyStartBarView : MonoBehaviour
 {
-    const string BUTTON_PATH = "Buttons/Play/BtnPlayGold";
     const string START_TEXT = "START MATCH";
     const string WAITING_TEXT = "Waiting for host";
     const string CANCEL_TEXT = "CANCEL";
     const float BUTTON_ASPECT = 768f / 217f;
-    const float ORNAMENT_HEIGHT = 0.3f;
-    const float ORNAMENT_LEFT_START = 0.02f;
-    const float ORNAMENT_LEFT_END = 0.20f;
+    const float BUTTON_SCALE = 1.6f;
+    const float BORDER_WIDTH = 3f;
+    const float GLOW_BLUR = 12f;
+    const float ICON_LEFT = 0.10f;
+    const float ICON_RIGHT = 0.26f;
+    const float ICON_BOTTOM = 0.22f;
+    const float ICON_TOP = 0.78f;
+    const float LABEL_LEFT_WITH_ICON = 0.28f;
     const float SLOT_LEFT = 0.22f;
     const float SLOT_RIGHT = 0.78f;
     const float LABEL_SIDE = 0.12f;
@@ -37,6 +41,7 @@ public class LobbyStartBarView : MonoBehaviour
 
     Button button;
     Image face;
+    Image swords;
     Text label;
     Text cancel_label;
     CanvasGroup button_group;
@@ -44,8 +49,6 @@ public class LobbyStartBarView : MonoBehaviour
 
     public void setup(RectTransform start_bar)
     {
-        build_ornament(start_bar, "ornament_left", ORNAMENT_LEFT_START, ORNAMENT_LEFT_END, false);
-        build_ornament(start_bar, "ornament_right", 1f - ORNAMENT_LEFT_END, 1f - ORNAMENT_LEFT_START, true);
         build_button(start_bar);
         refresh();
     }
@@ -62,51 +65,67 @@ public class LobbyStartBarView : MonoBehaviour
         LobbyState.players_changed -= refresh;
     }
 
-    static void build_ornament(RectTransform parent, string name, float x_min, float x_max, bool mirrored)
-    {
-        var ornament = LobbyOrnament.diamond_tail(parent, name, PlayTheme.gold, !mirrored);
-        ornament.anchorMin = new Vector2(x_min, 0.5f - ORNAMENT_HEIGHT * 0.5f);
-        ornament.anchorMax = new Vector2(x_max, 0.5f + ORNAMENT_HEIGHT * 0.5f);
-        ornament.pivot = new Vector2(0.5f, 0.5f);
-        ornament.offsetMin = Vector2.zero;
-        ornament.offsetMax = Vector2.zero;
-    }
-
     void build_button(RectTransform start_bar)
     {
         var slot = PlayUi.rect("start_slot", start_bar);
         LobbyUi.place_fraction(slot, SLOT_LEFT, 0f, SLOT_RIGHT, 1f);
 
-        var button_rect = PlayUi.rect("start_button", slot);
-        var fitter = button_rect.gameObject.AddComponent<AspectRatioFitter>();
+        var frame = PlayUi.rect("start_frame", slot);
+        frame.localScale = new Vector3(BUTTON_SCALE, BUTTON_SCALE, 1f);
+        var fitter = frame.gameObject.AddComponent<AspectRatioFitter>();
         fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
         fitter.aspectRatio = BUTTON_ASPECT;
 
-        button_group = button_rect.gameObject.AddComponent<CanvasGroup>();
+        button_group = frame.gameObject.AddComponent<CanvasGroup>();
 
-        var art = PlayUi.sprite(BUTTON_PATH);
+        var static_glow = LobbyUi.glow("start_glow_static", frame, PlayTheme.start_glow, PlayTheme.start_glow.a, GLOW_BLUR);
+        static_glow.raycastTarget = false;
+
+        var button_rect = PlayUi.rect("start_button", frame);
+        PlayUi.stretch(button_rect);
+
         face = button_rect.gameObject.AddComponent<Image>();
-        face.sprite = art != null ? art : PlayUi.pill();
-        face.type = art != null ? Image.Type.Simple : Image.Type.Sliced;
-        face.color = art != null ? PlayTheme.white : PlayTheme.gold;
+        face.sprite = PlayUi.pill();
+        face.type = Image.Type.Sliced;
+        face.color = PlayTheme.start_border;
         face.raycastTarget = true;
+
+        var fill_rect = PlayUi.rect("start_fill", button_rect);
+        PlayUi.stretch(fill_rect);
+        fill_rect.offsetMin = new Vector2(BORDER_WIDTH, BORDER_WIDTH);
+        fill_rect.offsetMax = new Vector2(-BORDER_WIDTH, -BORDER_WIDTH);
+        var fill_mask = fill_rect.gameObject.AddComponent<Image>();
+        fill_mask.sprite = PlayUi.pill();
+        fill_mask.type = Image.Type.Sliced;
+        fill_mask.raycastTarget = false;
+        var mask = fill_rect.gameObject.AddComponent<Mask>();
+        mask.showMaskGraphic = false;
+        var gradient = LobbyUi.gradient_image("start_gradient", fill_rect, PlayTheme.start_stops, true);
+        gradient.raycastTarget = false;
 
         var glow_rect = PlayUi.rect("start_glow", button_rect);
         PlayUi.stretch(glow_rect);
         var glow = glow_rect.gameObject.AddComponent<Image>();
         glow.sprite = face.sprite;
         glow.type = face.type;
-        glow.color = PlayTheme.glow;
+        glow.color = PlayTheme.start_glow;
         glow.raycastTarget = false;
         var glow_group = glow_rect.gameObject.AddComponent<CanvasGroup>();
         glow_group.alpha = 0f;
         glow_group.blocksRaycasts = false;
         glow_group.interactable = false;
 
-        label = PlayUi.text("start_label", button_rect, START_TEXT, LABEL_MAX_SIZE, PlayTheme.label_brown, TextAnchor.MiddleCenter);
+        var swords_sprite = PlayUi.sprite(LobbyUi.ICON_SWORDS_PATH);
+        swords = PlayUi.image("start_swords", button_rect, swords_sprite, false);
+        swords.preserveAspect = true;
+        swords.enabled = swords_sprite != null;
+        swords.color = PlayTheme.start_text;
+        LobbyUi.place_fraction(swords.rectTransform, ICON_LEFT, ICON_BOTTOM, ICON_RIGHT, ICON_TOP);
+
+        label = PlayUi.text("start_label", button_rect, START_TEXT, LABEL_MAX_SIZE, PlayTheme.start_text, TextAnchor.MiddleCenter);
         fit_text(label, LABEL_MIN_SIZE, LABEL_MAX_SIZE);
 
-        cancel_label = PlayUi.text("cancel_label", button_rect, CANCEL_TEXT, CANCEL_MAX_SIZE, PlayTheme.label_brown, TextAnchor.MiddleCenter);
+        cancel_label = PlayUi.text("cancel_label", button_rect, CANCEL_TEXT, CANCEL_MAX_SIZE, PlayTheme.start_text, TextAnchor.MiddleCenter);
         LobbyUi.place_fraction(cancel_label.rectTransform, LABEL_SIDE, CANCEL_BOTTOM, 1f - LABEL_SIDE, CANCEL_TOP);
         fit_text(cancel_label, CANCEL_MIN_SIZE, CANCEL_MAX_SIZE);
 
@@ -138,8 +157,11 @@ public class LobbyStartBarView : MonoBehaviour
         else if (searching) label.text = "SEARCHING " + LobbyState.opponents_found + "/" + LobbyState.SEARCH_TARGET;
         else label.text = START_TEXT;
 
+        var show_swords = host && !searching && swords.sprite != null;
+        swords.gameObject.SetActive(show_swords);
+
         if (searching) LobbyUi.place_fraction(label.rectTransform, LABEL_SIDE, SEARCH_LABEL_BOTTOM, 1f - LABEL_SIDE, SEARCH_LABEL_TOP);
-        else LobbyUi.place_fraction(label.rectTransform, LABEL_SIDE, 0f, 1f - LABEL_SIDE, 1f);
+        else LobbyUi.place_fraction(label.rectTransform, show_swords ? LABEL_LEFT_WITH_ICON : LABEL_SIDE, 0f, 1f - LABEL_SIDE, 1f);
 
         cancel_label.gameObject.SetActive(searching);
 
