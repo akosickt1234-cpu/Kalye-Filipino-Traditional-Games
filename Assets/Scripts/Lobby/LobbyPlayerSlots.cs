@@ -29,7 +29,7 @@ public static class LobbyPlayerSlots
     const float CREST_BOTTOM = 0.32f;
     const float CREST_TOP = 0.68f;
     const float RING_ALPHA = 0.9f;
-    const float YOU_GLOW_ALPHA = 0.95f;
+    const float YOU_GLOW_ALPHA = 0.5f;
     const float PLUS_MIN = 0.30f;
     const float PLUS_MAX = 0.70f;
     const float PLUS_HALF_THICKNESS = 0.025f;
@@ -57,16 +57,14 @@ public static class LobbyPlayerSlots
     const float RHOMBUS_RIGHT = 0.72f;
     const float RHOMBUS_BOTTOM = 0.77f;
     const float RHOMBUS_TOP = 0.935f;
-    const float CARD_GLOW_ALPHA = 0.65f;
-    const float EMPTY_GLOW_ALPHA = 0.6f;
+    const float CARD_GLOW_ALPHA = 0.38f;
+    const float EMPTY_CARD_ALPHA = 0.55f;
     const float SPIN_SPEED = 0.9f;
     const float SPIN_PHASE_STEP = 1.1f;
     const float SPIN_FRAME_INTENSITY = 0.6f;
     const float SPIN_GLOW_INTENSITY = 0.3f;
     static readonly Color GLOW_GOLD_COLOR = new Color(1f, 0.72f, 0.18f, 1f);
-    static readonly Color GLOW_BLUE_COLOR = new Color(0.3f, 0.62f, 1f, 1f);
     static readonly Color SPIN_LIGHT_GOLD = new Color(1f, 0.74f, 0.2f, 1f);
-    static readonly Color SPIN_LIGHT_BLUE = new Color(0.4f, 0.7f, 1f, 1f);
     const float FRAME_ALPHA_FAINT = 0.9f;
     const float AVATAR_ICON_INSET = 0.22f;
     const float HOURGLASS_SIZE = 20f;
@@ -201,16 +199,20 @@ public static class LobbyPlayerSlots
         fit_aspect(frame, CARD_ASPECT, AspectRatioFitter.AspectMode.FitInParent);
 
         var light = empty ? LobbyFrameLight.Style.BlueCard : LobbyFrameLight.Style.GoldCard;
-        var glow_color = is_you ? GLOW_GOLD_COLOR * new Color(1f, 1f, 1f, YOU_GLOW_ALPHA) : empty ? GLOW_BLUE_COLOR * new Color(1f, 1f, 1f, EMPTY_GLOW_ALPHA) : GLOW_GOLD_COLOR * new Color(1f, 1f, 1f, CARD_GLOW_ALPHA);
-        var glow = LobbyUi.glow_panel("card_glow", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, glow_color);
+        var card_glow_alpha = is_you ? YOU_GLOW_ALPHA : CARD_GLOW_ALPHA;
+        Image glow = null;
+        if (!empty) glow = LobbyUi.glow_panel("card_glow", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, GLOW_GOLD_COLOR * new Color(1f, 1f, 1f, card_glow_alpha));
         var card = LobbyUi.panel("card_frame", frame, LobbyUi.FRAME_PLAYER_CARD_PATH, CARD_BORDER_SCALE, light, true);
         card.raycastTarget = true;
         card.color = PlayTheme.with_alpha(PlayTheme.white, empty ? FRAME_ALPHA_FAINT : 1f);
 
-        var beam_color = empty ? SPIN_LIGHT_BLUE : SPIN_LIGHT_GOLD;
-        var beam_phase = card_index * SPIN_PHASE_STEP;
-        LobbyFrameSpin.attach(glow, beam_color, SPIN_SPEED, beam_phase, SPIN_GLOW_INTENSITY, true);
-        LobbyFrameSpin.attach(card, beam_color, SPIN_SPEED, beam_phase, SPIN_FRAME_INTENSITY, false);
+        if (empty) frame.gameObject.AddComponent<CanvasGroup>().alpha = EMPTY_CARD_ALPHA;
+        else
+        {
+            var beam_phase = card_index * SPIN_PHASE_STEP;
+            LobbyFrameSpin.attach(glow, SPIN_LIGHT_GOLD, SPIN_SPEED, beam_phase, SPIN_GLOW_INTENSITY, true);
+            LobbyFrameSpin.attach(card, SPIN_LIGHT_GOLD, SPIN_SPEED, beam_phase, SPIN_FRAME_INTENSITY, false);
+        }
 
         if (empty) build_empty_avatar(frame);
         else build_avatar(frame, player);
