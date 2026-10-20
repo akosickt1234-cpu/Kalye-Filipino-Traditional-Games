@@ -24,8 +24,6 @@ public static class LobbyChat
     const int ROW_PADDING = 12;
     const float ROW_SPACING = 10f;
     const float ICON_HOVER_SCALE = 1.1f;
-    const float PANEL_FILL_ALPHA = 0.85f;
-    const float SELECTION_ALPHA = 0.35f;
     const float SEND_HOVER_SCALE = 1.04f;
 
     const float ICON_LEFT = 0.03f;
@@ -71,12 +69,12 @@ public static class LobbyChat
         var glow = PlayUi.image("icon_glow", button_rect, PlayUi.radial_glow());
         LobbyUi.place_fraction(glow.rectTransform, 0f, 0f, ICON_RIGHT + ICON_LEFT, 1f);
         glow.preserveAspect = true;
-        glow.color = PlayTheme.with_alpha(PlayTheme.border_highlight, 0f);
+        glow.color = PlayTheme.with_alpha(PlayTheme.glow, 0f);
 
         var icon = PlayUi.image("icon_chat", button_rect, PlayUi.sprite(LobbyUi.ICON_CHAT_PATH));
         LobbyUi.place_fraction(icon.rectTransform, ICON_LEFT, ICON_BOTTOM, ICON_RIGHT, ICON_TOP);
         icon.preserveAspect = true;
-        icon.color = PlayTheme.info_icon;
+        icon.color = PlayTheme.gold;
         PlayUi.add_shadow(icon);
 
         var area = PlayUi.rect("message_area", button_rect);
@@ -87,7 +85,7 @@ public static class LobbyChat
         LobbyUi.no_transition(button);
 
         var hover = button_rect.gameObject.AddComponent<LobbyChatHover>();
-        hover.setup(button, icon, PlayTheme.info_icon, PlayTheme.pill_text, icon.rectTransform, ICON_HOVER_SCALE, glow);
+        hover.setup(button, icon, PlayTheme.gold, PlayTheme.gold_soft, icon.rectTransform, ICON_HOVER_SCALE, glow);
 
         var column = button_rect.gameObject.AddComponent<LobbyChatColumn>();
         column.setup(area, COLUMN_FONT_SIZE, COLUMN_SUB_FONT_SIZE, COLUMN_SPLIT);
@@ -110,7 +108,7 @@ public static class LobbyChat
 
     public static string format_message(LobbyMessage message)
     {
-        var name_color = message.name == LobbyState.SYSTEM_NAME ? PlayTheme.lobby_text_muted : PlayTheme.lobby_gold_icon;
+        var name_color = message.name == LobbyState.SYSTEM_NAME ? PlayTheme.text_muted : PlayTheme.gold;
         return "<color=#" + ColorUtility.ToHtmlStringRGB(name_color) + ">" + clean(message.name) + "</color>: " + clean(message.text);
     }
 
@@ -159,16 +157,16 @@ public static class LobbyChat
 
     internal static void build_window(LobbyChatWindow owner, RectTransform blocker, out ScrollRect scroll, out RectTransform content, out InputField input, out Button send)
     {
-        var window = LobbyUi.panel("chat_window", blocker, LobbyUi.PANEL_LOBBY_BLUE_PATH, LobbyUi.PANEL_BORDER_SCALE);
+        var window = LobbyUi.panel("chat_window", blocker, LobbyUi.PANEL_LOBBY_PATH, LobbyUi.PANEL_BORDER_SCALE);
         window.raycastTarget = true;
         LobbyUi.place_fraction(window.rectTransform, WINDOW_LEFT, WINDOW_BOTTOM, WINDOW_RIGHT, WINDOW_TOP);
 
-        var title = PlayUi.text("title", window.rectTransform, TITLE_TEXT, TITLE_FONT_SIZE, PlayTheme.title_accent, TextAnchor.MiddleLeft);
+        var title = PlayUi.text("title", window.rectTransform, TITLE_TEXT, TITLE_FONT_SIZE, PlayTheme.gold, TextAnchor.MiddleLeft);
         title.horizontalOverflow = HorizontalWrapMode.Overflow;
         LobbyUi.place_fraction(title.rectTransform, CONTENT_LEFT, TITLE_BOTTOM, CONTENT_RIGHT, TITLE_TOP);
         PlayUi.add_shadow(title);
 
-        var line = PlayOrnament.line(window.rectTransform, "title_line", 0f, 0f, PlayTheme.title_accent, true, true);
+        var line = PlayOrnament.line(window.rectTransform, "title_line", 0f, 0f, PlayTheme.gold, true, true);
         LobbyUi.place_fraction(line.rectTransform, CONTENT_LEFT, LINE_BOTTOM, CONTENT_RIGHT, LINE_TOP);
 
         build_list(window.rectTransform, out scroll, out content);
@@ -181,7 +179,7 @@ public static class LobbyChat
     {
         var list = PlayUi.image("message_list", window, PlayUi.pill(), true);
         list.type = Image.Type.Sliced;
-        list.color = PlayTheme.with_alpha(PlayTheme.lobby_inner_bg, PANEL_FILL_ALPHA);
+        list.color = PlayTheme.fill_soft;
         LobbyUi.place_fraction(list.rectTransform, CONTENT_LEFT, LIST_BOTTOM, CONTENT_RIGHT, LIST_TOP);
 
         var viewport = PlayUi.rect("viewport", list.rectTransform);
@@ -221,19 +219,19 @@ public static class LobbyChat
     {
         var background = PlayUi.image("message_input", window, PlayUi.pill(), true);
         background.type = Image.Type.Sliced;
-        background.color = PlayTheme.with_alpha(PlayTheme.lobby_inner_bg, PANEL_FILL_ALPHA);
+        background.color = PlayTheme.fill_soft;
         LobbyUi.place_fraction(background.rectTransform, CONTENT_LEFT, INPUT_BOTTOM, INPUT_RIGHT, INPUT_TOP);
 
         var text_area = PlayUi.rect("text_area", background.rectTransform);
         LobbyUi.place_fraction(text_area, TEXT_INSET_X, TEXT_INSET_Y, 1f - TEXT_INSET_X, 1f - TEXT_INSET_Y);
         text_area.gameObject.AddComponent<RectMask2D>();
 
-        var placeholder = PlayUi.text("placeholder", text_area, INPUT_HINT, INPUT_FONT_SIZE, PlayTheme.lobby_text_muted, TextAnchor.MiddleLeft);
+        var placeholder = PlayUi.text("placeholder", text_area, INPUT_HINT, INPUT_FONT_SIZE, PlayTheme.text_muted, TextAnchor.MiddleLeft);
         placeholder.horizontalOverflow = HorizontalWrapMode.Overflow;
         placeholder.supportRichText = false;
         PlayUi.stretch(placeholder.rectTransform);
 
-        var typed = PlayUi.text("text", text_area, string.Empty, INPUT_FONT_SIZE, PlayTheme.lobby_text, TextAnchor.MiddleLeft);
+        var typed = PlayUi.text("text", text_area, string.Empty, INPUT_FONT_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
         typed.horizontalOverflow = HorizontalWrapMode.Overflow;
         typed.verticalOverflow = VerticalWrapMode.Truncate;
         typed.supportRichText = false;
@@ -247,9 +245,9 @@ public static class LobbyChat
         input.lineType = InputField.LineType.SingleLine;
         input.characterLimit = MAX_LENGTH;
         input.customCaretColor = true;
-        input.caretColor = PlayTheme.lobby_gold_icon;
+        input.caretColor = PlayTheme.gold;
         input.caretWidth = LobbyUi.CARET_WIDTH;
-        input.selectionColor = PlayTheme.with_alpha(PlayTheme.border_highlight, SELECTION_ALPHA);
+        input.selectionColor = PlayTheme.glow;
         input.onSubmit.AddListener(owner.submit);
         input.onValueChanged.AddListener(owner.sync_send);
     }
@@ -258,11 +256,11 @@ public static class LobbyChat
     {
         var background = PlayUi.image("send_button", window, PlayUi.pill(), true);
         background.type = Image.Type.Sliced;
-        background.color = PlayTheme.lobby_gold_icon;
+        background.color = PlayTheme.gold;
         LobbyUi.place_fraction(background.rectTransform, SEND_LEFT, INPUT_BOTTOM, CONTENT_RIGHT, INPUT_TOP);
         PlayUi.add_shadow(background);
 
-        var label = PlayUi.text("label", background.rectTransform, SEND_TEXT, SEND_FONT_SIZE, PlayTheme.start_text, TextAnchor.MiddleCenter);
+        var label = PlayUi.text("label", background.rectTransform, SEND_TEXT, SEND_FONT_SIZE, PlayTheme.label_brown, TextAnchor.MiddleCenter);
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
         PlayUi.stretch(label.rectTransform);
 
@@ -272,7 +270,7 @@ public static class LobbyChat
         send.onClick.AddListener(owner.send);
 
         var hover = background.gameObject.AddComponent<LobbyChatHover>();
-        hover.setup(send, background, PlayTheme.lobby_gold_icon, PlayTheme.title_accent, background.rectTransform, SEND_HOVER_SCALE, null);
+        hover.setup(send, background, PlayTheme.gold, PlayTheme.gold_soft, background.rectTransform, SEND_HOVER_SCALE, null);
     }
 
     static void link_navigation(InputField input, Button send)
@@ -303,8 +301,8 @@ public class LobbyChatColumn : MonoBehaviour
     float built_width;
     string title_value = string.Empty;
     string sub_value = string.Empty;
-    Color title_color = PlayTheme.lobby_text;
-    Color sub_color = PlayTheme.lobby_text_muted;
+    Color title_color = PlayTheme.text;
+    Color sub_color = PlayTheme.text_muted;
 
     public void setup(RectTransform message_area, int title_font_size, int sub_font_size, float split_fraction)
     {
@@ -339,16 +337,16 @@ public class LobbyChatColumn : MonoBehaviour
         {
             title_value = LobbyChat.empty_text;
             sub_value = LobbyChat.empty_subtext;
-            title_color = PlayTheme.lobby_text;
-            sub_color = PlayTheme.lobby_text_muted;
+            title_color = PlayTheme.text;
+            sub_color = PlayTheme.text_muted;
         }
         else
         {
             var latest = list[list.Count - 1];
             title_value = LobbyUi.sanitize(latest.name) + ":";
             sub_value = LobbyUi.sanitize(latest.text).Replace("\r", string.Empty).Replace("\n", " ");
-            title_color = latest.name == LobbyState.SYSTEM_NAME ? PlayTheme.lobby_text_muted : PlayTheme.lobby_gold_icon;
-            sub_color = PlayTheme.lobby_text;
+            title_color = latest.name == LobbyState.SYSTEM_NAME ? PlayTheme.text_muted : PlayTheme.gold;
+            sub_color = PlayTheme.text;
         }
 
         apply();
@@ -367,7 +365,7 @@ public class LobbyChatColumn : MonoBehaviour
 
     Text build_line(string line_name, int size, TextAnchor anchor, float x_min, float y_min, float y_max)
     {
-        var label = PlayUi.text(line_name, area, string.Empty, size, PlayTheme.lobby_text, anchor);
+        var label = PlayUi.text(line_name, area, string.Empty, size, PlayTheme.text, anchor);
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
         label.verticalOverflow = VerticalWrapMode.Truncate;
         label.supportRichText = false;
@@ -517,11 +515,11 @@ public class LobbyChatWindow : MonoBehaviour
         var list = LobbyState.messages;
         if (list.Count == 0)
         {
-            LobbyChat.build_row(content, LobbyChat.empty_text, PlayTheme.lobby_text_muted);
+            LobbyChat.build_row(content, LobbyChat.empty_text, PlayTheme.text_muted);
         }
         else
         {
-            for (var i = 0; i < list.Count; i++) LobbyChat.build_row(content, LobbyChat.format_message(list[i]), PlayTheme.lobby_text);
+            for (var i = 0; i < list.Count; i++) LobbyChat.build_row(content, LobbyChat.format_message(list[i]), PlayTheme.text);
         }
 
         scroll_pending = true;
@@ -590,7 +588,7 @@ public class LobbyChatHover : MonoBehaviour, IPointerEnterHandler, IPointerExitH
             tint.color = interactable ? color : PlayTheme.with_alpha(color, color.a * DISABLED_ALPHA);
         }
 
-        if (glow != null) glow.color = PlayTheme.with_alpha(PlayTheme.border_highlight, PlayTheme.border_highlight.a * t);
+        if (glow != null) glow.color = PlayTheme.with_alpha(PlayTheme.glow, PlayTheme.glow.a * t);
     }
 
     public void OnPointerEnter(PointerEventData event_data)

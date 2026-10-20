@@ -22,6 +22,7 @@ public static class LobbyInfoBar
     const float DIVIDER_V_MIN = 0.12f;
     const float DIVIDER_V_MAX = 0.88f;
     const float DIVIDER_THICKNESS = 2f;
+    const float DIVIDER_ALPHA = 0.6f;
     const float TOP_LINE_ANCHOR = 0.93f;
     const float TOP_LINE_THICKNESS = 2f;
     const float COUNT_ICON_LEFT = 0.12f;
@@ -39,11 +40,15 @@ public static class LobbyInfoBar
     const float MODE_ICON_V_MIN = 0.22f;
     const float MODE_ICON_V_MAX = 0.78f;
     const float MODE_TEXT_LEFT = 0.24f;
-    const float MODE_TEXT_RIGHT = 0.96f;
+    const float MODE_TEXT_RIGHT = 0.78f;
     const float MAIN_V_MIN = 0.46f;
     const float MAIN_V_MAX = 0.90f;
     const float SUB_V_MIN = 0.10f;
     const float SUB_V_MAX = 0.46f;
+    const float CHEVRON_LEFT = 0.80f;
+    const float CHEVRON_RIGHT = 0.96f;
+    const float CHEVRON_SIZE = 26f;
+    const float CHEVRON_ROTATION = 90f;
 
     static string suffix_hex;
 
@@ -67,7 +72,7 @@ public static class LobbyInfoBar
 
     public static string count_text()
     {
-        if (suffix_hex == null) suffix_hex = ColorUtility.ToHtmlStringRGB(PlayTheme.lobby_text);
+        if (suffix_hex == null) suffix_hex = ColorUtility.ToHtmlStringRGB(PlayTheme.gold);
         return $"{LobbyState.player_count}/{LobbyState.team_size} <color=#{suffix_hex}>{COUNT_SUFFIX}</color>";
     }
 
@@ -81,29 +86,18 @@ public static class LobbyInfoBar
         var holder = PlayUi.rect("info_divider", column);
         PlayUi.place(holder, new Vector2(0f, DIVIDER_V_MIN), new Vector2(0f, DIVIDER_V_MAX), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(DIVIDER_THICKNESS, 0f));
 
-        var line = fade_line("info_divider_line", holder, DIVIDER_THICKNESS);
+        var color = PlayTheme.with_alpha(PlayTheme.gold, DIVIDER_ALPHA);
+        var line = PlayOrnament.line(holder, "info_divider_line", 0f, DIVIDER_THICKNESS, color, true, true);
         line.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 90f);
 
         var divider = holder.gameObject.AddComponent<LobbyInfoBarDivider>();
         divider.setup(holder, line.rectTransform, DIVIDER_THICKNESS);
     }
 
-    static Image fade_line(string line_name, Transform parent, float thickness)
-    {
-        var art = PlayUi.sprite(LobbyUi.DIVIDER_FADE_PATH);
-        if (art == null) return PlayOrnament.line(parent, line_name, 0f, thickness, PlayTheme.divider_line, true, true);
-
-        var picture = PlayUi.image(line_name, parent, art);
-        picture.color = PlayTheme.divider_line;
-        picture.raycastTarget = false;
-        var center = new Vector2(0.5f, 0.5f);
-        PlayUi.place(picture.rectTransform, center, center, center, Vector2.zero, new Vector2(0f, thickness));
-        return picture;
-    }
-
     static void build_top_line(RectTransform row)
     {
-        var line = fade_line("info_top_line", row, TOP_LINE_THICKNESS);
+        var color = PlayTheme.with_alpha(PlayTheme.gold, DIVIDER_ALPHA);
+        var line = PlayOrnament.line(row, "info_top_line", 0f, TOP_LINE_THICKNESS, color, true, true);
         var rect = line.rectTransform;
         rect.anchorMin = new Vector2(0f, TOP_LINE_ANCHOR);
         rect.anchorMax = new Vector2(1f, TOP_LINE_ANCHOR);
@@ -119,14 +113,14 @@ public static class LobbyInfoBar
         var icon_sprite = PlayUi.sprite(PLAYERS_ICON_PATH);
         var icon = PlayUi.image("count_icon", view, icon_sprite, false);
         icon.preserveAspect = true;
-        if (icon_sprite != null) icon.color = PlayTheme.info_icon;
+        if (icon_sprite != null) icon.color = PlayTheme.gold;
         LobbyUi.place_fraction(icon.rectTransform, COUNT_ICON_LEFT, COUNT_ICON_V_MIN, COUNT_ICON_RIGHT, COUNT_ICON_V_MAX);
 
-        var label = PlayUi.text("count_label", view, string.Empty, COUNT_FONT_SIZE, PlayTheme.lobby_text, TextAnchor.LowerLeft);
+        var label = PlayUi.text("count_label", view, string.Empty, COUNT_FONT_SIZE, PlayTheme.text, TextAnchor.LowerLeft);
         fit_text(label, COUNT_MIN_FONT_SIZE, COUNT_FONT_SIZE);
         LobbyUi.place_fraction(label.rectTransform, COUNT_TEXT_LEFT, MAIN_V_MIN, COUNT_TEXT_RIGHT, MAIN_V_MAX);
 
-        var sub = PlayUi.text("count_subtext", view, string.Empty, SUB_FONT_SIZE, PlayTheme.lobby_text_muted, TextAnchor.UpperLeft);
+        var sub = PlayUi.text("count_subtext", view, string.Empty, SUB_FONT_SIZE, PlayTheme.text_muted, TextAnchor.UpperLeft);
         fit_text(sub, SUB_MIN_FONT_SIZE, SUB_FONT_SIZE);
         LobbyUi.place_fraction(sub.rectTransform, COUNT_TEXT_LEFT, SUB_V_MIN, COUNT_TEXT_RIGHT, SUB_V_MAX);
 
@@ -138,7 +132,7 @@ public static class LobbyInfoBar
     {
         var hit = PlayUi.image("info_mode", column, PlayUi.pill(), true);
         hit.type = Image.Type.Sliced;
-        hit.color = PlayTheme.with_alpha(PlayTheme.lobby_gold_icon, 0f);
+        hit.color = PlayTheme.with_alpha(PlayTheme.gold, 0f);
         LobbyUi.place_fraction(hit.rectTransform, MODE_HIT_LEFT, MODE_HIT_V_MIN, MODE_HIT_RIGHT, MODE_HIT_V_MAX);
 
         var button = hit.gameObject.AddComponent<Button>();
@@ -150,20 +144,26 @@ public static class LobbyInfoBar
         var mode_icon_sprite = PlayUi.sprite(MODE_ICON_PATH);
         var mode_icon = PlayUi.image("mode_icon", hit.rectTransform, mode_icon_sprite, false);
         mode_icon.preserveAspect = true;
-        if (mode_icon_sprite != null) mode_icon.color = PlayTheme.lobby_gold_icon;
+        if (mode_icon_sprite != null) mode_icon.color = PlayTheme.gold;
         LobbyUi.place_fraction(mode_icon.rectTransform, MODE_ICON_LEFT, MODE_ICON_V_MIN, MODE_ICON_RIGHT, MODE_ICON_V_MAX);
 
-        var mode_label = PlayUi.text("mode_name", hit.rectTransform, string.Empty, NAME_FONT_SIZE, PlayTheme.lobby_text, TextAnchor.LowerLeft);
+        var mode_label = PlayUi.text("mode_name", hit.rectTransform, string.Empty, NAME_FONT_SIZE, PlayTheme.gold_soft, TextAnchor.LowerLeft);
         fit_text(mode_label, MODE_MIN_FONT_SIZE, NAME_FONT_SIZE);
         LobbyUi.place_fraction(mode_label.rectTransform, MODE_TEXT_LEFT, MAIN_V_MIN, MODE_TEXT_RIGHT, MAIN_V_MAX);
 
-        var mode_sub = PlayUi.text("mode_subtext", hit.rectTransform, MODE_SUBTEXT, SUB_FONT_SIZE, PlayTheme.lobby_text_muted, TextAnchor.UpperLeft);
+        var mode_sub = PlayUi.text("mode_subtext", hit.rectTransform, MODE_SUBTEXT, SUB_FONT_SIZE, PlayTheme.text_muted, TextAnchor.UpperLeft);
         fit_text(mode_sub, SUB_MIN_FONT_SIZE, SUB_FONT_SIZE);
         LobbyUi.place_fraction(mode_sub.rectTransform, MODE_TEXT_LEFT, SUB_V_MIN, MODE_TEXT_RIGHT, SUB_V_MAX);
 
+        var chevron_holder = PlayUi.rect("mode_chevron_holder", hit.rectTransform);
+        LobbyUi.place_fraction(chevron_holder, CHEVRON_LEFT, 0f, CHEVRON_RIGHT, 1f);
+        var chevron = PlayOrnament.arrow(chevron_holder, "mode_chevron", CHEVRON_SIZE, false, PlayTheme.gold);
+        chevron.rectTransform.localRotation = Quaternion.Euler(0f, 0f, CHEVRON_ROTATION);
+
         var hover = hit.gameObject.AddComponent<LobbyInfoBarHover>();
-        hover.setup(button, hit, mode_label, PlayTheme.with_alpha(PlayTheme.lobby_gold_icon, 0f), PlayTheme.with_alpha(PlayTheme.lobby_gold_icon, MODE_HOVER_ALPHA), PlayTheme.lobby_text, PlayTheme.title_accent);
-        hover.set_press(PlayTheme.with_alpha(PlayTheme.lobby_gold_icon, MODE_PRESS_ALPHA));
+        hover.setup(button, hit, mode_label, PlayTheme.with_alpha(PlayTheme.gold, 0f), PlayTheme.with_alpha(PlayTheme.gold, MODE_HOVER_ALPHA), PlayTheme.gold_soft, PlayTheme.text);
+        hover.set_press(PlayTheme.with_alpha(PlayTheme.gold, MODE_PRESS_ALPHA));
+        hover.set_accent(chevron, PlayTheme.gold, PlayTheme.text_white);
 
         var mode = hit.gameObject.AddComponent<LobbyInfoBarMode>();
         mode.setup(button, group, mode_label, column);
@@ -442,7 +442,7 @@ public class LobbyInfoBarOverlay : MonoBehaviour
         blocker_button.onClick.AddListener(close);
 
         var count = games.Length;
-        var panel = LobbyUi.panel("mode_list_panel", blocker, LobbyUi.PANEL_LOBBY_BLUE_PATH, LobbyUi.PANEL_BORDER_SCALE);
+        var panel = LobbyUi.panel("mode_list_panel", blocker, LobbyUi.PANEL_LOBBY_PATH, LobbyUi.PANEL_BORDER_SCALE);
         panel.raycastTarget = true;
         place_above(panel.rectTransform, host_root, anchor_column, count * ROW_HEIGHT + PANEL_PADDING * 2f);
 
@@ -474,8 +474,8 @@ public class LobbyInfoBarOverlay : MonoBehaviour
     {
         var row = PlayUi.image("mode_row_" + index, parent, PlayUi.pill(), true);
         row.type = Image.Type.Sliced;
-        var rest_fill = is_current ? PlayTheme.with_alpha(PlayTheme.lobby_gold_icon, CURRENT_FILL_ALPHA) : PlayTheme.clear;
-        var lit_fill = PlayTheme.with_alpha(PlayTheme.lobby_gold_icon, is_current ? CURRENT_LIT_ALPHA : LIT_ALPHA);
+        var rest_fill = is_current ? PlayTheme.with_alpha(PlayTheme.gold, CURRENT_FILL_ALPHA) : PlayTheme.clear;
+        var lit_fill = PlayTheme.with_alpha(PlayTheme.gold, is_current ? CURRENT_LIT_ALPHA : LIT_ALPHA);
         row.color = rest_fill;
 
         var top = 1f - index / (float)count;
@@ -488,15 +488,15 @@ public class LobbyInfoBarOverlay : MonoBehaviour
         LobbyUi.no_transition(button);
         button.onClick.AddListener(() => pick(index));
 
-        var label = PlayUi.text("mode_row_label", row.rectTransform, display_name, ROW_FONT_SIZE, is_current ? PlayTheme.lobby_gold_icon : PlayTheme.lobby_text, TextAnchor.MiddleLeft);
+        var label = PlayUi.text("mode_row_label", row.rectTransform, display_name, ROW_FONT_SIZE, is_current ? PlayTheme.gold_soft : PlayTheme.text, TextAnchor.MiddleLeft);
         label.resizeTextForBestFit = true;
         label.resizeTextMinSize = ROW_MIN_FONT_SIZE;
         label.resizeTextMaxSize = ROW_FONT_SIZE;
         LobbyUi.place_fraction(label.rectTransform, ROW_INSET, 0f, 1f - ROW_INSET, 1f);
 
         var hover = row.gameObject.AddComponent<LobbyInfoBarHover>();
-        var rest_text = is_current ? PlayTheme.lobby_gold_icon : PlayTheme.lobby_text;
-        hover.setup(button, row, label, rest_fill, lit_fill, rest_text, PlayTheme.title_accent);
+        var rest_text = is_current ? PlayTheme.gold_soft : PlayTheme.text;
+        hover.setup(button, row, label, rest_fill, lit_fill, rest_text, PlayTheme.gold_soft);
 
         return button;
     }
