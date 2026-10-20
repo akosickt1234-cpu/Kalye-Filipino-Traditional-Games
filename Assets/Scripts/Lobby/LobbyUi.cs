@@ -23,7 +23,7 @@ public static class LobbyUi
     public const string FRAME_AVATAR_CIRCLE_PATH = "Frames/Play/FrameAvatarRing";
     public const string BACKDROP_PATH = "Background/Lobby/LobbyBackdrop";
     public const float PANEL_BORDER_SCALE = 1.8f;
-    public const float PILL_BORDER = 2f;
+    public const float PILL_BORDER = 1f;
     public const float RIM_GLOW_FEATHER = 24f;
     public const float SCROLL_SENSITIVITY = 40f;
     public const float FADE_IN_SECONDS = 0.15f;
@@ -34,7 +34,10 @@ public static class LobbyUi
     const float BLOCKER_ALPHA = 0.6f;
     const int RIM_GLOW_SIZE = 64;
     const float RIM_GLOW_RADIUS = 8f;
+    const float PILL_BORDER_DARKEN = 0.4f;
+    const float CANVAS_REFERENCE_PPU = 100f;
     static Sprite rim_glow_sprite;
+    static readonly Color pill_border_color = Color.Lerp(PlayTheme.border_blue, PlayTheme.pill_blue_dark, PILL_BORDER_DARKEN);
 
     public static RectTransform modal_blocker(Transform parent)
     {
@@ -44,9 +47,9 @@ public static class LobbyUi
         return blocker.rectTransform;
     }
 
-    public static Image panel(string name, Transform parent, string sprite_path, float border_scale = 1f, LobbyFrameLight.Style light = LobbyFrameLight.Style.None)
+    public static Image panel(string name, Transform parent, string sprite_path, float border_scale = 1f, LobbyFrameLight.Style light = LobbyFrameLight.Style.None, bool ring_only = false)
     {
-        var art = LobbyFrameLight.sprite(sprite_path, light);
+        var art = LobbyFrameLight.sprite(sprite_path, light, ring_only);
         var picture = PlayUi.image(name, parent, art != null ? art : PlayUi.pill(), false);
         picture.type = Image.Type.Sliced;
         picture.color = art != null ? PlayTheme.white : PlayTheme.fill_soft;
@@ -59,7 +62,7 @@ public static class LobbyUi
     {
         var ring = PlayUi.image(name, parent, PlayUi.pill(), raycast);
         ring.type = Image.Type.Sliced;
-        ring.color = PlayTheme.border_blue;
+        ring.color = pill_border_color;
 
         var fill = PlayUi.image(name + "_fill", ring.rectTransform, PlayUi.pill());
         fill.type = Image.Type.Sliced;
@@ -68,6 +71,24 @@ public static class LobbyUi
         fill.rectTransform.offsetMin = new Vector2(PILL_BORDER, PILL_BORDER);
         fill.rectTransform.offsetMax = new Vector2(-PILL_BORDER, -PILL_BORDER);
         return ring;
+    }
+
+    public static Image glow_panel(string name, Transform parent, string sprite_path, float border_scale, Color color)
+    {
+        var art = LobbyFrameLight.glow_sprite(sprite_path);
+        var picture = PlayUi.image(name, parent, art);
+        picture.enabled = art != null;
+        picture.type = Image.Type.Sliced;
+        picture.fillCenter = false;
+        picture.color = color;
+        picture.pixelsPerUnitMultiplier = Mathf.Max(0.01f, border_scale);
+        PlayUi.stretch(picture.rectTransform);
+        if (art == null) return picture;
+
+        var reach = LobbyFrameLight.GLOW_PAD * Mathf.Max(0.01f, border_scale) * CANVAS_REFERENCE_PPU / art.pixelsPerUnit;
+        picture.rectTransform.offsetMin = new Vector2(-reach, -reach);
+        picture.rectTransform.offsetMax = new Vector2(reach, reach);
+        return picture;
     }
 
     public static void place_fraction(RectTransform r, float x_min, float y_min, float x_max, float y_max)

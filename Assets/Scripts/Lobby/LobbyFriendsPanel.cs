@@ -76,7 +76,7 @@ public static class LobbyFriendsPanel
         LobbyFriendRow.fit_text(title, HEADER_MIN_SIZE, HEADER_MAX_SIZE);
         PlayUi.add_shadow(title, 2f);
 
-        var underline = PlayOrnament.line(content, "friends_underline", 100f, UNDERLINE_THICKNESS, PlayTheme.with_alpha(PlayTheme.gold, UNDERLINE_ALPHA), true, true);
+        var underline = PlayOrnament.line(content, "friends_underline", 100f, UNDERLINE_THICKNESS, PlayTheme.with_alpha(PlayTheme.border_blue, UNDERLINE_ALPHA), true, true);
         PlayUi.place(underline.rectTransform, new Vector2(0f, UNDERLINE_Y), new Vector2(1f, UNDERLINE_Y), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(0f, UNDERLINE_THICKNESS));
 
         return build_online_pill(header);
