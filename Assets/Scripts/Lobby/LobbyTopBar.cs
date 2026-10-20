@@ -3,7 +3,6 @@ using UnityEngine.UI;
 
 public static class LobbyTopBar
 {
-    private const string PLAY_SCENE = "Play";
     private const string SETTINGS_SCENE = "Settings";
     private const string PRIVATE_LOBBY_SCENE = "PrivateLobby";
     private const string SETTINGS_ICON_PATH = "Icons/Play/IconTopSettings";
@@ -67,7 +66,7 @@ public static class LobbyTopBar
     private static void on_back()
     {
         LobbyState.leave();
-        PlayUi.go_to_scene(PLAY_SCENE);
+        PlayUi.go_to_scene(LobbyUi.PLAY_SCENE);
         PlayFocus.clear_selection();
     }
 
@@ -120,7 +119,7 @@ public static class LobbyTopBar
 
         Button button = hit.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
-        button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(button);
         button.onClick.AddListener(on_click);
 
         if (with_ring)

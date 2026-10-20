@@ -24,7 +24,6 @@ public static class LobbyPlayerSlots
     const float CREST_BOTTOM = 0.32f;
     const float CREST_TOP = 0.68f;
     const float RING_ALPHA = 0.4f;
-    const float RING_INSET = 0.05f;
     const float PLUS_MIN = 0.30f;
     const float PLUS_MAX = 0.70f;
     const float PLUS_HALF_THICKNESS = 0.025f;

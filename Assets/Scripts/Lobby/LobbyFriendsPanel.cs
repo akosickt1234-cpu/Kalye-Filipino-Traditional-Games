@@ -18,7 +18,6 @@ public static class LobbyFriendsPanel
     const int HEADER_MIN_SIZE = 18;
     const int HEADER_MAX_SIZE = 44;
     internal const float ROW_HEIGHT = 96f;
-    internal const float SCROLL_SENSITIVITY = 40f;
     const float UNDERLINE_ALPHA = 0.45f;
     internal const float EMPTY_ALPHA = 0.8f;
     internal const string EMPTY_HINT_TEXT = "Add friends and play together!";
@@ -163,7 +162,7 @@ public class LobbyFriendsView : MonoBehaviour
         scroll.horizontal = false;
         scroll.vertical = true;
         scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = LobbyFriendsPanel.SCROLL_SENSITIVITY;
+        scroll.scrollSensitivity = LobbyUi.SCROLL_SENSITIVITY;
 
         rebuild();
     }
@@ -453,7 +452,7 @@ public class LobbyFriendRow
 
         button = root.gameObject.AddComponent<Button>();
         button.targetGraphic = button_ring;
-        button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(button);
         button.onClick.AddListener(on_click);
 
         button_fx = root.gameObject.AddComponent<PlayButtonFx>();

@@ -137,7 +137,7 @@ public static class LobbyInfoBar
 
         var button = hit.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
-        button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(button);
 
         var group = hit.gameObject.AddComponent<CanvasGroup>();
 
@@ -236,8 +236,6 @@ public class LobbyInfoBarCount : MonoBehaviour
 
 public class LobbyInfoBarHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, ISelectHandler, IDeselectHandler
 {
-    const float FADE_IN_SECONDS = 0.15f;
-    const float FADE_OUT_SECONDS = 0.1f;
     const float PRESS_IN_SECONDS = 0.05f;
     const float PRESS_OUT_SECONDS = 0.12f;
 
@@ -303,7 +301,7 @@ public class LobbyInfoBarHover : MonoBehaviour, IPointerEnterHandler, IPointerEx
         var press_target = has_press && pressed && usable ? 1f : 0f;
         if (Mathf.Approximately(amount, target) && Mathf.Approximately(press_amount, press_target)) return;
 
-        var seconds = active ? FADE_IN_SECONDS : FADE_OUT_SECONDS;
+        var seconds = active ? LobbyUi.FADE_IN_SECONDS : LobbyUi.FADE_OUT_SECONDS;
         amount = Mathf.MoveTowards(amount, target, Time.unscaledDeltaTime / seconds);
         var press_seconds = press_target > press_amount ? PRESS_IN_SECONDS : PRESS_OUT_SECONDS;
         press_amount = Mathf.MoveTowards(press_amount, press_target, Time.unscaledDeltaTime / press_seconds);
@@ -439,7 +437,7 @@ public class LobbyInfoBarOverlay : MonoBehaviour
 
         var blocker_button = blocker.gameObject.AddComponent<Button>();
         blocker_button.targetGraphic = blocker.GetComponent<Image>();
-        blocker_button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(blocker_button);
         blocker_button.navigation = new Navigation { mode = Navigation.Mode.None };
         blocker_button.onClick.AddListener(close);
 
@@ -487,7 +485,7 @@ public class LobbyInfoBarOverlay : MonoBehaviour
 
         var button = row.gameObject.AddComponent<Button>();
         button.targetGraphic = row;
-        button.transition = Selectable.Transition.None;
+        LobbyUi.no_transition(button);
         button.onClick.AddListener(() => pick(index));
 
         var label = PlayUi.text("mode_row_label", row.rectTransform, display_name, ROW_FONT_SIZE, is_current ? PlayTheme.gold_soft : PlayTheme.text, TextAnchor.MiddleLeft);

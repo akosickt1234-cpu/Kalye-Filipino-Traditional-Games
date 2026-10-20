@@ -24,6 +24,12 @@ public static class LobbyUi
     public const string BACKDROP_PATH = "Background/Lobby/LobbyBackdrop";
     public const float PANEL_BORDER_SCALE = 1.8f;
     public const float RIM_GLOW_FEATHER = 24f;
+    public const float SCROLL_SENSITIVITY = 40f;
+    public const float FADE_IN_SECONDS = 0.15f;
+    public const float FADE_OUT_SECONDS = 0.1f;
+    public const int FOCUS_DELAY_FRAMES = 2;
+    public const int CARET_WIDTH = 2;
+    public const string PLAY_SCENE = "Play";
     const float BLOCKER_ALPHA = 0.6f;
     const int RIM_GLOW_SIZE = 64;
     const float RIM_GLOW_RADIUS = 8f;
@@ -62,6 +68,11 @@ public static class LobbyUi
     public static void go_to_scene(string scene_name)
     {
         PlayUi.go_to_scene(scene_name);
+    }
+
+    public static void no_transition(Selectable selectable)
+    {
+        selectable.transition = Selectable.Transition.None;
     }
 
     public static Image rim_glow(string name, Transform parent, Color color)
