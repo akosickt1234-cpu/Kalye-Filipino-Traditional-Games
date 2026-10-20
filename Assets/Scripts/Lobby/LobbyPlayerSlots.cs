@@ -13,7 +13,7 @@ public static class LobbyPlayerSlots
     const float CARD_ASPECT = 485f / 768f;
     const float CARD_BORDER_SCALE = 1.8f;
     const float CELL_PAD_X = 0.04f;
-    const float CELL_TOP = 0.90f;
+    const float CELL_TOP = 0.84f;
     const float CELL_BOTTOM = 0.05f;
     const float EMBLEM_RIGHT = 0.09f;
     const float TITLE_LEFT = 0.10f;
