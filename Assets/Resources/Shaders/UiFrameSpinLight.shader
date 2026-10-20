@@ -6,6 +6,8 @@ Shader "Kalye/ui_frame_spin_light"
         _Color ("Tint", Color) = (1,1,1,1)
         _LightColor ("Light Color", Color) = (1,0.96,0.8,1)
         _Intensity ("Light Intensity", Range(0, 2)) = 0.9
+        _WhiteMix ("White Mix", Range(0, 1)) = 0.12
+        _GlowGain ("Glow Gain", Range(1, 3)) = 1.8
         _Power ("Beam Sharpness", Range(1, 16)) = 5
         _Echo ("Opposite Beam", Range(0, 1)) = 0.4
         _AlphaMix ("Alpha Mix", Range(0, 1)) = 0
@@ -58,6 +60,8 @@ Shader "Kalye/ui_frame_spin_light"
             fixed4 _Color;
             fixed4 _LightColor;
             float _Intensity;
+            float _WhiteMix;
+            float _GlowGain;
             float _Power;
             float _Echo;
             float _AlphaMix;
@@ -84,9 +88,9 @@ Shader "Kalye/ui_frame_spin_light"
                 float echo_beam = pow(saturate(cos(a + 3.14159265) * 0.5 + 0.5), _Power) * _Echo;
                 float beam = saturate(main_beam + echo_beam);
 
-                float3 lit = col.rgb + _LightColor.rgb * beam * _Intensity;
+                float3 lit = col.rgb * (1.0 + beam * _Intensity) + _LightColor.rgb * beam * _Intensity * _WhiteMix;
                 col.rgb = lerp(saturate(lit), col.rgb, _AlphaMix);
-                col.a *= lerp(1.0, lerp(_AlphaFloor, 1.0, beam), _AlphaMix);
+                col.a = saturate(col.a * lerp(1.0, lerp(_AlphaFloor, _GlowGain, beam), _AlphaMix));
                 return col;
             }
             ENDCG
