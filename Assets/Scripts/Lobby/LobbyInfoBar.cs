@@ -7,11 +7,18 @@ public static class LobbyInfoBar
 {
     const string PLAYERS_ICON_PATH = "Icons/Play/IconPlayers";
     const string COUNT_SUFFIX = "PLAYERS";
+    const string WAITING_SUBTEXT = "Waiting for more...";
+    const string READY_SUBTEXT = "Ready to start";
+    const string MODE_SUBTEXT = "Classic Mode";
     const string MODE_ICON_PATH = "Icons/Play/IconNavMode";
     const int COUNT_FONT_SIZE = 30;
     const int COUNT_MIN_FONT_SIZE = 14;
     const int NAME_FONT_SIZE = 32;
     const int MODE_MIN_FONT_SIZE = 12;
+    const int SUB_FONT_SIZE = 22;
+    const int SUB_MIN_FONT_SIZE = 11;
+    const float MODE_HOVER_ALPHA = 0.12f;
+    const float MODE_PRESS_ALPHA = 0.26f;
     const float DIVIDER_V_MIN = 0.12f;
     const float DIVIDER_V_MAX = 0.88f;
     const float DIVIDER_THICKNESS = 2f;
@@ -34,8 +41,10 @@ public static class LobbyInfoBar
     const float MODE_ICON_V_MAX = 0.78f;
     const float MODE_TEXT_LEFT = 0.24f;
     const float MODE_TEXT_RIGHT = 0.78f;
-    const float NAME_V_MIN = 0.10f;
-    const float NAME_V_MAX = 0.90f;
+    const float MAIN_V_MIN = 0.46f;
+    const float MAIN_V_MAX = 0.90f;
+    const float SUB_V_MIN = 0.10f;
+    const float SUB_V_MAX = 0.46f;
     const float CHEVRON_LEFT = 0.80f;
     const float CHEVRON_RIGHT = 0.96f;
     const float CHEVRON_SIZE = 26f;
@@ -65,6 +74,11 @@ public static class LobbyInfoBar
     {
         if (suffix_hex == null) suffix_hex = ColorUtility.ToHtmlStringRGB(PlayTheme.gold);
         return $"{LobbyState.player_count}/{LobbyState.team_size} <color=#{suffix_hex}>{COUNT_SUFFIX}</color>";
+    }
+
+    public static string count_subtext()
+    {
+        return LobbyState.player_count >= LobbyState.team_size ? READY_SUBTEXT : WAITING_SUBTEXT;
     }
 
     static void build_divider(RectTransform column)
@@ -102,19 +116,23 @@ public static class LobbyInfoBar
         if (icon_sprite != null) icon.color = PlayTheme.gold;
         LobbyUi.place_fraction(icon.rectTransform, COUNT_ICON_LEFT, COUNT_ICON_V_MIN, COUNT_ICON_RIGHT, COUNT_ICON_V_MAX);
 
-        var label = PlayUi.text("count_label", view, string.Empty, COUNT_FONT_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
+        var label = PlayUi.text("count_label", view, string.Empty, COUNT_FONT_SIZE, PlayTheme.text, TextAnchor.LowerLeft);
         fit_text(label, COUNT_MIN_FONT_SIZE, COUNT_FONT_SIZE);
-        LobbyUi.place_fraction(label.rectTransform, COUNT_TEXT_LEFT, 0f, COUNT_TEXT_RIGHT, 1f);
+        LobbyUi.place_fraction(label.rectTransform, COUNT_TEXT_LEFT, MAIN_V_MIN, COUNT_TEXT_RIGHT, MAIN_V_MAX);
+
+        var sub = PlayUi.text("count_subtext", view, string.Empty, SUB_FONT_SIZE, PlayTheme.text_muted, TextAnchor.UpperLeft);
+        fit_text(sub, SUB_MIN_FONT_SIZE, SUB_FONT_SIZE);
+        LobbyUi.place_fraction(sub.rectTransform, COUNT_TEXT_LEFT, SUB_V_MIN, COUNT_TEXT_RIGHT, SUB_V_MAX);
 
         var count = view.gameObject.AddComponent<LobbyInfoBarCount>();
-        count.setup(label);
+        count.setup(label, sub);
     }
 
     static void build_mode(RectTransform column)
     {
         var hit = PlayUi.image("info_mode", column, PlayUi.pill(), true);
         hit.type = Image.Type.Sliced;
-        hit.color = PlayTheme.clear;
+        hit.color = PlayTheme.with_alpha(PlayTheme.gold, 0f);
         LobbyUi.place_fraction(hit.rectTransform, MODE_HIT_LEFT, MODE_HIT_V_MIN, MODE_HIT_RIGHT, MODE_HIT_V_MAX);
 
         var button = hit.gameObject.AddComponent<Button>();
@@ -129,9 +147,13 @@ public static class LobbyInfoBar
         if (mode_icon_sprite != null) mode_icon.color = PlayTheme.gold;
         LobbyUi.place_fraction(mode_icon.rectTransform, MODE_ICON_LEFT, MODE_ICON_V_MIN, MODE_ICON_RIGHT, MODE_ICON_V_MAX);
 
-        var mode_label = PlayUi.text("mode_name", hit.rectTransform, string.Empty, NAME_FONT_SIZE, PlayTheme.gold_soft, TextAnchor.MiddleLeft);
+        var mode_label = PlayUi.text("mode_name", hit.rectTransform, string.Empty, NAME_FONT_SIZE, PlayTheme.gold_soft, TextAnchor.LowerLeft);
         fit_text(mode_label, MODE_MIN_FONT_SIZE, NAME_FONT_SIZE);
-        LobbyUi.place_fraction(mode_label.rectTransform, MODE_TEXT_LEFT, NAME_V_MIN, MODE_TEXT_RIGHT, NAME_V_MAX);
+        LobbyUi.place_fraction(mode_label.rectTransform, MODE_TEXT_LEFT, MAIN_V_MIN, MODE_TEXT_RIGHT, MAIN_V_MAX);
+
+        var mode_sub = PlayUi.text("mode_subtext", hit.rectTransform, MODE_SUBTEXT, SUB_FONT_SIZE, PlayTheme.text_muted, TextAnchor.UpperLeft);
+        fit_text(mode_sub, SUB_MIN_FONT_SIZE, SUB_FONT_SIZE);
+        LobbyUi.place_fraction(mode_sub.rectTransform, MODE_TEXT_LEFT, SUB_V_MIN, MODE_TEXT_RIGHT, SUB_V_MAX);
 
         var chevron_holder = PlayUi.rect("mode_chevron_holder", hit.rectTransform);
         LobbyUi.place_fraction(chevron_holder, CHEVRON_LEFT, 0f, CHEVRON_RIGHT, 1f);
@@ -139,7 +161,9 @@ public static class LobbyInfoBar
         chevron.rectTransform.localRotation = Quaternion.Euler(0f, 0f, CHEVRON_ROTATION);
 
         var hover = hit.gameObject.AddComponent<LobbyInfoBarHover>();
-        hover.setup(button, hit, null, PlayTheme.clear, PlayTheme.fill_soft, PlayTheme.clear, PlayTheme.clear);
+        hover.setup(button, hit, mode_label, PlayTheme.with_alpha(PlayTheme.gold, 0f), PlayTheme.with_alpha(PlayTheme.gold, MODE_HOVER_ALPHA), PlayTheme.gold_soft, PlayTheme.text);
+        hover.set_press(PlayTheme.with_alpha(PlayTheme.gold, MODE_PRESS_ALPHA));
+        hover.set_accent(chevron, PlayTheme.gold, PlayTheme.text_white);
 
         var mode = hit.gameObject.AddComponent<LobbyInfoBarMode>();
         mode.setup(button, group, mode_label, column);
@@ -187,10 +211,12 @@ public class LobbyInfoBarDivider : MonoBehaviour
 public class LobbyInfoBarCount : MonoBehaviour
 {
     Text label;
+    Text sub;
 
-    public void setup(Text target)
+    public void setup(Text target, Text sub_target)
     {
         label = target;
+        sub = sub_target;
         LobbyState.players_changed += refresh;
         refresh();
     }
@@ -204,13 +230,16 @@ public class LobbyInfoBarCount : MonoBehaviour
     {
         if (label == null) return;
         label.text = LobbyInfoBar.count_text();
+        if (sub != null) sub.text = LobbyInfoBar.count_subtext();
     }
 }
 
-public class LobbyInfoBarHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
+public class LobbyInfoBarHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, ISelectHandler, IDeselectHandler
 {
     const float FADE_IN_SECONDS = 0.15f;
     const float FADE_OUT_SECONDS = 0.1f;
+    const float PRESS_IN_SECONDS = 0.05f;
+    const float PRESS_OUT_SECONDS = 0.12f;
 
     Selectable selectable;
     Graphic fill;
@@ -219,9 +248,16 @@ public class LobbyInfoBarHover : MonoBehaviour, IPointerEnterHandler, IPointerEx
     Color lit_fill;
     Color rest_text;
     Color lit_text;
+    Color press_fill;
+    bool has_press;
+    Graphic accent;
+    Color rest_accent;
+    Color lit_accent;
     bool pointer_over;
     bool focused;
+    bool pressed;
     float amount;
+    float press_amount;
 
     public void setup(Selectable target, Graphic fill_graphic, Text text_label, Color fill_rest, Color fill_lit, Color text_rest, Color text_lit)
     {
@@ -232,32 +268,57 @@ public class LobbyInfoBarHover : MonoBehaviour, IPointerEnterHandler, IPointerEx
         lit_fill = fill_lit;
         rest_text = text_rest;
         lit_text = text_lit;
-        apply(0f);
+        apply(0f, 0f);
+    }
+
+    public void set_press(Color fill_pressed)
+    {
+        press_fill = fill_pressed;
+        has_press = true;
+    }
+
+    public void set_accent(Graphic graphic, Color rest, Color lit)
+    {
+        accent = graphic;
+        rest_accent = rest;
+        lit_accent = lit;
+        apply(amount, press_amount);
     }
 
     void OnDisable()
     {
         pointer_over = false;
         focused = false;
+        pressed = false;
         amount = 0f;
-        apply(0f);
+        press_amount = 0f;
+        apply(0f, 0f);
     }
 
     void Update()
     {
-        var active = PlayFocus.lit(pointer_over, focused) && selectable != null && selectable.IsInteractable();
+        var usable = selectable != null && selectable.IsInteractable();
+        var active = PlayFocus.lit(pointer_over, focused) && usable;
         var target = active ? 1f : 0f;
-        if (Mathf.Approximately(amount, target)) return;
+        var press_target = has_press && pressed && usable ? 1f : 0f;
+        if (Mathf.Approximately(amount, target) && Mathf.Approximately(press_amount, press_target)) return;
 
         var seconds = active ? FADE_IN_SECONDS : FADE_OUT_SECONDS;
         amount = Mathf.MoveTowards(amount, target, Time.unscaledDeltaTime / seconds);
-        apply(amount);
+        var press_seconds = press_target > press_amount ? PRESS_IN_SECONDS : PRESS_OUT_SECONDS;
+        press_amount = Mathf.MoveTowards(press_amount, press_target, Time.unscaledDeltaTime / press_seconds);
+        apply(amount, press_amount);
     }
 
-    void apply(float t)
+    void apply(float t, float p)
     {
-        if (fill != null) fill.color = Color.Lerp(rest_fill, lit_fill, t);
+        if (fill != null)
+        {
+            var color = Color.Lerp(rest_fill, lit_fill, t);
+            fill.color = has_press ? Color.Lerp(color, press_fill, p) : color;
+        }
         if (label != null) label.color = Color.Lerp(rest_text, lit_text, t);
+        if (accent != null) accent.color = Color.Lerp(rest_accent, lit_accent, Mathf.Max(t, p));
     }
 
     public void OnPointerEnter(PointerEventData event_data)
@@ -268,6 +329,16 @@ public class LobbyInfoBarHover : MonoBehaviour, IPointerEnterHandler, IPointerEx
     public void OnPointerExit(PointerEventData event_data)
     {
         pointer_over = false;
+    }
+
+    public void OnPointerDown(PointerEventData event_data)
+    {
+        pressed = true;
+    }
+
+    public void OnPointerUp(PointerEventData event_data)
+    {
+        pressed = false;
     }
 
     public void OnSelect(BaseEventData event_data)
