@@ -1,9 +1,10 @@
 using System.Collections;
-using UnityEngine;
-using Unity.Netcode;
-using UnityEngine.UI;
-using Unity.VisualScripting;
 using TMPro;
+using Unity.Netcode;
+using Unity.Netcode.Components;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerNetwork : NetworkBehaviour
 {
@@ -69,7 +70,7 @@ public class PlayerNetwork : NetworkBehaviour
 
     [Header("Catch")]
     [SerializeField] private BoxCollider hitbox;
-
+    private bool catchRequestSent;
     private NetworkVariable<bool> hasBeenHit = new NetworkVariable<bool>(
     false,
     NetworkVariableReadPermission.Everyone,
@@ -102,51 +103,85 @@ public class PlayerNetwork : NetworkBehaviour
         textLabel.text = "";
     }
 
-    [Rpc(SendTo.Server)]
-    private void BecomeTayaRpc(RpcParams rpcParams = default)
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    public void TeleportToSpawnRpc(
+        Vector3 position,
+        RpcParams rpcParams = default)
     {
-        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+        // Only the owning client moves its player.
+        if (!IsOwner || !IsClient)
             return;
 
-        if (!IsSpawned) return;
+        Rigidbody body = GetComponent<Rigidbody>();
+        NetworkTransform networkTransform =
+            GetComponent<NetworkTransform>();
 
-        taya.Value = true;
+        if (body != null)
+        {
+            body.position = position;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
 
-        Debug.Log($"Player {OwnerClientId} is now Taya!");
+        if (networkTransform != null)
+        {
+            networkTransform.Teleport(
+                position,
+                transform.rotation,
+                transform.localScale
+            );
+        }
     }
 
-    // Detect a possible catch on the catching player's client.
+    public void ResetForNewRound()
+    {
+        if (!IsServer)
+            return;
+
+        hasBeenHit.Value = false;
+
+        Rigidbody body = GetComponent<Rigidbody>();
+
+        if (body != null)
+        {
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
+    }
     private void OnTriggerEnter(Collider other)
     {
+        TryCatchPlayer(other);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        TryCatchPlayer(other);
+    }
+
+    private void TryCatchPlayer(Collider other)
+    {
         if (!IsOwner || !IsClient) return;
-        if (taya.Value == false) return;
-        if (catchPlayer == false) return;
-        //Debug.Log($"[{OwnerClientId}] Trigger entered: {other.name}");
+        if (!taya.Value || !catchPlayer) return;
+        if (catchRequestSent) return;
 
-        if (hitbox == null)
-        {
-            Debug.LogWarning("Hitbox is missing!");
-            return;
-        }
+        PlayerNetwork target =
+            other.GetComponentInParent<PlayerNetwork>();
 
-        PlayerNetwork target = other.GetComponentInParent<PlayerNetwork>();
+        if (target == null || target == this) return;
 
-        if (target == null)
-        {
-            //Debug.Log("Touched object isn't a player.");
-            return;
-        }
+        // Don't try to catch another Taya.
+        if (target.taya.Value) return;
 
-        if (target == this) return;
-
-        Debug.Log($"[{OwnerClientId}] Sending catch request to {target.OwnerClientId}");
-
+        catchRequestSent = true;
         RequestCatchRpc(target.OwnerClientId);
     }
+
 
     [Rpc(SendTo.Server)]
     private void RequestCatchRpc(ulong targetClientId, RpcParams rpcParams = default)
     {
+        if (!taya.Value) return;
         Debug.Log("Receive request");
         // Make sure the request came from this player.
         if (rpcParams.Receive.SenderClientId != OwnerClientId) return;
@@ -161,6 +196,7 @@ public class PlayerNetwork : NetworkBehaviour
 
         if (target == null || target == this) return;
         Debug.Log("this is not the target and it isnt null");
+        if (target.taya.Value == true) return;
         if (target.hasBeenHit.Value) return;
         Debug.Log("target has value");
 
@@ -172,24 +208,17 @@ public class PlayerNetwork : NetworkBehaviour
             return;
         }
 
-        Debug.Log(
-            $"SERVER overlap check | " +
-            $"Taya hitbox: {hitbox.bounds} | " +
-            $"Target collider: {targetCollider.bounds} | " +
-            $"Intersects: {hitbox.bounds.Intersects(targetCollider.bounds)}");
-
-        // [ I DISABLED THIS CHECK TO REDUCE TIME CONSTRAINT, WILL FIX IF THE GAME BECAME SUCCESSFUL ]
-        /*if (!hitbox.bounds.Intersects(targetCollider.bounds))
+        if (!hitbox.bounds.Intersects(targetCollider.bounds))
         {
-            Debug.LogWarning("Catch rejected: server colliders don't overlap.");
+            Debug.Log("Catch rejected: target is outside hitbox.");
             return;
-        }*/
-
-        //Debug.Log("hitboxes intersected");
-        // Server marks the target as hit.
-
+        }
 
         target.hasBeenHit.Value = true;
+
+        PatinteroManager.Instance?.RegisterCaughtRunner(
+        target.OwnerClientId
+        );
 
         Debug.Log("Server validated catch! Player " + targetClientId + " got caught!");
 
@@ -207,6 +236,14 @@ public class PlayerNetwork : NetworkBehaviour
         if (newValue)
         {
             Debug.Log($"Player {OwnerClientId} got hit!");
+
+            Rigidbody body = GetComponent<Rigidbody>();
+
+            if (body != null)
+            {
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
         }
         else
         {
@@ -355,8 +392,11 @@ public class PlayerNetwork : NetworkBehaviour
 
     IEnumerator Catch()
     {
+        catchRequestSent = false;
         catchPlayer = true;
+
         yield return new WaitForSeconds(1f);
+
         catchPlayer = false;
     }
 
@@ -368,18 +408,18 @@ public class PlayerNetwork : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.Q))
         {
             if (canGet == false) return;
+            if (taya.Value)
+            {
+                animatorController.SetPickUp();
+                StartCoroutine(Catch());
+                return;
+            }
             if (hasTsinelas.Value)
             {
                 
                 StartCoroutine(disAndAbleChar());
                 animatorController.SetPickUp();
                 DespawnTsinelasRpc();
-            }
-            else
-            {
-                StartCoroutine(disAndAbleChar());
-                animatorController.SetPickUp();
-                StartCoroutine(Catch());
             }
             
         }
@@ -393,12 +433,6 @@ public class PlayerNetwork : NetworkBehaviour
             animatorController.SetThrow();
             SpawnTsinelasRpc(camera.transform.position, camera.transform.forward);
             
-        }
-
-        // become taya
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            BecomeTayaRpc();
         }
 
         // Jump input
