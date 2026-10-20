@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public static class LobbyCode
 {
     const string COPIED_TEXT = "Copied";
-    const string ENTER_TEXT = "Enter Lobby Code";
+    const string ENTER_TEXT = "Enter Lobby";
     const int ENTER_MIN_SIZE = 10;
     const int ENTER_MAX_SIZE = 26;
     const int LABEL_MIN_SIZE = 10;
@@ -50,7 +50,7 @@ public static class LobbyCode
         var label_area = PlayUi.rect("label_area", slot);
         LobbyUi.place_fraction(label_area, 0f, LABEL_BOTTOM, CODE_ROW_RIGHT, 1f);
 
-        var copied = fitted_text("copied_text", label_area, COPIED_TEXT, LABEL_MIN_SIZE, LABEL_MAX_SIZE, PlayTheme.gold_soft, TextAnchor.LowerRight);
+        var copied = fitted_text("copied_text", label_area, COPIED_TEXT, LABEL_MIN_SIZE, LABEL_MAX_SIZE, PlayTheme.lobby_text_muted, TextAnchor.LowerRight);
         LobbyUi.place_fraction(copied.rectTransform, 0f, 0f, 1f, 1f);
         copied.color = PlayTheme.clear;
 
@@ -59,15 +59,16 @@ public static class LobbyCode
 
         var pill = PlayUi.image("code_pill", row, PlayUi.pill());
         pill.type = Image.Type.Sliced;
-        pill.color = PlayTheme.fill_soft;
+        pill.color = PlayTheme.code_capsule;
+        add_frame(pill.rectTransform, PlayTheme.pill_border);
 
         var key = PlayUi.image("key_icon", pill.rectTransform, PlayUi.sprite(LobbyUi.ICON_KEY_PATH));
         key.enabled = key.sprite != null;
-        key.color = PlayTheme.gold;
+        key.color = PlayTheme.lobby_gold_icon;
         key.preserveAspect = true;
         LobbyUi.place_fraction(key.rectTransform, KEY_LEFT, KEY_VERTICAL_PADDING, KEY_RIGHT, 1f - KEY_VERTICAL_PADDING);
 
-        var code = fitted_text("code_text", pill.rectTransform, LobbyState.lobby_code, CODE_MIN_SIZE, CODE_MAX_SIZE, PlayTheme.text_white, TextAnchor.MiddleCenter);
+        var code = fitted_text("code_text", pill.rectTransform, LobbyState.lobby_code, CODE_MIN_SIZE, CODE_MAX_SIZE, PlayTheme.lobby_text, TextAnchor.MiddleCenter);
         LobbyUi.place_fraction(code.rectTransform, CODE_TEXT_LEFT, 0.08f, CODE_TEXT_RIGHT, 0.92f);
         PlayUi.add_shadow(code, 2f);
 
@@ -86,18 +87,16 @@ public static class LobbyCode
         var row = PlayUi.rect("enter_row", slot);
         LobbyUi.place_fraction(row, ENTER_LEFT, ROW_BOTTOM, 1f, ROW_TOP);
 
-        var pill = PlayUi.image("enter_pill", row, PlayUi.pill(), true);
-        pill.type = Image.Type.Sliced;
-        pill.color = PlayTheme.fill_soft;
+        var pill = gradient_pill("enter_pill", row, PlayTheme.pill_stops, PlayTheme.pill_border, out _);
         PlayUi.stretch(pill.rectTransform);
 
-        var label = fitted_text("enter_text", pill.rectTransform, ENTER_TEXT, ENTER_MIN_SIZE, ENTER_MAX_SIZE, PlayTheme.text_white, TextAnchor.MiddleLeft);
+        var label = fitted_text("enter_text", pill.rectTransform, ENTER_TEXT, ENTER_MIN_SIZE, ENTER_MAX_SIZE, PlayTheme.pill_text, TextAnchor.MiddleLeft);
         LobbyUi.place_fraction(label.rectTransform, ENTER_TEXT_LEFT, 0.08f, ENTER_TEXT_RIGHT, 0.92f);
         PlayUi.add_shadow(label, 2f);
 
         var arrow = PlayUi.image("arrow_icon", pill.rectTransform, PlayUi.sprite(LobbyUi.ICON_ARROW_RIGHT_PATH));
         arrow.enabled = arrow.sprite != null;
-        arrow.color = PlayTheme.gold;
+        arrow.color = PlayTheme.pill_text;
         arrow.preserveAspect = true;
         LobbyUi.place_fraction(arrow.rectTransform, ENTER_ARROW_LEFT, ENTER_ARROW_PADDING, ENTER_ARROW_RIGHT, 1f - ENTER_ARROW_PADDING);
         PlayUi.add_shadow(arrow, 2f);
@@ -107,7 +106,7 @@ public static class LobbyCode
         LobbyUi.no_transition(button);
 
         var hover = pill.gameObject.AddComponent<LobbyChatHover>();
-        hover.setup(button, arrow, PlayTheme.gold, PlayTheme.gold_soft, arrow.rectTransform, ENTER_HOVER_SCALE, null);
+        hover.setup(button, arrow, PlayTheme.pill_text, PlayTheme.lobby_text, arrow.rectTransform, ENTER_HOVER_SCALE, null);
 
         view.enter_button = button;
     }
@@ -128,7 +127,8 @@ public static class LobbyCode
     {
         var hit = PlayUi.image(name, parent, PlayUi.pill(), true);
         hit.type = Image.Type.Sliced;
-        hit.color = PlayTheme.fill_soft;
+        hit.color = PlayTheme.code_capsule;
+        add_frame(hit.rectTransform, PlayTheme.pill_border);
 
         var button = hit.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
@@ -140,7 +140,7 @@ public static class LobbyCode
 
         var icon = PlayUi.image("icon", hit.rectTransform, PlayUi.sprite(icon_path));
         icon.enabled = icon.sprite != null;
-        icon.color = PlayTheme.gold;
+        icon.color = PlayTheme.lobby_gold_icon;
         icon.preserveAspect = true;
         LobbyUi.place_fraction(icon.rectTransform, 0.5f - ICON_GLYPH_RATIO * 0.5f, 0.5f - ICON_GLYPH_RATIO * 0.5f, 0.5f + ICON_GLYPH_RATIO * 0.5f, 0.5f + ICON_GLYPH_RATIO * 0.5f);
         PlayUi.add_shadow(icon, 2f);
@@ -149,6 +149,34 @@ public static class LobbyCode
         hover.setup(icon, glow);
 
         return button;
+    }
+
+    internal static Image add_frame(RectTransform parent, Color color)
+    {
+        var frame = PlayUi.image("frame", parent, PlayUi.sprite(LobbyUi.FRAME_PILL_PATH));
+        frame.enabled = frame.sprite != null;
+        frame.type = Image.Type.Sliced;
+        frame.color = color;
+        frame.raycastTarget = false;
+        PlayUi.stretch(frame.rectTransform);
+        return frame;
+    }
+
+    internal static Image gradient_pill(string name, Transform parent, Color[] stops, Color border, out Image fill)
+    {
+        var pill = PlayUi.image(name, parent, PlayUi.pill(), true);
+        pill.type = Image.Type.Sliced;
+        pill.color = PlayTheme.white;
+
+        var mask = pill.gameObject.AddComponent<Mask>();
+        mask.showMaskGraphic = false;
+
+        fill = LobbyUi.gradient_image("fill", pill.rectTransform, stops, true);
+        fill.raycastTarget = false;
+        PlayUi.stretch(fill.rectTransform);
+
+        add_frame(pill.rectTransform, border);
+        return pill;
     }
 
     internal static Text fitted_text(string name, Transform parent, string value, int min_size, int max_size, Color color, TextAnchor anchor)
@@ -216,6 +244,7 @@ public class LobbyCodeRow : MonoBehaviour
 public class LobbyCodeButtonHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
 {
     const float ACTIVE_SCALE = 1.08f;
+    const float BUTTON_GLOW_ALPHA = 0.35f;
 
     Selectable selectable;
     Image icon_image;
@@ -254,7 +283,7 @@ public class LobbyCodeButtonHover : MonoBehaviour, IPointerEnterHandler, IPointe
     void apply(float t)
     {
         if (icon_image != null) icon_image.rectTransform.localScale = Vector3.one * Mathf.Lerp(1f, ACTIVE_SCALE, t);
-        if (glow_image != null) glow_image.color = PlayTheme.with_alpha(PlayTheme.glow, PlayTheme.glow.a * t);
+        if (glow_image != null) glow_image.color = PlayTheme.with_alpha(PlayTheme.border_highlight, BUTTON_GLOW_ALPHA * t);
     }
 
     public void OnPointerEnter(PointerEventData event_data)
@@ -336,7 +365,7 @@ public class LobbyCodeView : MonoBehaviour
 
         copied_timer = Mathf.Max(0f, copied_timer - Time.unscaledDeltaTime);
         var alpha = Mathf.Clamp01(copied_timer / COPIED_FADE_SECONDS);
-        copied_text.color = PlayTheme.with_alpha(PlayTheme.gold_soft, alpha);
+        copied_text.color = PlayTheme.with_alpha(PlayTheme.lobby_text_muted, alpha);
     }
 }
 
@@ -356,10 +385,10 @@ public class LobbyCodeWindow : MonoBehaviour
     const int CODE_LENGTH = 9;
     const float JOIN_DELAY_SECONDS = 0.4f;
     const float SPINNER_DEGREES_PER_SECOND = 360f;
-    const float FOCUS_FILL_ALPHA = 0.22f;
     const float FILL_LERP_SPEED = 14f;
     const float CLOSE_HOVER_SCALE = 1.08f;
     const float JOIN_HOVER_SCALE = 1.04f;
+    const float JOIN_REST_DIM = 0.15f;
 
     const float WINDOW_LEFT = 0.28f;
     const float WINDOW_RIGHT = 0.72f;
@@ -430,7 +459,7 @@ public class LobbyCodeWindow : MonoBehaviour
         dismiss.navigation = new Navigation { mode = Navigation.Mode.None };
         dismiss.onClick.AddListener(close);
 
-        var window = LobbyUi.panel("code_window", blocker, LobbyUi.PANEL_LOBBY_PATH, LobbyUi.PANEL_BORDER_SCALE);
+        var window = LobbyUi.panel("code_window", blocker, LobbyUi.PANEL_LOBBY_BLUE_PATH, LobbyUi.PANEL_BORDER_SCALE);
         window.raycastTarget = true;
         LobbyUi.place_fraction(window.rectTransform, WINDOW_LEFT, WINDOW_BOTTOM, WINDOW_RIGHT, WINDOW_TOP);
 
@@ -502,12 +531,12 @@ public class LobbyCodeWindow : MonoBehaviour
 
     void build_header(RectTransform window)
     {
-        var title = PlayUi.text("title", window, TITLE_TEXT, TITLE_FONT_SIZE, PlayTheme.gold, TextAnchor.MiddleLeft);
+        var title = PlayUi.text("title", window, TITLE_TEXT, TITLE_FONT_SIZE, PlayTheme.lobby_text, TextAnchor.MiddleLeft);
         title.horizontalOverflow = HorizontalWrapMode.Overflow;
         LobbyUi.place_fraction(title.rectTransform, CONTENT_LEFT, TITLE_BOTTOM, TITLE_RIGHT, TITLE_TOP);
         PlayUi.add_shadow(title);
 
-        var line = PlayOrnament.line(window, "title_line", 0f, 0f, PlayTheme.gold, true, true);
+        var line = PlayOrnament.line(window, "title_line", 0f, 0f, PlayTheme.divider_line, true, true);
         LobbyUi.place_fraction(line.rectTransform, CONTENT_LEFT, LINE_BOTTOM, CONTENT_RIGHT, LINE_TOP);
     }
 
@@ -515,12 +544,13 @@ public class LobbyCodeWindow : MonoBehaviour
     {
         input_pill = PlayUi.image("code_input", window, PlayUi.pill(), true);
         input_pill.type = Image.Type.Sliced;
-        input_pill.color = PlayTheme.fill_soft;
+        input_pill.color = PlayTheme.code_capsule;
         LobbyUi.place_fraction(input_pill.rectTransform, CONTENT_LEFT, INPUT_BOTTOM, CONTENT_RIGHT, INPUT_TOP);
+        LobbyCode.add_frame(input_pill.rectTransform, PlayTheme.pill_border);
 
         var key = PlayUi.image("key_icon", input_pill.rectTransform, PlayUi.sprite(LobbyUi.ICON_KEY_PATH));
         key.enabled = key.sprite != null;
-        key.color = PlayTheme.gold;
+        key.color = PlayTheme.lobby_gold_icon;
         key.preserveAspect = true;
         LobbyUi.place_fraction(key.rectTransform, KEY_LEFT, KEY_PADDING, KEY_RIGHT, 1f - KEY_PADDING);
 
@@ -528,11 +558,11 @@ public class LobbyCodeWindow : MonoBehaviour
         LobbyUi.place_fraction(area, TEXT_LEFT, 0.1f, TEXT_RIGHT, 0.9f);
         area.gameObject.AddComponent<RectMask2D>();
 
-        var typed = LobbyCode.fitted_text("text", area, string.Empty, INPUT_MIN_SIZE, INPUT_MAX_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
+        var typed = LobbyCode.fitted_text("text", area, string.Empty, INPUT_MIN_SIZE, INPUT_MAX_SIZE, PlayTheme.lobby_text, TextAnchor.MiddleLeft);
         PlayUi.stretch(typed.rectTransform);
         typed.supportRichText = false;
 
-        var placeholder = LobbyCode.fitted_text("placeholder", area, PLACEHOLDER_TEXT, INPUT_MIN_SIZE, INPUT_MAX_SIZE, PlayTheme.text_muted, TextAnchor.MiddleLeft);
+        var placeholder = LobbyCode.fitted_text("placeholder", area, PLACEHOLDER_TEXT, INPUT_MIN_SIZE, INPUT_MAX_SIZE, PlayTheme.lobby_text_muted, TextAnchor.MiddleLeft);
         PlayUi.stretch(placeholder.rectTransform);
         placeholder.fontStyle = FontStyle.Italic;
         placeholder.supportRichText = false;
@@ -546,9 +576,9 @@ public class LobbyCodeWindow : MonoBehaviour
         input.contentType = InputField.ContentType.Standard;
         input.characterLimit = CODE_LENGTH;
         input.customCaretColor = true;
-        input.caretColor = PlayTheme.gold;
+        input.caretColor = PlayTheme.lobby_text;
         input.caretWidth = LobbyUi.CARET_WIDTH;
-        input.selectionColor = PlayTheme.with_alpha(PlayTheme.gold, SELECTION_ALPHA);
+        input.selectionColor = PlayTheme.with_alpha(PlayTheme.border_highlight, SELECTION_ALPHA);
         input.onValueChanged.AddListener(on_input_changed);
         input.onSubmit.AddListener(submit);
     }
@@ -564,17 +594,14 @@ public class LobbyCodeWindow : MonoBehaviour
 
     void build_join(RectTransform window)
     {
-        var background = PlayUi.image("join_button", window, PlayUi.pill(), true);
-        background.type = Image.Type.Sliced;
-        background.color = PlayTheme.gold;
+        var background = LobbyCode.gradient_pill("join_button", window, PlayTheme.start_stops, PlayTheme.start_border, out var join_fill);
         LobbyUi.place_fraction(background.rectTransform, JOIN_LEFT, JOIN_BOTTOM, JOIN_RIGHT, JOIN_TOP);
-        PlayUi.add_shadow(background);
 
-        join_label = LobbyCode.fitted_text("label", background.rectTransform, JOIN_TEXT, JOIN_MIN_SIZE, JOIN_MAX_SIZE, PlayTheme.label_brown, TextAnchor.MiddleCenter);
+        join_label = LobbyCode.fitted_text("label", background.rectTransform, JOIN_TEXT, JOIN_MIN_SIZE, JOIN_MAX_SIZE, PlayTheme.start_text, TextAnchor.MiddleCenter);
         LobbyUi.place_fraction(join_label.rectTransform, JOIN_TEXT_LEFT, 0.1f, JOIN_TEXT_RIGHT, 0.9f);
 
         spinner = PlayUi.image("spinner", background.rectTransform, PlayUi.sprite(LobbyUi.ICON_REFRESH_PATH));
-        spinner.color = PlayTheme.label_brown;
+        spinner.color = PlayTheme.start_text;
         spinner.preserveAspect = true;
         spinner.raycastTarget = false;
         LobbyUi.place_fraction(spinner.rectTransform, SPINNER_LEFT, SPINNER_PADDING, SPINNER_RIGHT, 1f - SPINNER_PADDING);
@@ -585,7 +612,7 @@ public class LobbyCodeWindow : MonoBehaviour
         join_button.onClick.AddListener(start_join);
 
         var hover = background.gameObject.AddComponent<LobbyChatHover>();
-        hover.setup(join_button, background, PlayTheme.gold, PlayTheme.gold_soft, background.rectTransform, JOIN_HOVER_SCALE, null);
+        hover.setup(join_button, join_fill, Color.Lerp(PlayTheme.white, PlayTheme.start_stops[3], JOIN_REST_DIM), PlayTheme.white, background.rectTransform, JOIN_HOVER_SCALE, null);
     }
 
     void build_close(RectTransform window)
@@ -593,7 +620,7 @@ public class LobbyCodeWindow : MonoBehaviour
         var region = PlayUi.rect("close_area", window);
         LobbyUi.place_fraction(region, CLOSE_LEFT, CLOSE_BOTTOM, CONTENT_RIGHT, CLOSE_TOP);
 
-        var hit = PlayUi.circle("close_button", region, PlayTheme.fill_soft, true);
+        var hit = PlayUi.circle("close_button", region, PlayTheme.code_capsule, true);
         PlayUi.stretch(hit.rectTransform);
         var fitter = hit.gameObject.AddComponent<AspectRatioFitter>();
         fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
@@ -608,14 +635,14 @@ public class LobbyCodeWindow : MonoBehaviour
         close_button.onClick.AddListener(close);
 
         var hover = hit.gameObject.AddComponent<LobbyChatHover>();
-        hover.setup(close_button, hit, PlayTheme.fill_soft, PlayTheme.with_alpha(PlayTheme.gold, FOCUS_FILL_ALPHA), hit.rectTransform, CLOSE_HOVER_SCALE, null);
+        hover.setup(close_button, hit, PlayTheme.code_capsule, PlayTheme.pill_stops[0], hit.rectTransform, CLOSE_HOVER_SCALE, null);
     }
 
     void build_close_bar(RectTransform parent, float degrees)
     {
         var bar = PlayUi.image("close_bar", parent, PlayUi.pill());
         bar.type = Image.Type.Sliced;
-        bar.color = PlayTheme.gold;
+        bar.color = PlayTheme.pill_text;
         bar.raycastTarget = false;
         LobbyUi.place_fraction(bar.rectTransform, CLOSE_BAR_LEFT, CLOSE_BAR_BOTTOM, CLOSE_BAR_RIGHT, CLOSE_BAR_TOP);
         bar.rectTransform.localRotation = Quaternion.Euler(0f, 0f, degrees);
@@ -706,7 +733,7 @@ public class LobbyCodeWindow : MonoBehaviour
     {
         if (input_pill == null || input == null) return;
 
-        var target = input.isFocused ? PlayTheme.with_alpha(PlayTheme.gold, FOCUS_FILL_ALPHA) : PlayTheme.fill_soft;
+        var target = input.isFocused ? PlayTheme.pill_stops[0] : PlayTheme.code_capsule;
         input_pill.color = Color.Lerp(input_pill.color, target, Mathf.Clamp01(Time.unscaledDeltaTime * FILL_LERP_SPEED));
     }
 
