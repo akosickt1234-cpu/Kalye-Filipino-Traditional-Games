@@ -8,7 +8,9 @@ public static class LobbyFrameLight
         None,
         GoldTop,
         GoldTopBottom,
-        BlueTopBottom
+        BlueTopBottom,
+        GoldCard,
+        BlueCard
     }
 
     const float WARM_RANGE = 0.3f;
@@ -18,6 +20,12 @@ public static class LobbyFrameLight
     const float BOTTOM_STRENGTH = 0.8f;
     const float LIGHT_MIX = 0.6f;
     const float SHADE_MIN = 0.9f;
+    const float CARD_TOP_START = 0.25f;
+    const float CARD_BOTTOM_END = 0.55f;
+    const float CARD_LIGHT_POWER = 1.5f;
+    const float CARD_BOTTOM_STRENGTH = 1f;
+    const float CARD_LIGHT_MIX = 0.95f;
+    const float CARD_SHADE_MIN = 0.72f;
     const float BLUE_HUE = 0.585f;
     const float BLUE_SATURATION = 1.25f;
     const float RING_ALPHA_GAIN = 2f;
@@ -147,15 +155,18 @@ public static class LobbyFrameLight
         var pixels = read_pixels(source.texture, Mathf.RoundToInt(rect.x), Mathf.RoundToInt(rect.y), width, height);
         if (pixels == null || pixels.Length != width * height) return null;
 
-        var blue = style == Style.BlueTopBottom;
-        var bottom = style == Style.GoldTopBottom || style == Style.BlueTopBottom;
+        var card = style == Style.GoldCard || style == Style.BlueCard;
+        var blue = style == Style.BlueTopBottom || style == Style.BlueCard;
+        var bottom = style != Style.GoldTop;
         var tint = blue ? blue_light : gold_light;
+        var light_mix = card ? CARD_LIGHT_MIX : LIGHT_MIX;
+        var shade_min = card ? CARD_SHADE_MIN : SHADE_MIN;
 
         for (var y = 0; y < height; y++)
         {
             var t = height > 1 ? y / (float)(height - 1) : 1f;
-            var light = light_at(t, bottom);
-            var shade = Mathf.Lerp(SHADE_MIN, 1f, light);
+            var light = light_at(t, bottom, card);
+            var shade = Mathf.Lerp(shade_min, 1f, light);
 
             for (var x = 0; x < width; x++)
             {
@@ -180,7 +191,7 @@ public static class LobbyFrameLight
 
                 var alpha = c.a;
                 var shaded = new Color(c.r * shade, c.g * shade, c.b * shade, alpha);
-                var lit = Color.Lerp(shaded, tint, Mathf.Clamp01(light * LIGHT_MIX * warm));
+                var lit = Color.Lerp(shaded, tint, Mathf.Clamp01(light * light_mix * warm));
                 lit.a = alpha;
                 pixels[index] = lit;
             }
@@ -195,12 +206,15 @@ public static class LobbyFrameLight
         return Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), source.pixelsPerUnit, 0, SpriteMeshType.FullRect, source.border);
     }
 
-    static float light_at(float t, bool with_bottom)
+    static float light_at(float t, bool with_bottom, bool card = false)
     {
-        var top = Mathf.Pow(Mathf.Clamp01((t - TOP_START) / (1f - TOP_START)), LIGHT_POWER);
+        var top_start = card ? CARD_TOP_START : TOP_START;
+        var bottom_end = card ? CARD_BOTTOM_END : BOTTOM_END;
+        var power = card ? CARD_LIGHT_POWER : LIGHT_POWER;
+        var top = Mathf.Pow(Mathf.Clamp01((t - top_start) / (1f - top_start)), power);
         if (!with_bottom) return top;
 
-        var low = Mathf.Pow(Mathf.Clamp01((BOTTOM_END - t) / BOTTOM_END), LIGHT_POWER) * BOTTOM_STRENGTH;
+        var low = Mathf.Pow(Mathf.Clamp01((bottom_end - t) / bottom_end), power) * (card ? CARD_BOTTOM_STRENGTH : BOTTOM_STRENGTH);
         return Mathf.Max(top, low);
     }
 

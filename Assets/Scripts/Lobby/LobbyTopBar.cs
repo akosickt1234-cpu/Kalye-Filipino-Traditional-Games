@@ -176,7 +176,8 @@ public class LobbyTopBarLayout : MonoBehaviour
     private const float GAP_RATIO = 0.3f;
     private const float CRUMB_GAP_RATIO = 0.15f;
     private const float CRUMB_SPACING_RATIO = 0.1f;
-    private const float TEXT_RATIO = 0.26f;
+    private const float TEXT_RATIO = 0.34f;
+    private const float RIGHT_BUTTON_RATIO = 0.7f;
     private const float STAR_RATIO = 0.32f;
     private const float CRUMB_RIGHT_ANCHOR = 0.7f;
     private const int MIN_TEXT_SIZE = 12;
@@ -292,11 +293,12 @@ public class LobbyTopBarLayout : MonoBehaviour
             LayoutRebuilder.MarkLayoutForRebuild(crumb);
         }
 
+        float right_size = height * RIGHT_BUTTON_RATIO;
         int count = right_buttons.Length;
         for (int i = 0; i < count; i++)
         {
             int from_right = count - 1 - i;
-            place_right(right_buttons[i], margin + from_right * (size + gap), size);
+            place_right(right_buttons[i], margin + from_right * (right_size + gap), right_size);
         }
     }
 
