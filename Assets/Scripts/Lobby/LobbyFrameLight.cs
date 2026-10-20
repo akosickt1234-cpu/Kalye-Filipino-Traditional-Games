@@ -14,16 +14,18 @@ public static class LobbyFrameLight
     const float WARM_RANGE = 0.3f;
     const float TOP_START = 0.45f;
     const float BOTTOM_END = 0.4f;
-    const float LIGHT_POWER = 1.5f;
-    const float BOTTOM_STRENGTH = 0.85f;
-    const float LIGHT_MIX = 0.8f;
-    const float SHADE_MIN = 0.86f;
+    const float LIGHT_POWER = 2f;
+    const float BOTTOM_STRENGTH = 0.8f;
+    const float LIGHT_MIX = 0.6f;
+    const float SHADE_MIN = 0.9f;
     const float BLUE_HUE = 0.585f;
     const float BLUE_SATURATION = 1.25f;
     const float RING_ALPHA_GAIN = 2f;
-    const int GLOW_BLUR_RADIUS = 5;
-    const int GLOW_BLUR_PASSES = 2;
-    const float GLOW_GAIN = 2.2f;
+    const int GLOW_BLUR_RADIUS = 6;
+    const int GLOW_BLUR_PASSES = 3;
+    const float GLOW_PEAK = 0.9f;
+    const float GLOW_FALLOFF = 1.35f;
+    const float GLOW_SIDE_LEVEL = 0.5f;
 
     public const int GLOW_PAD = 28;
 
@@ -77,10 +79,21 @@ public static class LobbyFrameLight
 
         for (var pass = 0; pass < GLOW_BLUR_PASSES; pass++) box_blur(alpha, padded_width, padded_height, GLOW_BLUR_RADIUS);
 
+        var peak = 0f;
+        for (var i = 0; i < alpha.Length; i++) peak = Mathf.Max(peak, alpha[i]);
+        var scale = peak > 0f ? GLOW_PEAK / peak : 0f;
+
         var output = new Color32[alpha.Length];
-        for (var i = 0; i < alpha.Length; i++)
+        for (var y = 0; y < padded_height; y++)
         {
-            output[i] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(Mathf.Clamp01(alpha[i] * GLOW_GAIN) * 255f));
+            var t = padded_height > 1 ? y / (float)(padded_height - 1) : 1f;
+            var level = Mathf.Lerp(GLOW_SIDE_LEVEL, 1f, light_at(t, true));
+            for (var x = 0; x < padded_width; x++)
+            {
+                var index = y * padded_width + x;
+                var soft = Mathf.Pow(Mathf.Clamp01(alpha[index] * scale), GLOW_FALLOFF) * level;
+                output[index] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(Mathf.Clamp01(soft) * 255f));
+            }
         }
 
         var texture = new Texture2D(padded_width, padded_height, TextureFormat.RGBA32, false);
