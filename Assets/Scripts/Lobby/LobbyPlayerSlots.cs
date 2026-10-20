@@ -21,7 +21,7 @@ public static class LobbyPlayerSlots
     const float TITLE_SPLIT = 0.42f;
     const float SUBTEXT_RIGHT = 0.57f;
     const float CREST_LEFT = 0.58f;
-    const float CREST_RIGHT = 0.92f;
+    const float CREST_RIGHT = 0.78f;
     const float SUBTEXT_CREST_BOTTOM = 0.25f;
     const float SUBTEXT_CREST_TOP = 0.75f;
     const float DIVIDER_THICKNESS = 2f;
@@ -146,7 +146,7 @@ public static class LobbyPlayerSlots
         {
             var subtext_cell = PlayUi.rect("subtext_cell", heading_slot);
             LobbyUi.place_fraction(subtext_cell, TITLE_LEFT, 0f, SUBTEXT_RIGHT, TITLE_SPLIT);
-            var subtext = PlayUi.text("subtext", subtext_cell, SUBTEXT, SUBTEXT_MAX_SIZE, PlayTheme.text_muted, TextAnchor.MiddleLeft);
+            var subtext = PlayUi.text("subtext", subtext_cell, SUBTEXT, SUBTEXT_MAX_SIZE, PlayTheme.light_blue, TextAnchor.MiddleLeft);
             fit_text(subtext, SUBTEXT_MIN_SIZE, SUBTEXT_MAX_SIZE);
             PlayUi.stretch(subtext.rectTransform);
         }
