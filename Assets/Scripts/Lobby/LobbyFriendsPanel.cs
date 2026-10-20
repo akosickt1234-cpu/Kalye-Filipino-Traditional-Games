@@ -21,6 +21,21 @@ public static class LobbyFriendsPanel
     internal const float SCROLL_SENSITIVITY = 40f;
     const float UNDERLINE_ALPHA = 0.45f;
     internal const float EMPTY_ALPHA = 0.8f;
+    internal const string EMPTY_HINT_TEXT = "Add friends and play together!";
+    internal const string ONLINE_SUFFIX = " ONLINE";
+    const float PILL_LEFT = 0.6f;
+    const float PILL_BOTTOM = 0.2f;
+    const float PILL_TOP = 0.8f;
+    const float PILL_RING_THICKNESS = 2f;
+    const float PILL_RING_ALPHA = 0.7f;
+    const float PILL_DOT_LEFT = 0.1f;
+    const float PILL_DOT_BOTTOM = 0.34f;
+    const float PILL_DOT_TOP = 0.66f;
+    const float PILL_TEXT_LEFT = 0.26f;
+    const float PILL_TEXT_RIGHT = 0.94f;
+    const float TITLE_PILL_GAP = 0.02f;
+    const int PILL_MIN_SIZE = 10;
+    const int PILL_MAX_SIZE = 24;
 
     public static void build(RectTransform friends_panel)
     {
@@ -29,16 +44,16 @@ public static class LobbyFriendsPanel
         var content = PlayUi.rect("friends_content", friends_panel);
         LobbyUi.place_fraction(content, CONTENT_LEFT, CONTENT_BOTTOM, CONTENT_RIGHT, CONTENT_TOP);
 
-        build_header(content);
+        var online_text = build_header(content);
 
         var list_area = PlayUi.rect("friends_list_area", content);
         LobbyUi.place_fraction(list_area, 0f, 0f, 1f, LIST_TOP);
 
         var view = list_area.gameObject.AddComponent<LobbyFriendsView>();
-        view.setup(list_area);
+        view.setup(list_area, online_text);
     }
 
-    static void build_header(RectTransform content)
+    static Text build_header(RectTransform content)
     {
         var header = PlayUi.rect("friends_header", content);
         LobbyUi.place_fraction(header, 0f, HEADER_BOTTOM, 1f, 1f);
@@ -60,12 +75,50 @@ public static class LobbyFriendsPanel
         PlayUi.stretch(icon.rectTransform);
 
         var title = PlayUi.text("friends_title", header, HEADER_TEXT, HEADER_MAX_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
-        LobbyUi.place_fraction(title.rectTransform, HEADER_TEXT_START, 0f, 1f, 1f);
+        LobbyUi.place_fraction(title.rectTransform, HEADER_TEXT_START, 0f, PILL_LEFT - TITLE_PILL_GAP, 1f);
         LobbyFriendRow.fit_text(title, HEADER_MIN_SIZE, HEADER_MAX_SIZE);
         PlayUi.add_shadow(title, 2f);
 
         var underline = PlayOrnament.line(content, "friends_underline", 100f, UNDERLINE_THICKNESS, PlayTheme.with_alpha(PlayTheme.gold, UNDERLINE_ALPHA), true, true);
         PlayUi.place(underline.rectTransform, new Vector2(0f, UNDERLINE_Y), new Vector2(1f, UNDERLINE_Y), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(0f, UNDERLINE_THICKNESS));
+
+        return build_online_pill(header);
+    }
+
+    static Text build_online_pill(RectTransform header)
+    {
+        var root = PlayUi.rect("online_pill", header);
+        LobbyUi.place_fraction(root, PILL_LEFT, PILL_BOTTOM, 1f, PILL_TOP);
+
+        var ring = PlayUi.image("online_ring", root, PlayUi.pill());
+        ring.type = Image.Type.Sliced;
+        ring.color = PlayTheme.with_alpha(PlayTheme.success, PILL_RING_ALPHA);
+        PlayUi.stretch(ring.rectTransform);
+
+        var fill = PlayUi.image("online_fill", root, PlayUi.pill());
+        fill.type = Image.Type.Sliced;
+        fill.color = PlayTheme.panel_blue;
+        PlayUi.stretch(fill.rectTransform);
+        fill.rectTransform.offsetMin = new Vector2(PILL_RING_THICKNESS, PILL_RING_THICKNESS);
+        fill.rectTransform.offsetMax = new Vector2(-PILL_RING_THICKNESS, -PILL_RING_THICKNESS);
+
+        var dot_slot = PlayUi.rect("online_dot_slot", root);
+        dot_slot.anchorMin = new Vector2(PILL_DOT_LEFT, PILL_DOT_BOTTOM);
+        dot_slot.anchorMax = new Vector2(PILL_DOT_LEFT, PILL_DOT_TOP);
+        dot_slot.pivot = new Vector2(0f, 0.5f);
+        dot_slot.offsetMin = Vector2.zero;
+        dot_slot.offsetMax = Vector2.zero;
+        var dot_fit = dot_slot.gameObject.AddComponent<AspectRatioFitter>();
+        dot_fit.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
+        dot_fit.aspectRatio = 1f;
+
+        var dot = PlayUi.circle("online_dot", dot_slot, PlayTheme.success);
+        PlayUi.stretch(dot.rectTransform);
+
+        var label = PlayUi.text("online_text", root, "0" + LobbyFriendsPanel.ONLINE_SUFFIX, PILL_MAX_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
+        LobbyUi.place_fraction(label.rectTransform, PILL_TEXT_LEFT, 0f, PILL_TEXT_RIGHT, 1f);
+        LobbyFriendRow.fit_text(label, PILL_MIN_SIZE, PILL_MAX_SIZE);
+        return label;
     }
 }
 
@@ -74,10 +127,13 @@ public class LobbyFriendsView : MonoBehaviour
     RectTransform viewport_rect;
     RectTransform content_rect;
     ScrollRect scroll;
-    Text empty_text;
+    RectTransform empty_root;
+    Text online_text;
 
-    public void setup(RectTransform list_area)
+    public void setup(RectTransform list_area, Text online_label)
     {
+        online_text = online_label;
+
         var viewport = PlayUi.image("friends_viewport", list_area, null, true);
         PlayUi.stretch(viewport.rectTransform);
         viewport.gameObject.AddComponent<RectMask2D>();
@@ -135,20 +191,24 @@ public class LobbyFriendsView : MonoBehaviour
             Destroy(child);
         }
 
-        if (empty_text != null)
+        if (empty_root != null)
         {
-            Destroy(empty_text.gameObject);
-            empty_text = null;
+            Destroy(empty_root.gameObject);
+            empty_root = null;
         }
 
         var friends = LobbyState.friends;
         var count = 0;
+        var online_count = 0;
         for (var i = 0; friends != null && i < friends.Count; i++)
         {
             if (friends[i] == null) continue;
             LobbyFriendRow.create(content_rect, friends[i], LobbyFriendsPanel.ROW_HEIGHT);
             count++;
+            if (friends[i].online) online_count++;
         }
+
+        if (online_text != null) online_text.text = online_count + LobbyFriendsPanel.ONLINE_SUFFIX;
 
         if (count == 0)
         {
@@ -162,9 +222,38 @@ public class LobbyFriendsView : MonoBehaviour
 
     void build_empty(RectTransform parent)
     {
-        empty_text = PlayUi.text("friends_empty", parent, LobbyFriendsPanel.EMPTY_TEXT, 24, PlayTheme.with_alpha(PlayTheme.text_muted, LobbyFriendsPanel.EMPTY_ALPHA), TextAnchor.MiddleCenter);
-        LobbyUi.place_fraction(empty_text.rectTransform, 0f, 0.4f, 1f, 0.7f);
-        LobbyFriendRow.fit_text(empty_text, 14, 26);
+        var tint = PlayTheme.with_alpha(PlayTheme.text_muted, LobbyFriendsPanel.EMPTY_ALPHA);
+
+        empty_root = PlayUi.rect("friends_empty", parent);
+        LobbyUi.place_fraction(empty_root, 0f, 0.2f, 1f, 0.85f);
+
+        var icon_slot = PlayUi.rect("friends_empty_icon_slot", empty_root);
+        icon_slot.anchorMin = new Vector2(0.5f, 0.62f);
+        icon_slot.anchorMax = new Vector2(0.5f, 1f);
+        icon_slot.pivot = new Vector2(0.5f, 0.5f);
+        icon_slot.offsetMin = Vector2.zero;
+        icon_slot.offsetMax = Vector2.zero;
+        var icon_fit = icon_slot.gameObject.AddComponent<AspectRatioFitter>();
+        icon_fit.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
+        icon_fit.aspectRatio = 1f;
+
+        var icon = PlayUi.image("friends_empty_icon", icon_slot, PlayUi.sprite(LobbyUi.ICON_USER_PLUS_PATH));
+        icon.preserveAspect = true;
+        icon.color = tint;
+        icon.enabled = icon.sprite != null;
+        PlayUi.stretch(icon.rectTransform);
+
+        var title = PlayUi.text("friends_empty_title", empty_root, LobbyFriendsPanel.EMPTY_TEXT, 28, PlayTheme.text, TextAnchor.MiddleCenter);
+        LobbyUi.place_fraction(title.rectTransform, 0f, 0.42f, 1f, 0.58f);
+        LobbyFriendRow.fit_text(title, 14, 30);
+
+        var divider = PlayOrnament.line(empty_root, "friends_empty_divider", 100f, 2f, PlayTheme.with_alpha(PlayTheme.gold, 0.45f), true, true);
+        PlayUi.place(divider.rectTransform, new Vector2(0.15f, 0.38f), new Vector2(0.85f, 0.38f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(0f, 2f));
+
+        var hint = PlayUi.text("friends_empty_hint", empty_root, LobbyFriendsPanel.EMPTY_HINT_TEXT, 22, tint, TextAnchor.UpperCenter);
+        LobbyUi.place_fraction(hint.rectTransform, 0.05f, 0f, 0.95f, 0.34f);
+        hint.horizontalOverflow = HorizontalWrapMode.Wrap;
+        LobbyFriendRow.fit_text(hint, 12, 24);
     }
 }
 
