@@ -34,8 +34,6 @@ public class LobbyScreen : MonoBehaviour
     const float INFO_BOTTOM = 0.97f;
     const float START_LEFT = 0.34f;
     const float START_RIGHT = 0.66f;
-    const float JOIN_LEFT = 0.70f;
-    const float JOIN_RIGHT = 0.95f;
     const float BOTTOM_TOP = 0.82f;
     const float BOTTOM_BOTTOM = 0.94f;
     const float COLUMN_COUNT = 3f;
@@ -70,13 +68,12 @@ public class LobbyScreen : MonoBehaviour
         place_from_top(friends_panel.rectTransform, FRIENDS_LEFT, PANEL_TOP, FRIENDS_RIGHT, PANEL_BOTTOM);
 
         var start_bar = create_region("start_bar", root, START_LEFT, 1f - BOTTOM_BOTTOM, START_RIGHT, 1f - BOTTOM_TOP);
-        var join_slot = create_region("join_slot", root, JOIN_LEFT, 1f - BOTTOM_BOTTOM, JOIN_RIGHT, 1f - BOTTOM_TOP);
 
         LobbyTopBar.build(top_bar);
         LobbyPlayerSlots.build(heading_slot, slots_row);
         LobbyChat.build(chat_col);
         LobbyInfoBar.build(count_col, mode_col);
-        LobbyCode.build(code_slot, join_slot);
+        LobbyCode.build(code_slot);
         LobbyFriendsPanel.build(friends_panel.rectTransform);
         LobbyStartBar.build(start_bar);
 

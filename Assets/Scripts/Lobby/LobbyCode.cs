@@ -1,48 +1,33 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public static class LobbyCode
 {
     const string COPIED_TEXT = "Copied";
-    const string PLACEHOLDER_TEXT = "Enter friend's code";
     const int LABEL_MIN_SIZE = 10;
     const int LABEL_MAX_SIZE = 22;
     const int CODE_MIN_SIZE = 12;
     const int CODE_MAX_SIZE = 40;
-    const int INPUT_MIN_SIZE = 10;
-    const int INPUT_MAX_SIZE = 28;
-    const int ERROR_MIN_SIZE = 9;
-    const int ERROR_MAX_SIZE = 20;
-    const int CODE_LENGTH = 9;
     const float LABEL_BOTTOM = 0.64f;
     const float ROW_TOP = 0.56f;
     const float ROW_BOTTOM = 0.04f;
-    const float JOIN_ROW_TOP = 0.76f;
-    const float JOIN_ROW_BOTTOM = 0.30f;
-    const float ERROR_TOP = 0.26f;
-    const float ERROR_BOTTOM = 0.0f;
     const float KEY_LEFT = 0.04f;
     const float KEY_RIGHT = 0.16f;
     const float KEY_VERTICAL_PADDING = 0.2f;
     const float CODE_TEXT_LEFT = 0.19f;
     const float CODE_TEXT_RIGHT = 0.96f;
-    const float INPUT_TEXT_LEFT = 0.18f;
-    const float INPUT_TEXT_RIGHT = 0.95f;
     const float ICON_GLYPH_RATIO = 0.5f;
     const float GLOW_RATIO = 1.5f;
-    const float SELECTION_ALPHA = 0.3f;
 
-    public static void build(RectTransform code_slot, RectTransform join_slot)
+    public static void build(RectTransform code_slot)
     {
-        if (code_slot == null || join_slot == null) return;
+        if (code_slot == null) return;
 
         var view = code_slot.gameObject.AddComponent<LobbyCodeView>();
 
         build_code(code_slot, view);
-        build_join(join_slot, view);
 
         view.bind();
     }
@@ -83,75 +68,11 @@ public static class LobbyCode
         view.copy_button = copy_button;
     }
 
-    static void build_join(RectTransform slot, LobbyCodeView view)
+    static Button build_square_button(string name, RectTransform parent, string icon_path)
     {
-        var row = PlayUi.rect("join_row", slot);
-        LobbyUi.place_fraction(row, 0f, JOIN_ROW_BOTTOM, 1f, JOIN_ROW_TOP);
-
-        var pill = PlayUi.image("join_pill", row, PlayUi.pill(), true);
-        pill.type = Image.Type.Sliced;
-        pill.color = PlayTheme.fill_soft;
-
-        var key = PlayUi.image("key_icon", pill.rectTransform, PlayUi.sprite(LobbyUi.ICON_KEY_PATH));
-        key.enabled = key.sprite != null;
-        key.color = PlayTheme.gold;
-        key.preserveAspect = true;
-        LobbyUi.place_fraction(key.rectTransform, KEY_LEFT, KEY_VERTICAL_PADDING, KEY_RIGHT + 0.02f, 1f - KEY_VERTICAL_PADDING);
-
-        var area = PlayUi.rect("input_area", pill.rectTransform);
-        LobbyUi.place_fraction(area, INPUT_TEXT_LEFT, 0.1f, INPUT_TEXT_RIGHT, 0.9f);
-        area.gameObject.AddComponent<RectMask2D>();
-
-        var input_text = fitted_text("text", area, string.Empty, INPUT_MIN_SIZE, INPUT_MAX_SIZE, PlayTheme.text, TextAnchor.MiddleLeft);
-        PlayUi.stretch(input_text.rectTransform);
-        input_text.supportRichText = false;
-
-        var placeholder = fitted_text("placeholder", area, PLACEHOLDER_TEXT, INPUT_MIN_SIZE, INPUT_MAX_SIZE, PlayTheme.text_muted, TextAnchor.MiddleLeft);
-        PlayUi.stretch(placeholder.rectTransform);
-        placeholder.fontStyle = FontStyle.Italic;
-
-        var input = pill.gameObject.AddComponent<InputField>();
-        input.targetGraphic = pill;
-        input.transition = Selectable.Transition.None;
-        input.textComponent = input_text;
-        input.placeholder = placeholder;
-        input.lineType = InputField.LineType.SingleLine;
-        input.contentType = InputField.ContentType.Standard;
-        input.characterLimit = CODE_LENGTH;
-        input.caretColor = PlayTheme.gold;
-        input.customCaretColor = true;
-        input.selectionColor = PlayTheme.with_alpha(PlayTheme.gold, SELECTION_ALPHA);
-
-        var submit_button = build_square_button("join_button", row, LobbyUi.ICON_ARROW_RIGHT_PATH, true);
-
-        var layout = row.gameObject.AddComponent<LobbyCodeRow>();
-        layout.setup(pill.rectTransform, new List<RectTransform> { (RectTransform)submit_button.transform });
-
-        var error_area = PlayUi.rect("error_area", slot);
-        LobbyUi.place_fraction(error_area, 0.04f, ERROR_BOTTOM, 1f, ERROR_TOP);
-
-        var error = fitted_text("error_text", error_area, string.Empty, ERROR_MIN_SIZE, ERROR_MAX_SIZE, PlayTheme.error, TextAnchor.UpperLeft);
-        PlayUi.stretch(error.rectTransform);
-
-        view.join_pill = pill;
-        view.join_input = input;
-        view.join_button = submit_button;
-        view.error_text = error;
-    }
-
-    static Button build_square_button(string name, RectTransform parent, string icon_path, bool round = false)
-    {
-        Image hit;
-        if (round)
-        {
-            hit = PlayUi.circle(name, parent, PlayTheme.fill_soft, true);
-        }
-        else
-        {
-            hit = PlayUi.image(name, parent, PlayUi.pill(), true);
-            hit.type = Image.Type.Sliced;
-            hit.color = PlayTheme.fill_soft;
-        }
+        var hit = PlayUi.image(name, parent, PlayUi.pill(), true);
+        hit.type = Image.Type.Sliced;
+        hit.color = PlayTheme.fill_soft;
 
         var button = hit.gameObject.AddComponent<Button>();
         button.targetGraphic = hit;
@@ -305,20 +226,14 @@ public class LobbyCodeButtonHover : MonoBehaviour, IPointerEnterHandler, IPointe
 
 public class LobbyCodeView : MonoBehaviour
 {
-    const float FOCUS_FILL_ALPHA = 0.22f;
     const float COPIED_SECONDS = 1.2f;
     const float COPIED_FADE_SECONDS = 0.3f;
 
     public Text code_text;
     public Text copied_text;
     public Button copy_button;
-    public Image join_pill;
-    public InputField join_input;
-    public Button join_button;
-    public Text error_text;
 
     float copied_timer;
-    bool formatting;
     bool bound;
 
     public void bind()
@@ -327,8 +242,6 @@ public class LobbyCodeView : MonoBehaviour
         bound = true;
 
         copy_button.onClick.AddListener(copy_code);
-        join_button.onClick.AddListener(submit);
-        join_input.onValueChanged.AddListener(on_input_changed);
 
         LobbyState.code_changed += refresh_code_text;
 
@@ -343,8 +256,6 @@ public class LobbyCodeView : MonoBehaviour
     void Update()
     {
         update_copied();
-        update_focus_fill();
-        check_enter();
     }
 
     void refresh_code_text()
@@ -369,55 +280,5 @@ public class LobbyCodeView : MonoBehaviour
         copied_timer = Mathf.Max(0f, copied_timer - Time.unscaledDeltaTime);
         var alpha = Mathf.Clamp01(copied_timer / COPIED_FADE_SECONDS);
         copied_text.color = PlayTheme.with_alpha(PlayTheme.gold_soft, alpha);
-    }
-
-    void update_focus_fill()
-    {
-        if (join_pill == null || join_input == null) return;
-
-        var target = join_input.isFocused ? PlayTheme.with_alpha(PlayTheme.gold, FOCUS_FILL_ALPHA) : PlayTheme.fill_soft;
-        join_pill.color = Color.Lerp(join_pill.color, target, Mathf.Clamp01(Time.unscaledDeltaTime * 14f));
-    }
-
-    void check_enter()
-    {
-        if (join_input == null || !join_input.isFocused) return;
-
-        var keyboard = Keyboard.current;
-        if (keyboard == null) return;
-        if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame) submit();
-    }
-
-    void on_input_changed(string value)
-    {
-        if (formatting) return;
-
-        formatting = true;
-        var formatted = LobbyState.format_code_input(value);
-        if (formatted != value)
-        {
-            join_input.SetTextWithoutNotify(formatted);
-            join_input.caretPosition = formatted.Length;
-            join_input.selectionAnchorPosition = formatted.Length;
-            join_input.selectionFocusPosition = formatted.Length;
-        }
-        formatting = false;
-
-        error_text.text = string.Empty;
-    }
-
-    void submit()
-    {
-        var result = LobbyState.join_code(join_input.text);
-        if (result == LobbyState.JOIN_OK)
-        {
-            join_input.SetTextWithoutNotify(string.Empty);
-            error_text.text = string.Empty;
-            PlayFocus.clear_selection();
-            return;
-        }
-
-        error_text.text = result;
-        join_input.ActivateInputField();
     }
 }
