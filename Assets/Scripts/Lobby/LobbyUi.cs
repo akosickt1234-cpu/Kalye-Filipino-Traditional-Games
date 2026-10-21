@@ -37,8 +37,8 @@ public static class LobbyUi
     const float PILL_BORDER_DARKEN = 0.4f;
     const float PANEL_LIGHT_INSET = 8f;
     const float PANEL_LIGHT_CORNER_SCALE = 2.2f;
-    const float PANEL_LIGHT_ALPHA = 0.22f;
-    const float PANEL_LIGHT_HEIGHT = 0.6f;
+    const float PANEL_LIGHT_ALPHA = 0.10f;
+    const float PANEL_LIGHT_HEIGHT = 0.5f;
     const float CANVAS_REFERENCE_PPU = 100f;
     static Sprite rim_glow_sprite;
     static readonly Color pill_border_color = Color.Lerp(PlayTheme.border_blue, PlayTheme.pill_blue_dark, PILL_BORDER_DARKEN);
