@@ -35,6 +35,10 @@ public static class LobbyUi
     const int RIM_GLOW_SIZE = 64;
     const float RIM_GLOW_RADIUS = 8f;
     const float PILL_BORDER_DARKEN = 0.4f;
+    const float PANEL_LIGHT_INSET = 8f;
+    const float PANEL_LIGHT_CORNER_SCALE = 2.2f;
+    const float PANEL_LIGHT_ALPHA = 0.22f;
+    const float PANEL_LIGHT_HEIGHT = 0.6f;
     const float CANVAS_REFERENCE_PPU = 100f;
     static Sprite rim_glow_sprite;
     static readonly Color pill_border_color = Color.Lerp(PlayTheme.border_blue, PlayTheme.pill_blue_dark, PILL_BORDER_DARKEN);
@@ -56,6 +60,25 @@ public static class LobbyUi
         picture.pixelsPerUnitMultiplier = Mathf.Max(0.01f, border_scale);
         PlayUi.stretch(picture.rectTransform);
         return picture;
+    }
+
+    public static RectTransform panel_light(Image panel_image)
+    {
+        var holder = PlayUi.image("panel_light", panel_image.transform, PlayUi.pill());
+        holder.type = Image.Type.Sliced;
+        holder.pixelsPerUnitMultiplier = PANEL_LIGHT_CORNER_SCALE;
+        holder.color = PlayTheme.white;
+        holder.gameObject.AddComponent<Mask>().showMaskGraphic = false;
+        PlayUi.stretch(holder.rectTransform);
+        holder.rectTransform.offsetMin = new Vector2(PANEL_LIGHT_INSET, PANEL_LIGHT_INSET);
+        holder.rectTransform.offsetMax = new Vector2(-PANEL_LIGHT_INSET, -PANEL_LIGHT_INSET);
+        holder.rectTransform.SetAsFirstSibling();
+
+        var gradient = PlayUi.image("panel_light_gradient", holder.rectTransform, PlayUi.vertical_fade());
+        gradient.color = PlayTheme.with_alpha(PlayTheme.light_blue, PANEL_LIGHT_ALPHA);
+        place_fraction(gradient.rectTransform, 0f, 1f - PANEL_LIGHT_HEIGHT, 1f, 1f);
+        gradient.rectTransform.localScale = new Vector3(1f, -1f, 1f);
+        return holder.rectTransform;
     }
 
     public static Image blue_pill(string name, Transform parent, bool raycast)
