@@ -97,6 +97,7 @@ public class PatinteroManager : NetworkBehaviour
             (localPlayer.taya.Value && winnerTeam.Value == 1);
 
         resultText.text = localTeamWon ? "nanalo ka!" : "natalo ka";
+        localPlayer.canJump.Value = false;
     }
 
     public void StartPatinteroRound()

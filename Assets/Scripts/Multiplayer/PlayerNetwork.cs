@@ -82,8 +82,13 @@ public class PlayerNetwork : NetworkBehaviour
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server
     );
+    public NetworkVariable<bool> canJump = new NetworkVariable<bool>(
+    false,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+    );
 
-    
+
     bool catchPlayer = false;
     [SerializeField] private bool tayaDisplay;
     [SerializeField] private bool gotHitDisplay;
@@ -520,7 +525,7 @@ public class PlayerNetwork : NetworkBehaviour
         );
 
         // Jump
-        bool doJump = jumpRequested && isGrounded;
+        bool doJump = jumpRequested && isGrounded && canJump.Value;
         bool doHighJump = doJump
             && highJumpRequested
             && stamina >= 15f;
