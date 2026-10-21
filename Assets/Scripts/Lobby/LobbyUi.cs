@@ -37,10 +37,14 @@ public static class LobbyUi
     const float PILL_BORDER_DARKEN = 0.4f;
     const float PANEL_LIGHT_INSET = 8f;
     const float PANEL_LIGHT_CORNER_SCALE = 2.2f;
-    const float PANEL_LIGHT_ALPHA = 0.10f;
-    const float PANEL_LIGHT_HEIGHT = 0.5f;
+    const float PANEL_LIGHT_ALPHA = 0.07f;
+    const float PANEL_LIGHT_SPREAD = 1.1f;
+    const int PANEL_LIGHT_WIDTH = 128;
+    const int PANEL_LIGHT_ROWS = 64;
+    const float PANEL_LIGHT_HEIGHT = 0.55f;
     const float CANVAS_REFERENCE_PPU = 100f;
     static Sprite rim_glow_sprite;
+    static Sprite panel_light_sprite;
     static readonly Color pill_border_color = Color.Lerp(PlayTheme.border_blue, PlayTheme.pill_blue_dark, PILL_BORDER_DARKEN);
 
     public static RectTransform modal_blocker(Transform parent)
@@ -74,11 +78,37 @@ public static class LobbyUi
         holder.rectTransform.offsetMax = new Vector2(-PANEL_LIGHT_INSET, -PANEL_LIGHT_INSET);
         holder.rectTransform.SetAsFirstSibling();
 
-        var gradient = PlayUi.image("panel_light_gradient", holder.rectTransform, PlayUi.vertical_fade());
+        var gradient = PlayUi.image("panel_light_gradient", holder.rectTransform, panel_light_art());
         gradient.color = PlayTheme.with_alpha(PlayTheme.light_blue, PANEL_LIGHT_ALPHA);
         place_fraction(gradient.rectTransform, 0f, 1f - PANEL_LIGHT_HEIGHT, 1f, 1f);
-        gradient.rectTransform.localScale = new Vector3(1f, -1f, 1f);
         return holder.rectTransform;
+    }
+
+    static Sprite panel_light_art()
+    {
+        if (panel_light_sprite != null) return panel_light_sprite;
+
+        var texture = new Texture2D(PANEL_LIGHT_WIDTH, PANEL_LIGHT_ROWS, TextureFormat.RGBA32, false);
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+
+        var pixels = new Color[PANEL_LIGHT_WIDTH * PANEL_LIGHT_ROWS];
+        for (var y = 0; y < PANEL_LIGHT_ROWS; y++)
+        {
+            var down = 1f - y / (float)(PANEL_LIGHT_ROWS - 1);
+            for (var x = 0; x < PANEL_LIGHT_WIDTH; x++)
+            {
+                var across = (x / (float)(PANEL_LIGHT_WIDTH - 1) - 0.5f) * 2f / PANEL_LIGHT_SPREAD;
+                var distance = Mathf.Sqrt(across * across + down * down);
+                var alpha = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(1f - distance));
+                pixels[y * PANEL_LIGHT_WIDTH + x] = PlayTheme.with_alpha(PlayTheme.white, alpha * alpha);
+            }
+        }
+
+        texture.SetPixels(pixels);
+        texture.Apply(false, true);
+        panel_light_sprite = Sprite.Create(texture, new Rect(0f, 0f, PANEL_LIGHT_WIDTH, PANEL_LIGHT_ROWS), new Vector2(0.5f, 0.5f), 100f);
+        return panel_light_sprite;
     }
 
     public static Image blue_pill(string name, Transform parent, bool raycast)
