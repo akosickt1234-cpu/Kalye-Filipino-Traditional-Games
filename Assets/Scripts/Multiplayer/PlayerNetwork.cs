@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.UI;
+using Unity.VisualScripting;
 
 public class PlayerNetwork : NetworkBehaviour
 {
@@ -60,7 +61,66 @@ public class PlayerNetwork : NetworkBehaviour
     [SerializeField] private float throwSpeed = 12f;
     [SerializeField] private float spawnDistance = 1.2f;
     private bool canThrow = false;
-    private bool canGet = false; 
+    private bool canGet = false;
+
+
+    [Header("Catch")]
+    [SerializeField] private BoxCollider hitbox;
+
+    [SerializeField] private bool hasBeenHit;
+
+    // Detect a possible catch on the catching player's client.
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!IsOwner || !IsClient) return;
+
+        if (hitbox == null) return;
+        PlayerNetwork target =
+            other.GetComponentInParent<PlayerNetwork>();
+
+        // Ignore objects that aren't players or our own player.
+        if (target == null || target == this) return;
+
+        // Ask the server to validate the catch.
+        RequestCatchRpc(target.OwnerClientId);
+    }
+
+    [Rpc(SendTo.Server)]
+    private void RequestCatchRpc(ulong targetClientId, RpcParams rpcParams = default)
+    {
+        Debug.Log("Receive request");
+        // Make sure the request came from this player.
+        if (rpcParams.Receive.SenderClientId != OwnerClientId) return;
+
+        if (!IsSpawned) return;
+
+        // Find the target on the server.
+        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(targetClientId, out NetworkClient targetClient)) return;
+
+        PlayerNetwork target = targetClient.PlayerObject.GetComponent<PlayerNetwork>();
+
+        if (target == null || target == this) return;
+
+        if (target.hasBeenHit) return;
+
+        // Validate the target's position against the server's hitbox.
+        if (!hitbox.bounds.Intersects(target.GetComponent<Collider>().bounds)) return;
+
+        // Server confirms the catch.
+        target.hasBeenHit = true;
+
+        Debug.Log("Server validated catch! Player " + targetClientId + " got caught!");
+
+        // Notify the caught player's owner.
+        target.HitRpc();
+    }
+
+    [Rpc(SendTo.Owner)]
+    private void HitRpc()
+    {
+        Debug.Log("IM HIT!");
+        disAndAbleChar();
+    }
 
     public override void OnNetworkSpawn()
     {
