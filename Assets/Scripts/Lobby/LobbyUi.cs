@@ -42,6 +42,8 @@ public static class LobbyUi
     const int PANEL_LIGHT_WIDTH = 128;
     const int PANEL_LIGHT_ROWS = 64;
     const float PANEL_LIGHT_HEIGHT = 0.55f;
+    const float PANEL_SHADE_ALPHA = 0.3f;
+    const float PANEL_SHADE_HEIGHT = 0.45f;
     const float CANVAS_REFERENCE_PPU = 100f;
     static Sprite rim_glow_sprite;
     static Sprite panel_light_sprite;
@@ -81,6 +83,10 @@ public static class LobbyUi
         var gradient = PlayUi.image("panel_light_gradient", holder.rectTransform, panel_light_art());
         gradient.color = PlayTheme.with_alpha(PlayTheme.light_blue, PANEL_LIGHT_ALPHA);
         place_fraction(gradient.rectTransform, 0f, 1f - PANEL_LIGHT_HEIGHT, 1f, 1f);
+
+        var shade = PlayUi.image("panel_shade_gradient", holder.rectTransform, PlayUi.vertical_fade());
+        shade.color = PlayTheme.with_alpha(PlayTheme.overlay_dark, PANEL_SHADE_ALPHA);
+        place_fraction(shade.rectTransform, 0f, 0f, 1f, PANEL_SHADE_HEIGHT);
         return holder.rectTransform;
     }
 
