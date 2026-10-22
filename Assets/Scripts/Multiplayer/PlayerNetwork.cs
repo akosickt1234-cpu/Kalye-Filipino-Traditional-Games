@@ -60,6 +60,24 @@ public class PlayerNetwork : NetworkBehaviour
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server
     );
+    public bool HasSlipperInWorld => hasTsinelas.Value;
+    public ulong TsinelasOwnerClientId { get; private set; }
+    private NetworkVariable<bool> isInsideThrowerBase =
+    new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public bool IsInsideThrowerBase => isInsideThrowerBase.Value;
+
+    public void SetInsideThrowerBase(bool inside)
+    {
+        if (!IsServer)
+            return;
+
+        isInsideThrowerBase.Value = inside;
+    }
 
     [SerializeField] private float pickupDistance = 2f;
     [SerializeField] private float throwSpeed = 12f;
@@ -222,6 +240,51 @@ public class PlayerNetwork : NetworkBehaviour
             body.angularVelocity = Vector3.zero;
         }
     }
+
+    private bool IsTumbangPresoGuard()
+    {
+        TumbangPresoManager manager =
+            FindAnyObjectByType<TumbangPresoManager>();
+
+        return manager != null
+            && manager.IsMatchActive
+            && manager.GuardId == OwnerClientId;
+    }
+
+    private void TryTumbangPresoTag(Collider other)
+    {
+        // Elimination must be handled by the server.
+        if (!IsServer)
+            return;
+
+        TumbangPresoManager manager =
+            FindAnyObjectByType<TumbangPresoManager>();
+
+        if (manager == null || !manager.IsMatchActive)
+            return;
+
+        // Only the selected Guard can eliminate players.
+        if (manager.GuardId != OwnerClientId)
+            return;
+
+        PlayerNetwork target =
+            other.GetComponentInParent<PlayerNetwork>();
+
+        if (target == null || target == this)
+            return;
+
+        if (!target.IsInsideThrowerBase)
+            return;
+
+        // Only eliminate a player who is within tagging distance.
+        if (Vector3.Distance(
+                transform.position,
+                target.transform.position) > 2.5f)
+            return;
+
+        manager.EliminateThrower(target.OwnerClientId);
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         TryCatchPlayer(other);
@@ -268,6 +331,17 @@ public class PlayerNetwork : NetworkBehaviour
         PlayerNetwork target = targetClient.PlayerObject.GetComponent<PlayerNetwork>();
 
         if (target == null || target == this) return;
+
+        TumbangPresoManager manager = FindAnyObjectByType<TumbangPresoManager>();
+
+        if (manager != null &&
+            manager.IsMatchActive &&
+            target.IsInsideThrowerBase)
+        {
+            Debug.Log("Catch rejected: target is safe inside their base!");
+            return;
+        }
+
         Debug.Log("this is not the target and it isnt null");
         if (target.taya.Value == true) return;
         if (target.hasBeenHit.Value) return;
@@ -406,10 +480,28 @@ public class PlayerNetwork : NetworkBehaviour
         if (rpcParams.Receive.SenderClientId != OwnerClientId)
             return;
 
+        TumbangPresoManager manager =
+         FindAnyObjectByType<TumbangPresoManager>();
+
+        if (manager != null && manager.IsMatchActive)
+        {
+            if (manager.GuardId == OwnerClientId)
+                return;
+
+            if (!IsInsideThrowerBase)
+            {
+                Debug.Log("You can only throw from your base!");
+                return;
+            }
+        }
+
         if (spawnedTsinelas != null && spawnedTsinelas.IsSpawned)
             return;
 
         if (Vector3.Distance(cameraPosition, transform.position) > 5f)
+            return;
+
+        if (IsTumbangPresoGuard())
             return;
 
         cameraForward.Normalize();
@@ -438,9 +530,17 @@ public class PlayerNetwork : NetworkBehaviour
 
         networkObject.Spawn();
 
+        Tsinelas tsinelasScript = tsinelas.GetComponent<Tsinelas>();
+
+        if (tsinelasScript != null)
+        {
+            tsinelasScript.SetThrower(OwnerClientId);
+        }
+
         tsinelasRb.linearVelocity = cameraForward * throwSpeed;
 
         spawnedTsinelas = networkObject;
+
         spawnedTsinelasTransform = tsinelas.transform;
         hasTsinelas.Value = true;
     }
@@ -453,6 +553,9 @@ public class PlayerNetwork : NetworkBehaviour
             return;
 
         if (spawnedTsinelas == null || !spawnedTsinelas.IsSpawned)
+            return;
+
+        if (IsTumbangPresoGuard())
             return;
 
         float distance = Vector3.Distance(
@@ -482,29 +585,152 @@ public class PlayerNetwork : NetworkBehaviour
         catchPlayer = false;
     }
 
+
+    [Rpc(SendTo.Server)]
+    private void RequestResetCanRpc(RpcParams rpcParams = default)
+    {
+        // Validate who sent the request.
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        TumbangPresoManager manager =
+            FindAnyObjectByType<TumbangPresoManager>();
+
+        if (manager == null || !manager.IsMatchActive)
+            return;
+
+        // Only the selected Guard can reset the can.
+        if (manager.GuardId != OwnerClientId)
+            return;
+
+        PresoCan can = FindAnyObjectByType<PresoCan>();
+
+        if (can == null || !can.IsSpawned)
+            return;
+
+        
+
+        // The Guard must be close to the can.
+        float distance = Vector3.Distance(
+            transform.position,
+            can.transform.position
+        );
+
+        if (distance > 2.5f)
+            return;
+
+        can.ResetCan();
+
+        Debug.Log("Guard reset the can!");
+    }
+
+
+    [Rpc(SendTo.Server)]
+    private void RequestTagThrowerRpc(RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        TumbangPresoManager manager =
+            FindAnyObjectByType<TumbangPresoManager>();
+
+        if (manager == null || !manager.IsMatchActive)
+            return;
+
+        if (manager.GuardId != OwnerClientId)
+            return;
+
+        PlayerNetwork closestThrower = null;
+        float closestDistance = 2.5f;
+
+        foreach (NetworkClient client in
+                 NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject == null)
+                continue;
+
+            PlayerNetwork target =
+                client.PlayerObject.GetComponent<PlayerNetwork>();
+
+            if (target == null || target == this)
+                continue;
+
+            if (target.OwnerClientId == manager.GuardId)
+                continue;
+
+            float distance = Vector3.Distance(
+                transform.position,
+                target.transform.position
+            );
+
+            if (distance <= closestDistance)
+            {
+                closestDistance = distance;
+                closestThrower = target;
+            }
+        }
+
+        if (closestThrower == null)
+        {
+            Debug.Log("No thrower close enough to tag!");
+            return;
+        }
+
+        manager.EliminateThrower(closestThrower.OwnerClientId);
+    }
+
+
     private void Update()
     {
         if (!IsOwner || !IsClient) return;
+
+        if (!IsOwner || !IsClient) return;
+
+        // Tumbang Preso Guard: press F to reset the can.
+        TumbangPresoManager tpManager =
+            FindAnyObjectByType<TumbangPresoManager>();
+
+        if (tpManager != null &&
+            tpManager.IsMatchActive &&
+            tpManager.GuardId == OwnerClientId &&
+            Input.GetKeyDown(KeyCode.F))
+        {
+            RequestResetCanRpc();
+        }
+
         if (hasBeenHit.Value) return;
+
+        if (hasBeenHit.Value) return;
+
         // Taya or Pick up animation
+
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            if (canGet == false) return;
+            // In Tumbang Preso, Q lets the Guard attempt a tag.
+            if (IsTumbangPresoGuard())
+            {
+                RequestTagThrowerRpc();
+                return;
+            }
+
+            if (canGet == false)
+                return;
+
             if (taya.Value)
             {
                 animatorController.SetPickUp();
                 StartCoroutine(Catch());
                 return;
             }
+
             if (hasTsinelas.Value)
             {
-                
                 StartCoroutine(disAndAbleChar());
                 animatorController.SetPickUp();
                 DespawnTsinelasRpc();
             }
-            
         }
+
         // Lock cam or not
         if (Input.GetKeyDown(KeyCode.LeftControl))
         {
@@ -523,6 +749,7 @@ public class PlayerNetwork : NetworkBehaviour
         // throw animation for slippers
         if (Input.GetKeyDown(KeyCode.E))
         {
+            if (IsTumbangPresoGuard()) return;
             if (hasTsinelas.Value) return;
             if (canThrow == false) return;
             StartCoroutine(disAndAbleChar());
