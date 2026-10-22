@@ -101,6 +101,16 @@ public class PlayerNetwork : NetworkBehaviour
 
     [Header("SoundHandler")]
     [SerializeField] private SoundHandler soundHandler;
+
+    [Header("UI")]
+    [SerializeField] private GameObject inGamePanel;
+    [SerializeField] private GameObject managerPanel;
+    [SerializeField] private GameObject startButton;
+    [SerializeField] private GameObject createButton;
+    [SerializeField] private GameObject joinButton;
+    [SerializeField] private GameObject codeField;
+
+
     IEnumerator TextChange(string message)
     {
         textLabel.text = message;
@@ -138,6 +148,72 @@ public class PlayerNetwork : NetworkBehaviour
             );
         }
     }
+
+
+    public void ShowStartButtonAfterGame()
+    {
+        if (!IsOwner) return;
+
+        if (inGamePanel != null)
+            inGamePanel.SetActive(false);
+
+        if (managerPanel != null)
+            managerPanel.SetActive(false);
+
+        if (startButton != null)
+            startButton.SetActive(IsHost);
+    }
+
+
+    [ClientRpc]
+    public void UiGameStartClientRpc()
+    {
+        if (!IsOwner) return;
+
+        if (inGamePanel != null)
+            inGamePanel.SetActive(true);
+
+        if (managerPanel != null)
+            managerPanel.SetActive(false);
+
+        if (startButton != null)
+            startButton.SetActive(false);
+    }
+
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    public void TeleportToAssignedSpawnRpc(
+        Vector3 position,
+        Quaternion rotation,
+        RpcParams rpcParams = default)
+    {
+        if (!IsOwner || !IsClient)
+            return;
+
+        Rigidbody body = GetComponent<Rigidbody>();
+        NetworkTransform networkTransform =
+            GetComponent<NetworkTransform>();
+
+        if (body != null)
+        {
+            body.position = position;
+            body.rotation = rotation;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
+
+        transform.rotation = rotation;
+
+        if (networkTransform != null)
+        {
+            networkTransform.Teleport(
+                position,
+                rotation,
+                transform.localScale
+            );
+        }
+    }
+
 
     public void ResetForNewRound()
     {
@@ -271,12 +347,16 @@ public class PlayerNetwork : NetworkBehaviour
 
             if (sceneCam != null)
                 sceneCam.SetActive(false);
+
+     
         }
         else
         {
             cameraPivot.gameObject.SetActive(false);
         }
     }
+
+    
 
     public override void OnNetworkDespawn()
     {
@@ -302,13 +382,15 @@ public class PlayerNetwork : NetworkBehaviour
         }
     }
 
+
     private void Start()
     {
         if (!IsOwner) return;
+
         cam = camera.gameObject;
-        //Cursor.lockState = CursorLockMode.Locked;
         rb = GetComponent<Rigidbody>();
     }
+
 
     IEnumerator disAndAbleChar()
     {

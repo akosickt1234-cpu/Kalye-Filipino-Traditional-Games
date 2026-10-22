@@ -16,11 +16,18 @@ public class TestRelay : MonoBehaviour
     [SerializeField] public TextMeshProUGUI code;
     private bool isCreatingRelay;
     private bool servicesReady;
+    [SerializeField] private GameObject start;
 
     private void Start()
     {
+        
+
+        if (start != null)
+            start.SetActive(false);
+
         InitializeServices();
     }
+
 
     private async void InitializeServices()
     {
@@ -75,11 +82,15 @@ public class TestRelay : MonoBehaviour
                 allocation.Key,
                 allocation.ConnectionData
             );
-
+            
             if (!nm.StartHost())
             {
                 Debug.LogError("Failed to start host!");
                 code.text = "Couldn't start room. Please try again.";
+            }
+            else
+            {
+                HideLobbyEntryUI();
             }
         }
         catch (RelayServiceException e)
@@ -120,7 +131,11 @@ public class TestRelay : MonoBehaviour
                 joinAllocation.HostConnectionData
                 );
 
+        
+
             NetworkManager.Singleton.StartClient();
+
+            StartCoroutine(HideUIAfterJoining());
 
             code.text = joinCode;
         }
@@ -155,4 +170,35 @@ public class TestRelay : MonoBehaviour
         yield return new WaitForSeconds(1f);
         code.text = "";
     }
+
+    private IEnumerator HideUIAfterJoining()
+    {
+        NetworkManager nm = NetworkManager.Singleton;
+
+        while (nm == null || !nm.IsConnectedClient || nm.LocalClient == null ||
+               nm.LocalClient.PlayerObject == null)
+        {
+            yield return null;
+        }
+
+        HideLobbyEntryUI();
+    }
+
+
+    public void HideLobbyEntryUI()
+    {
+        GameObject manager = GameObject.Find("ManagerUI");
+
+        if (manager != null)
+            manager.SetActive(false);
+
+        
+
+        if (start != null)
+            start.SetActive(NetworkManager.Singleton.IsHost);
+
+        /*if (start != null)
+            start.SetActive(false);
+        */
+        }
 }

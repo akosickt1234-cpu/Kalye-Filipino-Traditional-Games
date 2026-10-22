@@ -45,10 +45,25 @@ public class PatinteroManager : NetworkBehaviour
     private readonly HashSet<ulong> caughtRunners = new();
 
     private bool roundEnded;
+    public NetworkVariable<bool> gameStart = new(
+    false,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server);
+    private bool endGameUIShown;
 
     public override void OnNetworkSpawn()
     {
         Instance = this;
+
+        if (scoreText == null)
+        {
+            GameObject scoreObject = GameObject.Find("Scores");
+
+            if (scoreObject != null)
+                scoreText = scoreObject.GetComponent<TextMeshProUGUI>();
+        }
+
+
         UpdateUI();
     }
 
@@ -63,9 +78,11 @@ public class PatinteroManager : NetworkBehaviour
         UpdateUI();
     }
 
+
+
     private void UpdateUI()
     {
-        if (scoreText != null)
+        if (scoreText != null && gameStart.Value == true)
         {
             scoreText.text =
                 $"RUNNERS {runnerScore.Value} - {tayaScore.Value} TAYA";
@@ -96,14 +113,28 @@ public class PatinteroManager : NetworkBehaviour
             (!localPlayer.taya.Value && winnerTeam.Value == 0) ||
             (localPlayer.taya.Value && winnerTeam.Value == 1);
 
+
+        if (winnerTeam.Value != -1 && !endGameUIShown)
+        {
+            gameStart.Value = false;
+            endGameUIShown = true;
+
+            if (IsServer)
+                ShowEndGameUIClientRpc();
+        }
+
         resultText.text = localTeamWon ? "nanalo ka!" : "natalo ka";
-        localPlayer.canJump.Value = false;
+        gameStart.Value = false;
+        
     }
 
     public void StartPatinteroRound()
     {
         if (!IsServer || gameMode != "Patintero")
             return;
+
+        gameStart.Value = true;
+        endGameUIShown = false;
 
         runnerScore.Value = 0;
         tayaScore.Value = 0;
@@ -127,12 +158,31 @@ public class PatinteroManager : NetworkBehaviour
             if (plr == null)
                 continue;
 
+            plr.UiGameStartClientRpc();
+            plr.canJump.Value = false;
             plr.taya.Value = assignTaya;
             assignTaya = !assignTaya;
         }
 
         TeleportPlayersToSpawnPoints();
     }
+
+
+    [ClientRpc]
+    private void ShowEndGameUIClientRpc()
+    {
+        NetworkClient localClient = NetworkManager.Singleton.LocalClient;
+
+        if (localClient == null || localClient.PlayerObject == null)
+            return;
+
+        PlayerNetwork localPlayer =
+            localClient.PlayerObject.GetComponent<PlayerNetwork>();
+
+        if (localPlayer != null)
+            localPlayer.ShowStartButtonAfterGame();
+    }
+
 
     public void RegisterCheckpoint(ulong runnerId)
     {

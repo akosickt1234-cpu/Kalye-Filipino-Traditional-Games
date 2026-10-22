@@ -44,7 +44,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 1, g: 0.9254902, b: 0.654902, a: 0}
+  m_BackGroundColor: {r: 0.9529412, g: 0.5254902, b: 0.2901961, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -807,11 +807,22 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 0
+  canJump:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
   tayaDisplay: 0
   gotHitDisplay: 0
   textLabel: {fileID: 3350002234521050231}
   lineDetector: {fileID: 838174640154054096}
   soundHandler: {fileID: 7280999098390212357}
+  inGamePanel: {fileID: 0}
+  managerPanel: {fileID: 0}
+  startButton: {fileID: 0}
+  createButton: {fileID: 0}
+  joinButton: {fileID: 0}
+  codeField: {fileID: 0}
 --- !u!114 &-1798745715432377660
 MonoBehaviour:
   m_ObjectHideFlags: 0
