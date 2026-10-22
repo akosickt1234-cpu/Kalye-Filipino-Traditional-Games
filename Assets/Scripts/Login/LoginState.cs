@@ -13,14 +13,20 @@ public static class LoginState
     public static event Action on_submit;
     public static event Action<bool> on_busy_changed;
 
-    public static LoginMode mode { get; private set; }
+    static LoginMode current_mode;
+
+    public static LoginMode mode
+    {
+        get { return current_mode; }
+    }
+
     public static bool is_busy { get; private set; }
 
     public static void set_mode(LoginMode value)
     {
-        if (is_busy || mode == value) return;
+        if (is_busy || current_mode == value) return;
 
-        mode = value;
+        current_mode = value;
         if (on_mode_changed != null) on_mode_changed(value);
     }
 
@@ -40,7 +46,7 @@ public static class LoginState
 
     public static void reset()
     {
-        mode = LoginMode.SignIn;
+        current_mode = LoginMode.SignIn;
         is_busy = false;
     }
 }
