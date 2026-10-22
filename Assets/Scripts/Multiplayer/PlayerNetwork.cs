@@ -502,6 +502,7 @@ public class PlayerNetwork : NetworkBehaviour
             if (canGet == false) return;
             if (taya.Value)
             {
+                //StartCoroutine(disAndAbleChar());
                 animatorController.SetPickUp();
                 StartCoroutine(Catch());
                 return;

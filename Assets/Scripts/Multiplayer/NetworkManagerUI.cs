@@ -43,30 +43,64 @@ public class NetworkManagerUI : MonoBehaviour
         });
     }
 
+
+    private NetworkManager subscribedNetworkManager;
+
     private void OnEnable()
     {
-        if (NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientDisconnectCallback
-                += OnClientDisconnected;
-        }
+        SubscribeToDisconnect();
     }
 
     private void OnDisable()
     {
-        if (NetworkManager.Singleton != null)
+        if (subscribedNetworkManager != null)
         {
-            NetworkManager.Singleton.OnClientDisconnectCallback
+            subscribedNetworkManager.OnClientDisconnectCallback
                 -= OnClientDisconnected;
+
+            subscribedNetworkManager = null;
         }
     }
+
+    private void SubscribeToDisconnect()
+    {
+        NetworkManager nm = NetworkManager.Singleton;
+
+        if (nm == null)
+        {
+            Debug.LogWarning("NetworkManager.Singleton is not available yet.");
+            return;
+        }
+
+        if (subscribedNetworkManager == nm)
+            return;
+
+        if (subscribedNetworkManager != null)
+        {
+            subscribedNetworkManager.OnClientDisconnectCallback
+                -= OnClientDisconnected;
+        }
+
+        subscribedNetworkManager = nm;
+        subscribedNetworkManager.OnClientDisconnectCallback
+            += OnClientDisconnected;
+
+        Debug.Log("Subscribed to disconnect callback!");
+    }
+
 
 
     private void OnClientDisconnected(ulong clientId)
     {
         NetworkManager nm = NetworkManager.Singleton;
 
-        if (nm == null || isReturningToMenu)
+        if (nm == null)
+        {
+            Debug.LogWarning("NetworkManager is null during disconnect!");
+            return;
+        }
+
+        if (isReturningToMenu)
             return;
 
         Debug.Log($"Disconnected client ID: {clientId}");
@@ -103,6 +137,8 @@ public class NetworkManagerUI : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        Debug.Log("Loading SampleScene...");
 
         SceneManager.LoadScene("SampleScene");
     }
