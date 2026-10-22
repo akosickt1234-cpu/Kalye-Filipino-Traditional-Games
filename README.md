@@ -19,6 +19,14 @@ After pulling, open the project in Unity once and commit the generated `.meta` f
 
 The menu font (Matcha Salt, MJType) is licensed for personal use only; get a commercial license before shipping.
 
+## Login
+
+Play asks for login first. `MainMenuController.load_scene("Play")` goes through `LoginOverlay.require_login`, which runs the scene load right away when a session exists, restores a saved session with the stored refresh token, or opens the login overlay. The overlay is a floating card built in code on top of the Menu scene (scripts in `Assets/Scripts/Login`, art in `Assets/Resources/Frames/Login` and `Assets/Resources/Icons/Login`). It has sign in, register, forgot password and guest modes, a blurred backdrop, toasts with retry, and full keyboard use (tab cycles inside the card, escape closes).
+
+The auth api base url is `LoginService.BASE_URL` (`/auth/login`, `/auth/guest`, `/auth/register`, `/auth/refresh`, `/auth/logout`). Enable `Allow downloads over HTTP` in player settings while the base url is http. The refresh token is kept in an encrypted file under `Application.persistentDataPath`, which is weak on non windows platforms; use a platform keystore before release. Forgot password is not available yet.
+
+Shared and feedback resources are listed in `login_shared_resources.md` and `login_feedback_resources.md`.
+
 ## Version history
 
 - v0.1: lobby screen with chat, mode picker, lobby code, friends panel, start search, and a Return Lobby button on Play
