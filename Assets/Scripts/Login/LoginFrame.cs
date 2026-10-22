@@ -32,13 +32,58 @@ public static class LoginFrame
             picture.color = LoginTheme.card_fill;
         }
 
-        var fitter = card_rect.gameObject.AddComponent<AspectRatioFitter>();
-        fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-        fitter.aspectRatio = ratio;
+        area.gameObject.AddComponent<LoginFrameFit>().setup(card_rect, ratio);
         card = card_rect;
 
         var inner = PlayUi.rect("login_inner", card_rect);
         LobbyUi.place_fraction(inner, LoginTheme.INNER_LEFT, LoginTheme.INNER_BOTTOM, LoginTheme.INNER_RIGHT, LoginTheme.INNER_TOP);
         return inner;
+    }
+}
+
+public class LoginFrameFit : MonoBehaviour
+{
+    const float WIDTH_FRACTION = 0.37f;
+    const float MIN_WIDTH = 340f;
+    const float MAX_WIDTH = 680f;
+
+    RectTransform bounds;
+    RectTransform target;
+    float aspect = 1f;
+
+    public void setup(RectTransform card_rect, float ratio)
+    {
+        bounds = transform as RectTransform;
+        target = card_rect;
+        aspect = ratio > 0f ? ratio : 1f;
+
+        target.anchorMin = new Vector2(0.5f, 0.5f);
+        target.anchorMax = new Vector2(0.5f, 0.5f);
+        target.pivot = new Vector2(0.5f, 0.5f);
+        target.anchoredPosition = Vector2.zero;
+        apply();
+    }
+
+    void Start()
+    {
+        apply();
+    }
+
+    void OnRectTransformDimensionsChange()
+    {
+        apply();
+    }
+
+    void apply()
+    {
+        if (bounds == null || target == null) return;
+
+        var area_width = bounds.rect.width;
+        var area_height = bounds.rect.height;
+        if (area_width <= 0f || area_height <= 0f) return;
+
+        var width = Mathf.Clamp(area_width * WIDTH_FRACTION, MIN_WIDTH, MAX_WIDTH);
+        width = Mathf.Min(width, area_width, area_height * aspect);
+        target.sizeDelta = new Vector2(width, width / aspect);
     }
 }
