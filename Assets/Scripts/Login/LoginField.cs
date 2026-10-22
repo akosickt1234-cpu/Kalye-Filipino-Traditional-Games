@@ -1,9 +1,14 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public static class LoginField
 {
+    const string LABEL_SHOW = "SHOW PASSWORD";
+    const string LABEL_HIDE = "HIDE PASSWORD";
+    const float TOOLTIP_SHADOW = 2f;
+
     public static LoginFieldView create(RectTransform parent, string placeholder, string icon_path, bool is_password)
     {
         if (parent == null) return null;
@@ -19,7 +24,7 @@ public static class LoginField
         LobbyUi.place_fraction(area, LoginTheme.FIELD_TEXT_LEFT, LoginTheme.FIELD_TEXT_BOTTOM, text_right, LoginTheme.FIELD_TEXT_TOP);
         area.gameObject.AddComponent<RectMask2D>();
 
-        var hint = PlayUi.text("login_field_placeholder", area, placeholder, LoginTheme.FIELD_TEXT_SIZE, LoginTheme.text_placeholder, TextAnchor.MiddleLeft);
+        var hint = PlayUi.text("login_field_placeholder", area, (placeholder ?? string.Empty).ToUpperInvariant(), LoginTheme.FIELD_TEXT_SIZE, LoginTheme.text_placeholder, TextAnchor.MiddleLeft);
         hint.horizontalOverflow = HorizontalWrapMode.Overflow;
         hint.verticalOverflow = VerticalWrapMode.Truncate;
         PlayUi.stretch(hint.rectTransform);
@@ -50,6 +55,7 @@ public static class LoginField
 
         Button eye = null;
         Image eye_icon = null;
+        Text eye_label = null;
         if (is_password)
         {
             var hit = PlayUi.image("login_field_eye", ring.rectTransform, null, true);
@@ -63,11 +69,67 @@ public static class LoginField
             eye.targetGraphic = hit;
             LobbyUi.no_transition(eye);
             LoginFocusGlow.attach(eye, eye_icon, LoginTheme.icon, LoginTheme.gold, null, LoginTheme.clear);
+
+            eye_label = build_eye_label(ring.rectTransform, eye, input);
         }
 
         var view = ring.gameObject.AddComponent<LoginFieldView>();
         view.setup(ring.rectTransform, ring, input, error, eye, eye_icon, is_password);
+
+        if (eye != null && eye_label != null)
+        {
+            var label = eye_label;
+            eye.onClick.AddListener(() => label.text = reveal_label(input));
+        }
+
         return view;
+    }
+
+    static Text build_eye_label(RectTransform ring, Button eye, InputField input)
+    {
+        var label = PlayUi.text("login_field_eye_label", ring, reveal_label(input), LoginTheme.FIELD_ERROR_SIZE, LoginTheme.gold_soft, TextAnchor.UpperRight);
+        label.horizontalOverflow = HorizontalWrapMode.Overflow;
+        PlayUi.place(label.rectTransform, new Vector2(LoginTheme.FIELD_EYE_RIGHT, 0f), new Vector2(LoginTheme.FIELD_EYE_RIGHT, 0f), new Vector2(1f, 1f), new Vector2(0f, -LoginTheme.FIELD_ERROR_GAP), Vector2.zero);
+
+        var fitter = label.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var shadow = label.gameObject.AddComponent<Shadow>();
+        shadow.effectColor = LoginTheme.field_fill;
+        shadow.effectDistance = new Vector2(TOOLTIP_SHADOW, -TOOLTIP_SHADOW);
+
+        label.gameObject.SetActive(false);
+
+        var state = new bool[2];
+        var trigger = eye.gameObject.AddComponent<EventTrigger>();
+        add_trigger(trigger, EventTriggerType.PointerEnter, () => { state[0] = true; refresh_label(label, state, input); });
+        add_trigger(trigger, EventTriggerType.PointerExit, () => { state[0] = false; refresh_label(label, state, input); });
+        add_trigger(trigger, EventTriggerType.Select, () => { state[1] = true; refresh_label(label, state, input); });
+        add_trigger(trigger, EventTriggerType.Deselect, () => { state[1] = false; refresh_label(label, state, input); });
+        return label;
+    }
+
+    static void add_trigger(EventTrigger trigger, EventTriggerType type, UnityEngine.Events.UnityAction action)
+    {
+        var entry = new EventTrigger.Entry { eventID = type };
+        entry.callback.AddListener(_ => action());
+        trigger.triggers.Add(entry);
+    }
+
+    static void refresh_label(Text label, bool[] state, InputField input)
+    {
+        if (label == null) return;
+
+        var show = state[0] || (state[1] && PlayFocus.show_focus);
+        if (show) label.text = reveal_label(input);
+        label.gameObject.SetActive(show);
+    }
+
+    static string reveal_label(InputField input)
+    {
+        var hidden = input == null || input.contentType == InputField.ContentType.Password;
+        return hidden ? LABEL_SHOW : LABEL_HIDE;
     }
 
     static char reject_control(string text, int index, char added)
