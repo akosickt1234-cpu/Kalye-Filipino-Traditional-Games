@@ -7,7 +7,7 @@ branch: feature_login_shared (off arkeos_merge)
 | file | what other agents use it for |
 | --- | --- |
 | Assets/Scripts/Login/LoginOverlay.cs | `open(Action)`, `close()`, `require_login(Action)`, `succeed()` (close + run on_success, call after a good login), `root`, `is_open` |
-| Assets/Scripts/Login/LoginState.cs | `LoginMode {SignIn, Register, Forgot}`, `mode`, `set_mode()`, `set_busy()`, `submit()`, `is_busy`, events `on_mode_changed`, `on_submit`, `on_busy_changed` |
+| Assets/Scripts/Login/LoginState.cs | `LoginMode {SignIn, Register, Forgot}`, `mode`, `change_mode()`, `set_busy()`, `submit()`, `is_busy`, events `on_mode_changed`, `on_submit`, `on_busy_changed` |
 | Assets/Scripts/Login/LoginSession.cs | memory only: `is_logged_in`, `is_guest`, `access_token`, `refresh_token`, `display_name`, `set(name, access, refresh, guest)`, `clear()` |
 | Assets/Scripts/Login/LoginStore.cs | `save(refresh_token)`, `load()`, `clear()` (PlayerPrefs, see notes) |
 | Assets/Scripts/Login/LoginService.cs | stubs, all fail with "Login is not available yet." except `sign_out()` which clears session and store |
