@@ -85,7 +85,7 @@ public class LoginForgotView : MonoBehaviour
 
     void back_to_sign_in()
     {
-        LoginState.set_mode(LoginMode.SignIn);
+        LoginState.change_mode(LoginMode.SignIn);
     }
 
     void apply_busy(bool busy)

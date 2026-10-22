@@ -206,7 +206,7 @@ public class LoginActionsView : MonoBehaviour
 
     void build_forgot()
     {
-        var label = build_link("login_forgot_link", FORGOT_TEXT, link_color, FORGOT_LEFT, FORGOT_BOTTOM, FORGOT_RIGHT, FORGOT_TOP, FORGOT_RATIO, TextAnchor.MiddleCenter, 0.5f, () => LoginState.set_mode(LoginMode.Forgot));
+        var label = build_link("login_forgot_link", FORGOT_TEXT, link_color, FORGOT_LEFT, FORGOT_BOTTOM, FORGOT_RIGHT, FORGOT_TOP, FORGOT_RATIO, TextAnchor.MiddleCenter, 0.5f, () => LoginState.change_mode(LoginMode.Forgot));
         locked_groups.Add(label.gameObject.AddComponent<CanvasGroup>());
     }
 
@@ -256,7 +256,7 @@ public class LoginActionsView : MonoBehaviour
         place(prompt.rectTransform, NEW_LABEL_LEFT, NEW_BOTTOM, NEW_LABEL_SPLIT - NEW_LABEL_GAP, NEW_TOP);
         track(prompt, NEW_RATIO, 0f);
 
-        var link = build_link("login_create_link", CREATE_TEXT, LoginTheme.gold, NEW_LABEL_SPLIT + NEW_LABEL_GAP, NEW_BOTTOM, NEW_LABEL_RIGHT, NEW_TOP, NEW_RATIO, TextAnchor.MiddleLeft, 0f, () => LoginState.set_mode(LoginMode.Register));
+        var link = build_link("login_create_link", CREATE_TEXT, LoginTheme.gold, NEW_LABEL_SPLIT + NEW_LABEL_GAP, NEW_BOTTOM, NEW_LABEL_RIGHT, NEW_TOP, NEW_RATIO, TextAnchor.MiddleLeft, 0f, () => LoginState.change_mode(LoginMode.Register));
         locked_groups.Add(link.gameObject.AddComponent<CanvasGroup>());
     }
 
