@@ -150,19 +150,6 @@ public class PlayerNetwork : NetworkBehaviour
     }
 
 
-    /*public void ShowStartButtonAfterGame()
-    {
-        if (!IsOwner) return;
-
-        if (inGamePanel != null)
-            inGamePanel.SetActive(false);
-
-        if (managerPanel != null)
-            managerPanel.SetActive(false);
-
-        if (startButton != null)
-            startButton.SetActive(IsHost);
-    }*/
 
     public void ShowStartButtonAfterGame()
     {
@@ -394,6 +381,9 @@ public class PlayerNetwork : NetworkBehaviour
 
         cam = camera.gameObject;
         rb = GetComponent<Rigidbody>();
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
 
@@ -514,6 +504,20 @@ public class PlayerNetwork : NetworkBehaviour
                 DespawnTsinelasRpc();
             }
             
+        }
+        // Lock cam or not
+        if (Input.GetKeyDown(KeyCode.LeftControl))
+        {
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
 
         // throw animation for slippers

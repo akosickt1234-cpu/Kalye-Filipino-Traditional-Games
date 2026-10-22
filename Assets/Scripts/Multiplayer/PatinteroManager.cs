@@ -10,6 +10,7 @@ public class PatinteroManager : NetworkBehaviour
     public static PatinteroManager Instance { get; private set; }
 
     [Header("Game Mode")]
+    [SerializeField] private int minimumPlayers = 2;
     [SerializeField] private string gameMode = "Patintero";
 
     [Header("Spawn Points")]
@@ -51,6 +52,9 @@ public class PatinteroManager : NetworkBehaviour
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server);
     private bool endGameUIShown;
+    private readonly Dictionary<ulong, Vector3> lobbyPositions = new();
+    private readonly Dictionary<ulong, Quaternion> lobbyRotations = new();
+    private bool isEndingMatch;
 
     public override void OnNetworkSpawn()
     {
@@ -128,11 +132,52 @@ public class PatinteroManager : NetworkBehaviour
         gameStart.Value = false;
         
     }
-
+    IEnumerator ResetText()
+    {
+        yield return new WaitForSeconds(1);
+        scoreText.text = "";
+    }
     public void StartPatinteroRound()
     {
         if (!IsServer || gameMode != "Patintero")
             return;
+
+        int playerCount = 0;
+
+        foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject != null)
+                playerCount++;
+        }
+
+        if (playerCount < minimumPlayers)
+        {
+            Debug.LogWarning(
+                $"Patintero requires at least {minimumPlayers} players. " +
+                $"Current players: {playerCount}"
+            );
+            scoreText.text = $"Must be at least {minimumPlayers}  players. Current players: {playerCount}";
+            StartCoroutine(ResetText());
+            return;
+        }
+
+        lobbyPositions.Clear();
+        lobbyRotations.Clear();
+
+        foreach (NetworkClient client in
+                 NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject == null)
+                continue;
+
+            lobbyPositions[client.ClientId] =
+                client.PlayerObject.transform.position;
+
+            lobbyRotations[client.ClientId] =
+                client.PlayerObject.transform.rotation;
+        }
+
+        isEndingMatch = false;
 
         gameStart.Value = true;
         if (startButton != null)
@@ -277,9 +322,78 @@ public class PatinteroManager : NetworkBehaviour
             winnerTeam.Value = 0;
 
         if (winnerTeam.Value == -1)
+        {
             StartCoroutine(ResetRoundAfterDelay());
+        }
+        else if (!isEndingMatch)
+        {
+            isEndingMatch = true;
+            StartCoroutine(ReturnPlayersToLobby());
+        }
     }
+    private IEnumerator ReturnPlayersToLobby()
+    {
+        // Briefly let players see the result.
+        yield return new WaitForSeconds(2f);
 
+        if (!IsServer)
+            yield break;
+
+        foreach (NetworkClient client in
+                 NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject == null)
+                continue;
+
+            ulong id = client.ClientId;
+
+            if (!lobbyPositions.TryGetValue(id, out Vector3 position))
+                continue;
+
+            if (!lobbyRotations.TryGetValue(id, out Quaternion rotation))
+                continue;
+
+            PlayerNetwork player =
+                client.PlayerObject.GetComponent<PlayerNetwork>();
+
+            if (player == null)
+                continue;
+
+            player.TeleportToAssignedSpawnRpc(
+                position,
+                rotation,
+                RpcTarget.Single(id, RpcTargetUse.Temp)
+            );
+
+            player.taya.Value = false;
+            player.canJump.Value = false;
+        }
+
+        gameStart.Value = false;
+        runnerScore.Value = 0;
+        tayaScore.Value = 0;
+        winnerTeam.Value = -1;
+
+        runnersAtCheckpoint.Clear();
+        caughtRunners.Clear();
+
+        roundEnded = false;
+
+        ResetLobbyUIClientRpc();
+    }
+    [ClientRpc]
+    private void ResetLobbyUIClientRpc()
+    {
+        if (scoreText != null)
+            scoreText.text = "";
+
+        if (resultText != null)
+            resultText.text = "";
+
+        // Only the host should see the Start button.
+        if (NetworkManager.Singleton.IsHost && startButton != null)
+            startButton.SetActive(true);
+    }
     private IEnumerator ResetRoundAfterDelay()
     {
         yield return new WaitForSeconds(resetDelay);

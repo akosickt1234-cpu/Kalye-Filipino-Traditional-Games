@@ -12,6 +12,7 @@ public class PlayerSpawnManager : NetworkBehaviour
     private int nextSpawnIndex = 0;
     private readonly HashSet<ulong> queuedClients = new();
 
+
     public override void OnNetworkSpawn()
     {
         if (!IsServer)
