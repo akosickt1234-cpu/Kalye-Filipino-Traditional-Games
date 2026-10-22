@@ -8078,6 +8078,7 @@ MonoBehaviour:
   resetDelay: 2
   scoreText: {fileID: 207147543}
   resultText: {fileID: 1375737369}
+  startButton: {fileID: 931327925}
   runnerScore:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
@@ -8093,6 +8094,11 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: -1
+  gameStart:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
 --- !u!1 &2096769256
 GameObject:
   m_ObjectHideFlags: 0

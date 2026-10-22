@@ -27,6 +27,7 @@ public class PatinteroManager : NetworkBehaviour
     [Header("UI - Optional")]
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI resultText;
+    [SerializeField] private GameObject startButton;
 
     public NetworkVariable<int> runnerScore = new(
         0, NetworkVariableReadPermission.Everyone,
@@ -134,6 +135,9 @@ public class PatinteroManager : NetworkBehaviour
             return;
 
         gameStart.Value = true;
+        if (startButton != null)
+            startButton.SetActive(false);
+
         endGameUIShown = false;
 
         runnerScore.Value = 0;
@@ -171,16 +175,11 @@ public class PatinteroManager : NetworkBehaviour
     [ClientRpc]
     private void ShowEndGameUIClientRpc()
     {
-        NetworkClient localClient = NetworkManager.Singleton.LocalClient;
-
-        if (localClient == null || localClient.PlayerObject == null)
+        if (!NetworkManager.Singleton.IsHost)
             return;
 
-        PlayerNetwork localPlayer =
-            localClient.PlayerObject.GetComponent<PlayerNetwork>();
-
-        if (localPlayer != null)
-            localPlayer.ShowStartButtonAfterGame();
+        if (startButton != null)
+            startButton.SetActive(true);
     }
 
 
@@ -269,6 +268,8 @@ public class PatinteroManager : NetworkBehaviour
             tayaScore.Value++;
         else
             runnerScore.Value++;
+
+        runnersAtCheckpoint.Clear();
 
         if (tayaScore.Value >= pointsToWin)
             winnerTeam.Value = 1;

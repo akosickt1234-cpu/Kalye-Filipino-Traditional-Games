@@ -150,7 +150,7 @@ public class PlayerNetwork : NetworkBehaviour
     }
 
 
-    public void ShowStartButtonAfterGame()
+    /*public void ShowStartButtonAfterGame()
     {
         if (!IsOwner) return;
 
@@ -162,24 +162,29 @@ public class PlayerNetwork : NetworkBehaviour
 
         if (startButton != null)
             startButton.SetActive(IsHost);
-    }
+    }*/
 
+    public void ShowStartButtonAfterGame()
+    {
+        if (!IsOwner || !IsHost) return;
+
+        GameObject start = GameObject.Find("StartButton");
+
+        if (start != null)
+            start.SetActive(true);
+    }
 
     [ClientRpc]
     public void UiGameStartClientRpc()
     {
-        if (!IsOwner) return;
+        if (!IsOwner || !IsHost) return;
 
-        if (inGamePanel != null)
-            inGamePanel.SetActive(true);
+        GameObject start = GameObject.Find("StartButton");
 
-        if (managerPanel != null)
-            managerPanel.SetActive(false);
-
-        if (startButton != null)
-            startButton.SetActive(false);
+        if (start != null)
+            start.SetActive(false);
     }
-
+   
 
     [Rpc(SendTo.SpecifiedInParams)]
     public void TeleportToAssignedSpawnRpc(
