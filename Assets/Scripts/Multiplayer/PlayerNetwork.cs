@@ -14,6 +14,9 @@ public class PlayerNetwork : NetworkBehaviour
     [SerializeField] private Transform cameraPivot;
     [SerializeField] private Transform defaultCameraPivot;
     [SerializeField] private float mouseSensitivity = 2f;
+    [SerializeField] private RectTransform cursorImage;
+
+
     private float xRotation;
 
     [Header("Movement")]
@@ -59,6 +62,12 @@ public class PlayerNetwork : NetworkBehaviour
     false,
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server
+    );
+    private NetworkVariable<bool> hasThrownTsinelas =
+    new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
     );
     public bool HasSlipperInWorld => hasTsinelas.Value;
     public ulong TsinelasOwnerClientId { get; private set; }
@@ -231,6 +240,7 @@ public class PlayerNetwork : NetworkBehaviour
             return;
 
         hasBeenHit.Value = false;
+        hasThrownTsinelas.Value = false;
 
         Rigidbody body = GetComponent<Rigidbody>();
 
@@ -273,7 +283,7 @@ public class PlayerNetwork : NetworkBehaviour
         if (target == null || target == this)
             return;
 
-        if (!target.IsInsideThrowerBase)
+        if (target.IsInsideThrowerBase)
             return;
 
         // Only eliminate a player who is within tagging distance.
@@ -543,6 +553,7 @@ public class PlayerNetwork : NetworkBehaviour
 
         spawnedTsinelasTransform = tsinelas.transform;
         hasTsinelas.Value = true;
+        hasThrownTsinelas.Value = true;
     }
 
 
@@ -658,6 +669,14 @@ public class PlayerNetwork : NetworkBehaviour
             if (target.OwnerClientId == manager.GuardId)
                 continue;
 
+                    // Throwers inside their base cannot be tagged.
+if (target.IsInsideThrowerBase)
+                continue;
+
+            // Throwers must throw their tsinelas before they can be tagged.
+            if (!target.hasThrownTsinelas.Value)
+                continue;
+
             float distance = Vector3.Distance(
                 transform.position,
                 target.transform.position
@@ -737,7 +756,7 @@ public class PlayerNetwork : NetworkBehaviour
             if (Cursor.lockState == CursorLockMode.Locked)
             {
                 Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                Cursor.visible = false;
             }
             else
             {
@@ -831,6 +850,7 @@ public class PlayerNetwork : NetworkBehaviour
     private void FixedUpdate()
     {
         if (!IsOwner) return;
+        cursorImage.position = Input.mousePosition;
         if (hasBeenHit.Value) return;
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
@@ -906,9 +926,7 @@ public class PlayerNetwork : NetworkBehaviour
         Vector3 movement =
             (forward * vertical + right * horizontal).normalized;
 
-        /*rb.MovePosition(
-            rb.position + movement * speed * Time.fixedDeltaTime
-        );*/
+
 
         Vector3 nextPosition =
     rb.position + movement * speed * Time.fixedDeltaTime;

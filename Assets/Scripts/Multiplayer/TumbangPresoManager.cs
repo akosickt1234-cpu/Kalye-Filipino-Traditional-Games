@@ -1,9 +1,10 @@
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
-using TMPro;
 using UnityEngine.UI;
 
 public class TumbangPresoManager : NetworkBehaviour
@@ -48,6 +49,11 @@ public class TumbangPresoManager : NetworkBehaviour
 
     private float timerAccumulator;
     private bool matchFinished;
+
+    private bool isReturningToLobby;
+
+    private readonly Dictionary<ulong, Vector3> lobbyPositions = new();
+    private readonly Dictionary<ulong, Quaternion> lobbyRotations = new();
 
     public bool IsMatchActive => matchActive.Value;
     public ulong GuardId => guardClientId.Value;
@@ -185,7 +191,7 @@ public class TumbangPresoManager : NetworkBehaviour
     // Call this from the host's Start button.
     public void StartMatch()
     {
-        if (!IsServer || matchActive.Value)
+        if (!IsServer || matchActive.Value || isReturningToLobby)
             return;
 
         int connectedPlayers = NetworkManager.Singleton
@@ -199,6 +205,22 @@ public class TumbangPresoManager : NetworkBehaviour
                 $"Tumbang Preso requires {minimumPlayers}-{maximumPlayers} players."
             );
             return;
+        }
+
+        lobbyPositions.Clear();
+        lobbyRotations.Clear();
+
+        foreach (NetworkClient client in
+                 NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject == null)
+                continue;
+
+            lobbyPositions[client.ClientId] =
+                client.PlayerObject.transform.position;
+
+            lobbyRotations[client.ClientId] =
+                client.PlayerObject.transform.rotation;
         }
 
         playerScores.Clear();
@@ -407,8 +429,86 @@ public class TumbangPresoManager : NetworkBehaviour
         UpdateMatchUIClientRpc();
 
         Debug.Log(message);
+
+        StartCoroutine(ReturnPlayersToLobby());
+
+    }
+    private IEnumerator ReturnPlayersToLobby()
+    {
+        isReturningToLobby = true;
+
+        // Give everyone time to read the result.
+        yield return new WaitForSeconds(3f);
+
+        if (!IsServer)
+            yield break;
+
+        foreach (NetworkClient client in
+                 NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject == null)
+                continue;
+
+            ulong id = client.ClientId;
+
+            if (!lobbyPositions.TryGetValue(
+                    id, out Vector3 position))
+                continue;
+
+            if (!lobbyRotations.TryGetValue(
+                    id, out Quaternion rotation))
+                continue;
+
+            PlayerNetwork player =
+                client.PlayerObject.GetComponent<PlayerNetwork>();
+
+            if (player == null)
+                continue;
+
+            player.TeleportToAssignedSpawnRpc(
+                position,
+                rotation,
+                RpcTarget.Single(id, RpcTargetUse.Temp)
+            );
+        }
+
+        // Clear the completed match.
+        playerScores.Clear();
+        throwers.Clear();
+        eliminatedPlayers.Clear();
+        canKnocked.Clear();
+        safelyReturned.Clear();
+
+        guardClientId.Value = ulong.MaxValue;
+        timeRemaining.Value = matchDuration;
+        timerAccumulator = 0f;
+        matchFinished = false;
+
+        ResetLobbyUIClientRpc();
+
+        isReturningToLobby = false;
+
+        Debug.Log("Tumbang Preso ended. Players returned to lobby.");
     }
 
+    [ClientRpc]
+    private void ResetLobbyUIClientRpc()
+    {
+        if (timerText != null)
+            timerText.text = "";
+
+        if (scoreText != null)
+            scoreText.text = "";
+
+        if (resultText != null)
+            resultText.text = "";
+
+        if (roleText != null)
+            roleText.text = "";
+
+        if (startButton != null)
+            startButton.gameObject.SetActive(IsServer);
+    }
     private void RefreshScoreboard()
     {
         if (!IsServer)
