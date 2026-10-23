@@ -357,8 +357,10 @@ public class PlayerNetwork : NetworkBehaviour
             target.IsInsideThrowerBase)
         {
             Debug.Log("Catch rejected: target is safe inside their base!");
+            
             return;
         }
+        
 
         Debug.Log("this is not the target and it isnt null");
         if (target.taya.Value == true) return;
@@ -376,6 +378,7 @@ public class PlayerNetwork : NetworkBehaviour
         if (!hitbox.bounds.Intersects(targetCollider.bounds))
         {
             Debug.Log("Catch rejected: target is outside hitbox.");
+
             return;
         }
 
@@ -515,6 +518,9 @@ public class PlayerNetwork : NetworkBehaviour
             if (!IsInsideThrowerBase)
             {
                 Debug.Log("You can only throw from your base!");
+                
+                    
+                
                 return;
             }
         }
@@ -591,7 +597,7 @@ public class PlayerNetwork : NetworkBehaviour
         if (distance > pickupDistance)
         {
             Debug.Log("You're too far away from the tsinelas!");
-            StartCoroutine(TextChange("anlayo ko sa tsinelas"));
+            StartCoroutine(TextChange("anlayo ko sa tsinelas / too far away from the slippers"));
             return;
         }
 
@@ -642,7 +648,14 @@ public class PlayerNetwork : NetworkBehaviour
         );
 
         if (distance > 2.5f)
-            return;
+        {
+            
+                StartCoroutine(TextChange("anlayo ko sa lata / too far away from can"));
+
+                return;
+            
+        }
+            
 
         can.ResetCan();
 
@@ -684,8 +697,9 @@ public class PlayerNetwork : NetworkBehaviour
                 continue;
 
                     // Throwers inside their base cannot be tagged.
-if (target.IsInsideThrowerBase)
+            if (target.IsInsideThrowerBase)
                 continue;
+            
 
             // Throwers must throw their tsinelas before they can be tagged.
             if (!target.hasThrownTsinelas.Value)
@@ -704,10 +718,7 @@ if (target.IsInsideThrowerBase)
         }
 
         if (closestThrower == null)
-        {
-            Debug.Log("No thrower close enough to tag!");
             return;
-        }
 
         manager.EliminateThrower(closestThrower.OwnerClientId);
     }
