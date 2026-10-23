@@ -64,6 +64,10 @@ public class PatinteroManager : NetworkBehaviour
         if (patinteroUI != null)
             patinteroUI.SetActive(false);
 
+        if (startButton != null)
+            startButton.SetActive(NetworkManager.Singleton != null
+                && NetworkManager.Singleton.IsHost);
+
         if (scoreText == null)
         {
             GameObject scoreObject = GameObject.Find("Scores");
@@ -127,9 +131,6 @@ public class PatinteroManager : NetworkBehaviour
         {
             gameStart.Value = false;
             endGameUIShown = true;
-
-            if (IsServer)
-                ShowEndGameUIClientRpc();
         }
 
         resultText.text = localTeamWon ? "nanalo ka!" : "natalo ka";
@@ -142,13 +143,14 @@ public class PatinteroManager : NetworkBehaviour
         scoreText.text = "";
     }
     [ClientRpc]
-    private void SetPatinteroUIClientRpc(bool isVisible)
+    private void SetPatinteroUIClientRpc(bool showMatchUI, bool showStartButton)
     {
         if (patinteroUI != null)
-            patinteroUI.SetActive(isVisible);
+            patinteroUI.SetActive(showMatchUI);
 
         if (startButton != null)
-            startButton.SetActive(!isVisible && IsServer);
+            startButton.SetActive(showStartButton && NetworkManager.Singleton != null
+                && NetworkManager.Singleton.IsHost);
     }
     public void StartPatinteroRound()
     {
@@ -193,9 +195,7 @@ public class PatinteroManager : NetworkBehaviour
         isEndingMatch = false;
 
         gameStart.Value = true;
-        if (startButton != null)
-            startButton.SetActive(false);
-        SetPatinteroUIClientRpc(true);
+        SetPatinteroUIClientRpc(true, false);
 
         endGameUIShown = false;
 
@@ -229,18 +229,6 @@ public class PatinteroManager : NetworkBehaviour
 
         TeleportPlayersToSpawnPoints();
     }
-
-
-    [ClientRpc]
-    private void ShowEndGameUIClientRpc()
-    {
-        if (!NetworkManager.Singleton.IsHost)
-            return;
-
-        if (startButton != null)
-            startButton.SetActive(true);
-    }
-
 
     public void RegisterCheckpoint(ulong runnerId)
     {
@@ -383,7 +371,7 @@ public class PatinteroManager : NetworkBehaviour
             player.canJump.Value = false;
         }
 
-        SetPatinteroUIClientRpc(false);
+        SetPatinteroUIClientRpc(false, true);
 
         gameStart.Value = false;
         runnerScore.Value = 0;

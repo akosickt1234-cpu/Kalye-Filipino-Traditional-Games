@@ -260,6 +260,14 @@ public class PlayerNetwork : NetworkBehaviour
             && manager.IsMatchActive
             && manager.GuardId == OwnerClientId;
     }
+    private bool CanUseTsinelas()
+    {
+        // Tsinelas throwing is only allowed during Tumbang Preso.
+        TumbangPresoManager manager =
+            FindAnyObjectByType<TumbangPresoManager>();
+
+        return manager != null && manager.IsMatchActive;
+    }
 
     private void TryTumbangPresoTag(Collider other)
     {
@@ -491,7 +499,13 @@ public class PlayerNetwork : NetworkBehaviour
             return;
 
         TumbangPresoManager manager =
-         FindAnyObjectByType<TumbangPresoManager>();
+    FindAnyObjectByType<TumbangPresoManager>();
+
+        // Reject slipper spawning outside an active Tumbang Preso match.
+        if (manager == null || !manager.IsMatchActive)
+            return;
+
+      
 
         if (manager != null && manager.IsMatchActive)
         {
@@ -768,6 +782,7 @@ if (target.IsInsideThrowerBase)
         // throw animation for slippers
         if (Input.GetKeyDown(KeyCode.E))
         {
+            if (!CanUseTsinelas()) return;
             if (IsTumbangPresoGuard()) return;
             if (hasTsinelas.Value) return;
             if (canThrow == false) return;
@@ -850,7 +865,15 @@ if (target.IsInsideThrowerBase)
     private void FixedUpdate()
     {
         if (!IsOwner) return;
-        //cursorImage.position = Input.mousePosition;
+        if (Cursor.lockState == CursorLockMode.Locked)
+        {
+            cursorImage.position = Input.mousePosition;
+        }
+        else
+        {
+            cursorImage.position = new Vector2(9999, 9999);
+        }
+        
         if (hasBeenHit.Value) return;
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");

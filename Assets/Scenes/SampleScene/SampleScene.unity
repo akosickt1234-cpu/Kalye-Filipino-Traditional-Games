@@ -9963,7 +9963,7 @@ MonoBehaviour:
   resetDelay: 2
   scoreText: {fileID: 207147543}
   resultText: {fileID: 1375737369}
-  startButton: {fileID: 931327925}
+  startButton: {fileID: 1697200257}
   patinteroUI: {fileID: 2096769256}
   runnerScore:
     UpdateTraits:
