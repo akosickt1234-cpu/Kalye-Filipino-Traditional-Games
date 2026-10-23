@@ -962,7 +962,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 941846305
+  GlobalObjectIdHash: 2877628098
   InScenePlacedSourceGlobalObjectIdHash: 0
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -1028,6 +1028,7 @@ MonoBehaviour:
   colorTransitionSpeed: 5
   animatorController: {fileID: 1257500209283897145}
   player: {fileID: 3619135988846754672}
+  model: {fileID: 6528938553713596853}
   tsinelasPrefab: {fileID: 6807346094398842588, guid: 7a9922c40ac65a344b901bec81e747ad, type: 3}
   pickupDistance: 3
   throwSpeed: 12
@@ -1350,12 +1351,20 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -5450526443423814944, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
+      propertyPath: m_Name
+      value: Model
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
       propertyPath: m_Name
       value: boy-idle
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
       propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7233867138446155668, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
+      propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -1439,5 +1448,10 @@ MonoBehaviour:
 --- !u!4 &4139390443772879306 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
+  m_PrefabInstance: {fileID: 4537562236503705121}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &6528938553713596853 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7233867138446155668, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
   m_PrefabInstance: {fileID: 4537562236503705121}
   m_PrefabAsset: {fileID: 0}

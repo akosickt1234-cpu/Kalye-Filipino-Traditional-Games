@@ -53,6 +53,7 @@ public class PlayerNetwork : NetworkBehaviour
 
     [Header("Objects")]
     [SerializeField] private GameObject player;
+    [SerializeField] private SkinnedMeshRenderer model;
 
     [Header("Tsinelas")]
     [SerializeField] private Transform tsinelasPrefab;
@@ -136,13 +137,59 @@ public class PlayerNetwork : NetworkBehaviour
     [SerializeField] private GameObject createButton;
     [SerializeField] private GameObject joinButton;
     [SerializeField] private GameObject codeField;
+    private NetworkVariable<bool> isSpectating = new(
+    false,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+);
 
+    public bool IsSpectating => isSpectating.Value;
 
-    IEnumerator TextChange(string message)
+    public void SetSpectatingServer(bool spectating)
     {
+        if (!IsServer)
+            return;
+
+        isSpectating.Value = spectating;
+
+        Rigidbody body = GetComponent<Rigidbody>();
+
+        if (body != null)
+        {
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
+
+        if (spectating)
+        {
+            sprintRequested = false;
+            jumpRequested = false;
+            highJumpRequested = false;
+            isJumping = false;
+        }
+    }
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    private void ShowErrorClientRpc(
+    string message,
+    RpcParams rpcParams = default)
+    {
+        if (!IsOwner || !IsClient)
+            return;
+
+        StartCoroutine(TextChange(message));
+    }
+    private IEnumerator TextChange(string message)
+    {
+        if (!IsOwner || !IsClient || textLabel == null)
+            yield break;
+
         textLabel.text = message;
         yield return new WaitForSeconds(1f);
-        textLabel.text = "";
+
+        // Don't clear a newer message accidentally.
+        if (textLabel != null && textLabel.text == message)
+            textLabel.text = "";
     }
 
 
@@ -482,11 +529,27 @@ public class PlayerNetwork : NetworkBehaviour
     }
 
 
-    IEnumerator disAndAbleChar()
+    private Coroutine characterVisibilityCoroutine;
+
+    private IEnumerator disAndAbleChar()
     {
-        player.SetActive(false);
+        if (model == null)
+            yield break;
+
+        model.enabled = false;
+
         yield return new WaitForSeconds(2f);
-        player.SetActive(true);
+
+        model.enabled = true;
+        characterVisibilityCoroutine = null;
+    }
+
+    private void PlayCharacterVisibility()
+    {
+        if (characterVisibilityCoroutine != null)
+            StopCoroutine(characterVisibilityCoroutine);
+
+        characterVisibilityCoroutine = StartCoroutine(disAndAbleChar());
     }
 
 
@@ -596,8 +659,13 @@ public class PlayerNetwork : NetworkBehaviour
 
         if (distance > pickupDistance)
         {
-            Debug.Log("You're too far away from the tsinelas!");
-            StartCoroutine(TextChange("anlayo ko sa tsinelas / too far away from the slippers"));
+            Debug.Log($"Player {OwnerClientId} is too far away from the tsinelas!");
+
+            ShowErrorClientRpc(
+                "anlayo ko sa tsinelas / too far away from the slippers",
+                RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp)
+            );
+
             return;
         }
 
@@ -649,11 +717,12 @@ public class PlayerNetwork : NetworkBehaviour
 
         if (distance > 2.5f)
         {
-            
-                StartCoroutine(TextChange("anlayo ko sa lata / too far away from can"));
+            ShowErrorClientRpc(
+         "anlayo ko sa lata / too far away from can",
+         RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp)
+     );
 
-                return;
-            
+            return;
         }
             
 
@@ -748,11 +817,13 @@ public class PlayerNetwork : NetworkBehaviour
 
         // Taya or Pick up animation
 
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (!isSpectating.Value &&Input.GetKeyDown(KeyCode.Q))
         {
             // In Tumbang Preso, Q lets the Guard attempt a tag.
             if (IsTumbangPresoGuard())
             {
+                PlayCharacterVisibility();
+                animatorController.SetPickUp();
                 RequestTagThrowerRpc();
                 return;
             }
@@ -762,6 +833,7 @@ public class PlayerNetwork : NetworkBehaviour
 
             if (taya.Value)
             {
+                PlayCharacterVisibility();
                 animatorController.SetPickUp();
                 StartCoroutine(Catch());
                 return;
@@ -769,7 +841,7 @@ public class PlayerNetwork : NetworkBehaviour
 
             if (hasTsinelas.Value)
             {
-                StartCoroutine(disAndAbleChar());
+                PlayCharacterVisibility();
                 animatorController.SetPickUp();
                 DespawnTsinelasRpc();
             }
@@ -791,27 +863,27 @@ public class PlayerNetwork : NetworkBehaviour
         }
 
         // throw animation for slippers
-        if (Input.GetKeyDown(KeyCode.E))
+        if (!isSpectating.Value && Input.GetKeyDown(KeyCode.E))
         {
             if (!CanUseTsinelas()) return;
             if (IsTumbangPresoGuard()) return;
             if (hasTsinelas.Value) return;
             if (canThrow == false) return;
-            StartCoroutine(disAndAbleChar());
+            PlayCharacterVisibility();
             animatorController.SetThrow();
             SpawnTsinelasRpc(camera.transform.position, camera.transform.forward);
             
         }
 
         // Jump input
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        if (!isSpectating.Value && Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             jumpRequested = true;
             highJumpRequested = sprintRequested;
         }
 
         // Sprint input
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        if (!isSpectating.Value && Input.GetKeyDown(KeyCode.LeftShift))
         {
             sprintRequested = true;
         }
@@ -886,6 +958,21 @@ public class PlayerNetwork : NetworkBehaviour
         }
         
         if (hasBeenHit.Value) return;
+
+        if (isSpectating.Value)
+        {
+            sprintRequested = false;
+            jumpRequested = false;
+            highJumpRequested = false;
+
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+
+            animatorController.SetLocomotion(false, false, false);
+
+            return;
+        }
+
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
 

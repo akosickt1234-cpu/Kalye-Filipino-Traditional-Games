@@ -49,6 +49,9 @@ public class TumbangPresoManager : NetworkBehaviour
     private readonly Dictionary<ulong, bool> canKnocked = new();
     private readonly Dictionary<ulong, bool> safelyReturned = new();
 
+    private readonly Dictionary<ulong, Vector3> throwerSpawnPositions = new();
+    private readonly Dictionary<ulong, Quaternion> throwerSpawnRotations = new();
+
     private float timerAccumulator;
     private bool matchFinished;
 
@@ -100,6 +103,9 @@ public class TumbangPresoManager : NetworkBehaviour
                 spawnPoint = throwerSpawnPoints[
                     throwerIndex % throwerSpawnPoints.Length
                 ];
+
+                throwerSpawnPositions[id] = spawnPoint.position;
+                throwerSpawnRotations[id] = spawnPoint.rotation;
 
                 throwerIndex++;
             }
@@ -232,7 +238,8 @@ public class TumbangPresoManager : NetworkBehaviour
             lobbyRotations[client.ClientId] =
                 client.PlayerObject.transform.rotation;
         }
-
+        throwerSpawnPositions.Clear();
+        throwerSpawnRotations.Clear();
         playerScores.Clear();
         throwers.Clear();
         eliminatedPlayers.Clear();
@@ -252,6 +259,17 @@ public class TumbangPresoManager : NetworkBehaviour
         foreach (ulong id in playerIds)
         {
             playerScores[id] = 0;
+
+            if (NetworkManager.Singleton.ConnectedClients.TryGetValue(
+        id, out NetworkClient client) &&
+    client.PlayerObject != null)
+            {
+                PlayerNetwork player =
+                    client.PlayerObject.GetComponent<PlayerNetwork>();
+
+                if (player != null)
+                    player.SetSpectatingServer(false);
+            }
 
             if (id != guardClientId.Value)
             {
@@ -314,6 +332,7 @@ public class TumbangPresoManager : NetworkBehaviour
 
     // Award +6 when the thrower safely returns to base.
 
+
     public bool AwardSafeReturn(ulong playerId)
     {
         if (!IsServer || !matchActive.Value || matchFinished)
@@ -323,33 +342,33 @@ public class TumbangPresoManager : NetworkBehaviour
             eliminatedPlayers.Contains(playerId))
             return false;
 
-        // The can must have been knocked down during this attempt.
-        if (!canKnocked.TryGetValue(playerId, out bool knocked)
-            || !knocked)
+        // The player must have knocked the can down during this attempt.
+        if (!canKnocked.TryGetValue(playerId, out bool knocked) || !knocked)
             return false;
 
-        if (safelyReturned.TryGetValue(
-                playerId, out bool alreadyReturned)
+        // Prevent duplicate safe-return rewards.
+        if (safelyReturned.TryGetValue(playerId, out bool alreadyReturned)
             && alreadyReturned)
             return false;
 
         safelyReturned[playerId] = true;
         AddPoints(playerId, safeReturnPoints);
 
-        // Reset the can after a successful return.
+        // Reset the physical can if the Guard hasn't already done so.
         PresoCan can = FindAnyObjectByType<PresoCan>();
-
-        if (can != null)
+        if (can != null && can.HasBeenKnockedDown)
             can.ResetCan();
 
-        // Prepare this thrower's next attempt.
+        // Reset this player's scoring flags for their next attempt.
         BeginThrowerAttempt(playerId);
 
         return true;
     }
 
 
+
     // Call when the Guard successfully eliminates a thrower.
+
     public void EliminateThrower(ulong throwerId)
     {
         if (!IsServer || !matchActive.Value || matchFinished)
@@ -363,20 +382,52 @@ public class TumbangPresoManager : NetworkBehaviour
 
         AddPoints(guardClientId.Value, guardEliminationPoints);
 
-        // TODO: Connect your player spectator logic here.
+        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(
+                throwerId, out NetworkClient client) &&
+            client.PlayerObject != null)
+        {
+            PlayerNetwork player =
+                client.PlayerObject.GetComponent<PlayerNetwork>();
+
+            if (player != null)
+            {
+                // Disable gameplay controls.
+                player.SetSpectatingServer(true);
+
+                // Return the eliminated player to their assigned
+                // thrower spawn so they can watch the remaining players.
+                if (throwerSpawnPositions.TryGetValue(
+                        throwerId, out Vector3 position) &&
+                    throwerSpawnRotations.TryGetValue(
+                        throwerId, out Quaternion rotation))
+                {
+                    player.TeleportToAssignedSpawnRpc(
+                        position,
+                        rotation,
+                        RpcTarget.Single(
+                            throwerId,
+                            RpcTargetUse.Temp
+                        )
+                    );
+                }
+            }
+        }
+
         SetEliminatedClientRpc(
-        throwerId,
-        RpcTarget.Single(throwerId, RpcTargetUse.Temp)
+            throwerId,
+            RpcTarget.Single(throwerId, RpcTargetUse.Temp)
         );
 
-        // The Guard wins immediately if all throwers are eliminated.
+        RefreshScoreboard();
+
         if (eliminatedPlayers.Count >= throwers.Count)
         {
             FinishMatch(
-                $"THE GUARD WINS!\nAll throwers were eliminated."
+                "THE GUARD WINS!\nAll throwers were eliminated."
             );
         }
     }
+
 
     private void AddPoints(ulong playerId, int points)
     {
@@ -474,6 +525,8 @@ public class TumbangPresoManager : NetworkBehaviour
 
             if (player == null)
                 continue;
+
+            player.SetSpectatingServer(false);
 
             player.TeleportToAssignedSpawnRpc(
                 position,

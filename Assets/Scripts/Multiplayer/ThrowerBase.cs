@@ -39,18 +39,18 @@ public class ThrowerBase : NetworkBehaviour
         if (player.HasSlipperInWorld)
             return;
 
-        PresoCan can = FindAnyObjectByType<PresoCan>();
+        /*PresoCan can = FindAnyObjectByType<PresoCan>();
 
         // The can must have been knocked down this attempt.
         if (can == null || !can.HasBeenKnockedDown)
             return;
-
+        */
         // AwardSafeReturn should award +6 once and reset the can
         // when the manager confirms the successful return.
         if (manager.AwardSafeReturn(playerId))
         {
             playersWhoLeftBase.Remove(playerId);
-            can.ResetCan();
+            
             Debug.Log($"Thrower {playerId} returned safely: +6 points!");
         }
     }
