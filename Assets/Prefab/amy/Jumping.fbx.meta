@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: acd36234b44af4d09bb7b5f9c03e1f33
+guid: 6c9033d511ac147a2b17ec37686aa461
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
@@ -8,22 +8,22 @@ ModelImporter:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: Ch46_1001_Diffuse
-    second: {fileID: 2800000, guid: 866bf1c5f8eb8400c85f4323bf98db1f, type: 3}
+    second: {fileID: 2800000, guid: d7c3a8d0688bc481888d3339c86eeaf6, type: 3}
   - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: Ch46_1001_Glossiness
-    second: {fileID: 2800000, guid: f8b7b31a27ec340cda202654f96f4cac, type: 3}
+    second: {fileID: 2800000, guid: e057b6bd8cd4d4b8dbdecf3bca92b0b8, type: 3}
   - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: Ch46_1001_Normal
-    second: {fileID: 2800000, guid: 2a1f0e61ef94d40fa9db581e02f812bf, type: 3}
+    second: {fileID: 2800000, guid: c45dde498f0f74d7699dd68b880410d1, type: 3}
   - first:
       type: UnityEngine:Texture2D
       assembly: UnityEngine.CoreModule
       name: Ch46_1001_Specular
-    second: {fileID: 2800000, guid: 69bf6342c6ac041babf8b6566ad066e4, type: 3}
+    second: {fileID: 2800000, guid: 55a5224a63c4244959ddc71fee426d4b, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -43,7 +43,7 @@ ModelImporter:
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
     importConstraints: 0
-    animationCompression: 3
+    animationCompression: 1
     animationRotationError: 0.5
     animationPositionError: 0.5
     animationScaleError: 0.5
@@ -118,13 +118,13 @@ ModelImporter:
     globalScale: 1
     rootMotionBoneName: 
     hasTranslationDoF: 0
-    hasExtraRoot: 1
+    hasExtraRoot: 0
     skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   autoGenerateAvatarMappingIfUnspecified: 1
-  animationType: 3
+  animationType: 2
   humanoidOversampling: 1
-  avatarSetup: 1
+  avatarSetup: 0
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
   importBlendShapeDeformPercent: 1
   remapMaterialsIfMaterialImportModeIsNone: 0
