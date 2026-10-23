@@ -25,6 +25,8 @@ public class TumbangPresoManager : NetworkBehaviour
     [SerializeField] private TMP_Text scoreText;
     [SerializeField] private TMP_Text resultText;
     [SerializeField] private TMP_Text roleText;
+    [SerializeField] private GameObject tumbangPresoUI;
+    [SerializeField] private GameObject startButtons;
 
 
     [Header("Role Spawns")]
@@ -126,6 +128,8 @@ public class TumbangPresoManager : NetworkBehaviour
         if (startButton != null)
             startButton.onClick.AddListener(StartMatch);
 
+
+
         // Hide all match texts before the game starts.
         if (!matchActive.Value)
         {
@@ -150,6 +154,10 @@ public class TumbangPresoManager : NetworkBehaviour
 
         if (startButton != null)
             startButton.gameObject.SetActive(IsServer);
+        if (tumbangPresoUI != null)
+            tumbangPresoUI.SetActive(false);
+        if (startButtons != null)
+            startButtons.SetActive(IsHost);
     }
 
     public override void OnNetworkDespawn()
@@ -206,6 +214,8 @@ public class TumbangPresoManager : NetworkBehaviour
             );
             return;
         }
+
+        SetTumbangPresoUIClientRpc(true, false);
 
         lobbyPositions.Clear();
         lobbyRotations.Clear();
@@ -484,6 +494,9 @@ public class TumbangPresoManager : NetworkBehaviour
         timerAccumulator = 0f;
         matchFinished = false;
 
+
+        SetTumbangPresoUIClientRpc(false, true);
+
         ResetLobbyUIClientRpc();
 
         isReturningToLobby = false;
@@ -623,7 +636,18 @@ public class TumbangPresoManager : NetworkBehaviour
 
         timerText.text = $"{minutes:00}:{remainingSeconds:00}";
     }
+    [ClientRpc]
+    private void SetTumbangPresoUIClientRpc(bool showMatchUI, bool showStartButtons)
+    {
+        if (tumbangPresoUI != null)
+            tumbangPresoUI.SetActive(showMatchUI);
 
+        if (startButtons != null)
+            startButtons.SetActive(showStartButtons && IsHost);
+
+        if (startButton != null)
+            startButton.gameObject.SetActive(showStartButtons && IsHost);
+    }
     private void UpdateRoleUI()
     {
         if (roleText == null || !IsSpawned)

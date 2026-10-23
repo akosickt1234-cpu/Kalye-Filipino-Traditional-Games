@@ -17,13 +17,16 @@ public class TestRelay : MonoBehaviour
     private bool isCreatingRelay;
     private bool servicesReady;
     [SerializeField] private GameObject start;
+    [SerializeField] private GameObject managerUI;
+    [SerializeField] private GameObject startButtons;
 
     private void Start()
     {
-        
+        if (managerUI != null)
+            managerUI.SetActive(true);
 
-        if (start != null)
-            start.SetActive(false);
+        if (startButtons != null)
+            startButtons.SetActive(false);
 
         InitializeServices();
     }
@@ -187,18 +190,11 @@ public class TestRelay : MonoBehaviour
 
     public void HideLobbyEntryUI()
     {
-        GameObject manager = GameObject.Find("ManagerUI");
+        if (managerUI != null)
+            managerUI.SetActive(false);
 
-        if (manager != null)
-            manager.SetActive(false);
-
-        
-
-        if (start != null)
-            start.SetActive(NetworkManager.Singleton.IsHost);
-
-        /*if (start != null)
-            start.SetActive(false);
-        */
-        }
+        if (startButtons != null)
+            startButtons.SetActive(NetworkManager.Singleton != null
+                && NetworkManager.Singleton.IsHost);
+    }
 }

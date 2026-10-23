@@ -467,7 +467,7 @@ public class PlayerNetwork : NetworkBehaviour
         rb = GetComponent<Rigidbody>();
 
         Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        Cursor.visible = true;
     }
 
 
@@ -756,12 +756,12 @@ if (target.IsInsideThrowerBase)
             if (Cursor.lockState == CursorLockMode.Locked)
             {
                 Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = false;
+                Cursor.visible = true;
             }
             else
             {
                 Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                Cursor.visible = true;
             }
         }
 
@@ -850,7 +850,7 @@ if (target.IsInsideThrowerBase)
     private void FixedUpdate()
     {
         if (!IsOwner) return;
-        cursorImage.position = Input.mousePosition;
+        //cursorImage.position = Input.mousePosition;
         if (hasBeenHit.Value) return;
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");

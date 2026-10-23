@@ -29,6 +29,7 @@ public class PatinteroManager : NetworkBehaviour
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI resultText;
     [SerializeField] private GameObject startButton;
+    [SerializeField] private GameObject patinteroUI;
 
     public NetworkVariable<int> runnerScore = new(
         0, NetworkVariableReadPermission.Everyone,
@@ -59,6 +60,9 @@ public class PatinteroManager : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         Instance = this;
+
+        if (patinteroUI != null)
+            patinteroUI.SetActive(false);
 
         if (scoreText == null)
         {
@@ -137,6 +141,15 @@ public class PatinteroManager : NetworkBehaviour
         yield return new WaitForSeconds(1);
         scoreText.text = "";
     }
+    [ClientRpc]
+    private void SetPatinteroUIClientRpc(bool isVisible)
+    {
+        if (patinteroUI != null)
+            patinteroUI.SetActive(isVisible);
+
+        if (startButton != null)
+            startButton.SetActive(!isVisible && IsServer);
+    }
     public void StartPatinteroRound()
     {
         if (!IsServer || gameMode != "Patintero")
@@ -182,6 +195,7 @@ public class PatinteroManager : NetworkBehaviour
         gameStart.Value = true;
         if (startButton != null)
             startButton.SetActive(false);
+        SetPatinteroUIClientRpc(true);
 
         endGameUIShown = false;
 
@@ -369,6 +383,8 @@ public class PatinteroManager : NetworkBehaviour
             player.canJump.Value = false;
         }
 
+        SetPatinteroUIClientRpc(false);
+
         gameStart.Value = false;
         runnerScore.Value = 0;
         tayaScore.Value = 0;
@@ -380,6 +396,7 @@ public class PatinteroManager : NetworkBehaviour
         roundEnded = false;
 
         ResetLobbyUIClientRpc();
+
     }
     [ClientRpc]
     private void ResetLobbyUIClientRpc()
