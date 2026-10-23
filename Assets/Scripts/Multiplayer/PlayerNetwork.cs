@@ -358,10 +358,6 @@ public class PlayerNetwork : NetworkBehaviour
         {
             Debug.Log("Catch rejected: target is safe inside their base!");
             
-
-                StartCoroutine(TextChange("wag po bantay bata / don't camp, kid"));
-                
-            
             return;
         }
         
@@ -383,7 +379,6 @@ public class PlayerNetwork : NetworkBehaviour
         {
             Debug.Log("Catch rejected: target is outside hitbox.");
 
-            //StartCoroutine(TextChange("wala akong tinataya / I'm catching no one"));
             return;
         }
 
@@ -524,8 +519,6 @@ public class PlayerNetwork : NetworkBehaviour
             {
                 Debug.Log("You can only throw from your base!");
                 
-
-                    StartCoroutine(TextChange(" uy sa base ka lang pwede bumato / You can only throw from your base!"));
                     
                 
                 return;
@@ -705,11 +698,8 @@ public class PlayerNetwork : NetworkBehaviour
 
                     // Throwers inside their base cannot be tagged.
             if (target.IsInsideThrowerBase)
-            {
-
-                StartCoroutine(TextChange("wag po bantay bata / don't camp, kid"));
-            continue;
-            }
+                continue;
+            
 
             // Throwers must throw their tsinelas before they can be tagged.
             if (!target.hasThrownTsinelas.Value)
@@ -728,13 +718,7 @@ public class PlayerNetwork : NetworkBehaviour
         }
 
         if (closestThrower == null)
-        {
-            
-
-           //StartCoroutine(TextChange("wala akong tinataya / I'm catching no one"));
-           return;
-            
-        }
+            return;
 
         manager.EliminateThrower(closestThrower.OwnerClientId);
     }
