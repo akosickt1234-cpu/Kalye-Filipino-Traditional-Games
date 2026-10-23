@@ -28,6 +28,7 @@ public class PatinteroManager : NetworkBehaviour
     [Header("UI - Optional")]
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI resultText;
+    [SerializeField] private TextMeshProUGUI teamText;
     [SerializeField] private GameObject startButton;
     [SerializeField] private GameObject patinteroUI;
 
@@ -95,10 +96,36 @@ public class PatinteroManager : NetworkBehaviour
 
     private void UpdateUI()
     {
-        if (scoreText != null && gameStart.Value == true)
+        if (teamText != null)
+        {
+            if (!gameStart.Value)
+            {
+                teamText.text = "";
+            }
+            else
+            {
+                NetworkClient lcalClient =
+                    NetworkManager.Singleton.LocalClient;
+
+                if (lcalClient != null &&
+                    lcalClient.PlayerObject != null)
+                {
+                    PlayerNetwork lcalPlayer =
+                        lcalClient.PlayerObject.GetComponent<PlayerNetwork>();
+
+                    if (lcalPlayer != null)
+                    {
+                        teamText.text = lcalPlayer.taya.Value
+                            ? "Team: Taya"
+                            : "Team: Runner";
+                    }
+                }
+            }
+        }
+            if (scoreText != null && gameStart.Value == true)
         {
             scoreText.text =
-                $"RUNNERS {runnerScore.Value} - {tayaScore.Value} TAYA";
+                $"{runnerScore.Value}:{tayaScore.Value}";
         }
 
         if (resultText == null)
@@ -171,8 +198,8 @@ public class PatinteroManager : NetworkBehaviour
                 $"Patintero requires at least {minimumPlayers} players. " +
                 $"Current players: {playerCount}"
             );
-            scoreText.text = $"Must be at least {minimumPlayers}  players. Current players: {playerCount}";
-            StartCoroutine(ResetText());
+            //scoreText.text = $"Must be at least {minimumPlayers}  players. Current players: {playerCount}";
+            //StartCoroutine(ResetText());
             return;
         }
 

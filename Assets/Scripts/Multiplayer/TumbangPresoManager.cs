@@ -580,7 +580,7 @@ public class TumbangPresoManager : NetworkBehaviour
         if (!IsServer)
             return;
 
-        string board = "TUMBANG PRESO SCORES\n";
+        string board = "";
 
         foreach (var entry in playerScores.OrderByDescending(x => x.Value))
         {
@@ -637,7 +637,7 @@ public class TumbangPresoManager : NetworkBehaviour
             return;
 
         if (roleText != null)
-            roleText.text = "ELIMINATED - SPECTATING";
+            roleText.text = "Role: Spectator";
 
         // Connect your spectator camera and movement logic here.
     }
@@ -687,7 +687,7 @@ public class TumbangPresoManager : NetworkBehaviour
         int minutes = seconds / 60;
         int remainingSeconds = seconds % 60;
 
-        timerText.text = $"{minutes:00}:{remainingSeconds:00}";
+        timerText.text = $"{seconds}";
     }
     [ClientRpc]
     private void SetTumbangPresoUIClientRpc(bool showMatchUI, bool showStartButtons)
@@ -715,8 +715,8 @@ public class TumbangPresoManager : NetworkBehaviour
         ulong localId = NetworkManager.Singleton.LocalClientId;
 
         if (localId == guardClientId.Value)
-            roleText.text = "ROLE: GUARD";
+            roleText.text = "Role: Guard";
         else
-            roleText.text = "ROLE: THROWER";
+            roleText.text = "Role: Thrower";
     }
 }
