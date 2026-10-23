@@ -28,6 +28,11 @@ public class TumbangPresoManager : NetworkBehaviour
     [SerializeField] private GameObject tumbangPresoUI;
     [SerializeField] private GameObject startButtons;
 
+    [Header("End Game Panel")]
+    [SerializeField] private GameObject resultPanel;
+    [SerializeField] private TMP_Text rankText;
+    [SerializeField] private TMP_Text totalPointsText;
+    [SerializeField] private TMP_Text messageNotifText;
 
     [Header("Role Spawns")]
     [SerializeField] private Transform guardSpawnPoint;
@@ -162,6 +167,8 @@ public class TumbangPresoManager : NetworkBehaviour
             startButton.gameObject.SetActive(IsServer);
         if (tumbangPresoUI != null)
             tumbangPresoUI.SetActive(false);
+        if (resultPanel != null)
+            resultPanel.SetActive(false);
         if (startButtons != null)
             startButtons.SetActive(IsHost);
     }
@@ -423,8 +430,9 @@ public class TumbangPresoManager : NetworkBehaviour
         if (eliminatedPlayers.Count >= throwers.Count)
         {
             FinishMatch(
-                "THE GUARD WINS!\nAll throwers were eliminated."
-            );
+    "THE GUARD WINS!\nAll throwers were eliminated.",
+    new List<ulong> { guardClientId.Value }
+);
         }
     }
 
@@ -439,12 +447,12 @@ public class TumbangPresoManager : NetworkBehaviour
         RefreshScoreboard();
     }
 
+
     private void FinishByTime()
     {
         if (!IsServer || matchFinished)
             return;
 
-        // Highest-scoring player wins when time expires.
         int highestScore = playerScores.Count > 0
             ? playerScores.Values.Max()
             : 0;
@@ -456,29 +464,50 @@ public class TumbangPresoManager : NetworkBehaviour
 
         if (winners.Count == 1)
         {
-            string role = winners[0] == guardClientId.Value
-                ? "THE GUARD"
-                : "A THROWER";
-
             FinishMatch(
-                $"{role} WINS!\n" +
-                $"Player ID: {winners[0]}\n" +
-                $"Score: {highestScore}"
+                $"Winner: {winners[0]} | Score: {highestScore}",
+                winners
             );
         }
         else
         {
-            string winnerIds = string.Join(", ", winners);
-
             FinishMatch(
-                $"IT'S A TIE!\n" +
-                $"Players: {winnerIds}\n" +
-                $"Score: {highestScore}"
+                $"It's a tie! | Score: {highestScore}",
+                winners
             );
         }
     }
 
-    private void FinishMatch(string message)
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    private void ShowPlayerResultRpc(
+        int rank,
+        int totalPlayers,
+        int points,
+        bool won,
+        RpcParams rpcParams = default)
+    {
+        if (resultPanel != null)
+            resultPanel.SetActive(true);
+
+        if (rankText != null)
+            rankText.text = $"#{rank}/{totalPlayers}";
+
+        if (totalPointsText != null)
+            totalPointsText.text = $"{points} points";
+
+        if (messageNotifText != null)
+            messageNotifText.text = won ? "Panalo!" : "Talo!";
+    }
+
+    [ClientRpc]
+    private void HideResultPanelClientRpc()
+    {
+        if (resultPanel != null)
+            resultPanel.SetActive(false);
+    }
+
+    private void FinishMatch(string message, List<ulong> winners)
     {
         if (!IsServer || matchFinished)
             return;
@@ -486,14 +515,36 @@ public class TumbangPresoManager : NetworkBehaviour
         matchFinished = true;
         matchActive.Value = false;
 
-        ShowResultClientRpc(message);
+        int totalPlayers = playerScores.Count;
+
+        foreach (var entry in playerScores)
+        {
+            ulong playerId = entry.Key;
+            int points = entry.Value;
+
+            // Competition ranking: tied scores share the same rank.
+            int rank = playerScores.Values.Count(
+                score => score > points
+            ) + 1;
+
+            bool won = winners.Contains(playerId);
+
+            ShowPlayerResultRpc(
+                rank,
+                totalPlayers,
+                points,
+                won,
+                RpcTarget.Single(playerId, RpcTargetUse.Temp)
+            );
+        }
+
         UpdateMatchUIClientRpc();
 
         Debug.Log(message);
 
         StartCoroutine(ReturnPlayersToLobby());
-
     }
+
     private IEnumerator ReturnPlayersToLobby()
     {
         isReturningToLobby = true;
@@ -534,7 +585,7 @@ public class TumbangPresoManager : NetworkBehaviour
                 RpcTarget.Single(id, RpcTargetUse.Temp)
             );
         }
-
+        HideResultPanelClientRpc();
         // Clear the completed match.
         playerScores.Clear();
         throwers.Clear();
