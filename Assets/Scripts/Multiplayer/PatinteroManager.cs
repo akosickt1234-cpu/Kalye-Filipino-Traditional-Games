@@ -29,9 +29,15 @@ public class PatinteroManager : NetworkBehaviour
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI resultText;
     [SerializeField] private TextMeshProUGUI teamText;
+
+    [Header("End Game UI")]
+    [SerializeField] private GameObject patinteroEnd;
+    [SerializeField] private TextMeshProUGUI endScoreText;
+    [SerializeField] private TextMeshProUGUI messageNotifText;
+
     [SerializeField] private GameObject startButton;
     [SerializeField] private GameObject patinteroUI;
-
+    [SerializeField] private float endScreenDuration = 5f;
     public NetworkVariable<int> runnerScore = new(
         0, NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
@@ -54,6 +60,7 @@ public class PatinteroManager : NetworkBehaviour
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server);
     private bool endGameUIShown;
+    private bool endScreenDismissed;
     private readonly Dictionary<ulong, Vector3> lobbyPositions = new();
     private readonly Dictionary<ulong, Quaternion> lobbyRotations = new();
     private bool isEndingMatch;
@@ -64,6 +71,9 @@ public class PatinteroManager : NetworkBehaviour
 
         if (patinteroUI != null)
             patinteroUI.SetActive(false);
+
+        if (patinteroEnd != null)
+            patinteroEnd.SetActive(false);
 
         if (startButton != null)
             startButton.SetActive(NetworkManager.Singleton != null
@@ -94,8 +104,13 @@ public class PatinteroManager : NetworkBehaviour
 
 
 
+
     private void UpdateUI()
     {
+        if (NetworkManager.Singleton == null)
+            return;
+
+        // Display the player's team during the match.
         if (teamText != null)
         {
             if (!gameStart.Value)
@@ -104,71 +119,97 @@ public class PatinteroManager : NetworkBehaviour
             }
             else
             {
-                NetworkClient lcalClient =
+                NetworkClient localClient =
                     NetworkManager.Singleton.LocalClient;
 
-                if (lcalClient != null &&
-                    lcalClient.PlayerObject != null)
+                if (localClient != null &&
+                    localClient.PlayerObject != null)
                 {
-                    PlayerNetwork lcalPlayer =
-                        lcalClient.PlayerObject.GetComponent<PlayerNetwork>();
+                    PlayerNetwork localPlayer =
+                        localClient.PlayerObject.GetComponent<PlayerNetwork>();
 
-                    if (lcalPlayer != null)
+                    if (localPlayer != null)
                     {
-                        teamText.text = lcalPlayer.taya.Value
+                        teamText.text = localPlayer.taya.Value
                             ? "Team: Taya"
                             : "Team: Runner";
                     }
                 }
             }
         }
-            if (scoreText != null && gameStart.Value == true)
+
+        // Display the current score during the match.
+        if (scoreText != null && gameStart.Value)
         {
             scoreText.text =
                 $"{runnerScore.Value}:{tayaScore.Value}";
         }
 
-        if (resultText == null)
+        // Don't reopen the end panel after it has been dismissed.
+        if (winnerTeam.Value == -1 || endGameUIShown || endScreenDismissed)
             return;
 
-        if (winnerTeam.Value == -1)
-        {
-            resultText.text = "";
-            return;
-        }
+        NetworkClient client = NetworkManager.Singleton.LocalClient;
 
-        NetworkClient localClient =
-            NetworkManager.Singleton.LocalClient;
-
-        if (localClient == null || localClient.PlayerObject == null)
+        if (client == null || client.PlayerObject == null)
             return;
 
-        PlayerNetwork localPlayer =
-            localClient.PlayerObject.GetComponent<PlayerNetwork>();
+        PlayerNetwork localPlayerComponent =
+            client.PlayerObject.GetComponent<PlayerNetwork>();
 
-        if (localPlayer == null)
+        if (localPlayerComponent == null)
             return;
 
+        // Determine whether THIS player's team won.
         bool localTeamWon =
-            (!localPlayer.taya.Value && winnerTeam.Value == 0) ||
-            (localPlayer.taya.Value && winnerTeam.Value == 1);
+            (!localPlayerComponent.taya.Value && winnerTeam.Value == 0) ||
+            (localPlayerComponent.taya.Value && winnerTeam.Value == 1);
 
+        // Show the end-game panel.
+        if (patinteroEnd != null)
+            patinteroEnd.SetActive(true);
 
-        if (winnerTeam.Value != -1 && !endGameUIShown)
+        // Display the final score.
+        if (endScoreText != null)
         {
-            gameStart.Value = false;
-            endGameUIShown = true;
+            endScoreText.text =
+                $"{runnerScore.Value}:{tayaScore.Value}";
         }
 
-        resultText.text = localTeamWon ? "nanalo ka!" : "natalo ka";
-        gameStart.Value = false;
-        
+        // Display the correct result for this player's team.
+        if (messageNotifText != null)
+        {
+            messageNotifText.text = localTeamWon
+                ? "Nanalo kayo!"
+                : "Natalo kayo!";
+        }
+
+        if (resultText != null)
+        {
+            resultText.text = localTeamWon
+                ? "Nanalo kayo!"
+                : "Natalo kayo!";
+        }
+
+        endGameUIShown = true;
     }
+
     IEnumerator ResetText()
     {
         yield return new WaitForSeconds(1);
         scoreText.text = "";
     }
+
+    [ClientRpc]
+    private void SetPatinteroEndClientRpc(bool show)
+    {
+        if (patinteroEnd != null)
+            patinteroEnd.SetActive(show);
+
+        if (!show)
+            endScreenDismissed = true;
+    }
+
     [ClientRpc]
     private void SetPatinteroUIClientRpc(bool showMatchUI, bool showStartButton)
     {
@@ -225,6 +266,10 @@ public class PatinteroManager : NetworkBehaviour
         SetPatinteroUIClientRpc(true, false);
 
         endGameUIShown = false;
+        endScreenDismissed = false;
+
+        if (patinteroEnd != null)
+            patinteroEnd.SetActive(false);
 
         runnerScore.Value = 0;
         tayaScore.Value = 0;
@@ -357,17 +402,24 @@ public class PatinteroManager : NetworkBehaviour
         else if (!isEndingMatch)
         {
             isEndingMatch = true;
+
+            SetPatinteroUIClientRpc(false, false);
+
             StartCoroutine(ReturnPlayersToLobby());
         }
     }
     private IEnumerator ReturnPlayersToLobby()
     {
-        // Briefly let players see the result.
-        yield return new WaitForSeconds(2f);
+        // Let everyone see the result for 5 seconds.
+        yield return new WaitForSeconds(endScreenDuration);
 
         if (!IsServer)
             yield break;
 
+        // Hide PatinteroEnd on every client.
+        SetPatinteroEndClientRpc(false);
+
+        // Now teleport everyone back to the lobby.
         foreach (NetworkClient client in
                  NetworkManager.Singleton.ConnectedClientsList)
         {
@@ -398,6 +450,8 @@ public class PatinteroManager : NetworkBehaviour
             player.canJump.Value = false;
         }
 
+        // Continue with your existing lobby reset.
+        ResetLobbyUIClientRpc();
         SetPatinteroUIClientRpc(false, true);
 
         gameStart.Value = false;
@@ -409,22 +463,35 @@ public class PatinteroManager : NetworkBehaviour
         caughtRunners.Clear();
 
         roundEnded = false;
-
-        ResetLobbyUIClientRpc();
-
     }
+
     [ClientRpc]
     private void ResetLobbyUIClientRpc()
     {
+        if (patinteroEnd != null)
+            patinteroEnd.SetActive(false);
+
         if (scoreText != null)
             scoreText.text = "";
 
-        if (resultText != null)
-            resultText.text = "";
+        if (teamText != null)
+            teamText.text = "";
 
-        // Only the host should see the Start button.
-        if (NetworkManager.Singleton.IsHost && startButton != null)
+        if (endScoreText != null)
+            endScoreText.text = "";
+
+        if (messageNotifText != null)
+            messageNotifText.text = "";
+
+        endGameUIShown = false;
+        endScreenDismissed = true;
+
+        if (NetworkManager.Singleton != null &&
+            NetworkManager.Singleton.IsHost &&
+            startButton != null)
+        {
             startButton.SetActive(true);
+        }
     }
     private IEnumerator ResetRoundAfterDelay()
     {
