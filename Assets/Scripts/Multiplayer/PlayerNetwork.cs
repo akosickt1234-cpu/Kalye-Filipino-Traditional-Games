@@ -59,6 +59,7 @@ public class PlayerNetwork : NetworkBehaviour
     [SerializeField] private Transform tsinelasPrefab;
     private Transform spawnedTsinelasTransform;
     private NetworkObject spawnedTsinelas;
+    private ThrowerBase throwerBase;
     private NetworkVariable<bool> hasTsinelas = new NetworkVariable<bool>(
     false,
     NetworkVariableReadPermission.Everyone,
@@ -71,6 +72,23 @@ public class PlayerNetwork : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
     public bool HasSlipperInWorld => hasTsinelas.Value;
+    public bool HasThrownTsinelas => hasThrownTsinelas.Value;
+    private NetworkVariable<bool> canLeaveThrowerBase =
+    new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public bool CanLeaveThrowerBase => canLeaveThrowerBase.Value;
+
+    public void SetCanLeaveThrowerBase(bool canLeave)
+    {
+        if (!IsServer)
+            return;
+
+        canLeaveThrowerBase.Value = canLeave;
+    }
     public ulong TsinelasOwnerClientId { get; private set; }
     private NetworkVariable<bool> isInsideThrowerBase =
     new NetworkVariable<bool>(
@@ -281,13 +299,26 @@ public class PlayerNetwork : NetworkBehaviour
     }
 
 
+    
+
     public void ResetForNewRound()
     {
         if (!IsServer)
             return;
 
-        hasBeenHit.Value = false;
+        // Remove this player's slipper if it is still in the world.
+        if (spawnedTsinelas != null && spawnedTsinelas.IsSpawned)
+        {
+            spawnedTsinelas.Despawn(true);
+        }
+
+        spawnedTsinelas = null;
+        spawnedTsinelasTransform = null;
+
+        hasTsinelas.Value = false;
+        canLeaveThrowerBase.Value = false;
         hasThrownTsinelas.Value = false;
+        hasBeenHit.Value = false;
 
         Rigidbody body = GetComponent<Rigidbody>();
 
@@ -520,7 +551,7 @@ public class PlayerNetwork : NetworkBehaviour
     private void Start()
     {
         if (!IsOwner) return;
-
+        throwerBase = FindAnyObjectByType<ThrowerBase>();
         cam = camera.gameObject;
         rb = GetComponent<Rigidbody>();
 
@@ -633,6 +664,11 @@ public class PlayerNetwork : NetworkBehaviour
         tsinelasRb.linearVelocity = cameraForward * throwSpeed;
 
         spawnedTsinelas = networkObject;
+
+        spawnedTsinelasTransform = tsinelas.transform;
+        hasTsinelas.Value = true;
+        hasThrownTsinelas.Value = true;
+        canLeaveThrowerBase.Value = true;
 
         spawnedTsinelasTransform = tsinelas.transform;
         hasTsinelas.Value = true;
@@ -797,7 +833,13 @@ public class PlayerNetwork : NetworkBehaviour
     {
         if (!IsOwner || !IsClient) return;
 
-        if (!IsOwner || !IsClient) return;
+        if (isSpectating.Value || hasBeenHit.Value)
+        {
+            sprintRequested = false;
+            jumpRequested = false;
+            highJumpRequested = false;
+            return;
+        }
 
         // Tumbang Preso Guard: press F to reset the can.
         TumbangPresoManager tpManager =
@@ -956,19 +998,19 @@ public class PlayerNetwork : NetworkBehaviour
         {
             cursorImage.position = new Vector2(9999, 9999);
         }
-        
-        if (hasBeenHit.Value) return;
 
-        if (isSpectating.Value)
+        if (isSpectating.Value || hasBeenHit.Value)
         {
             sprintRequested = false;
             jumpRequested = false;
             highJumpRequested = false;
+            isJumping = false;
 
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
 
             animatorController.SetLocomotion(false, false, false);
+            soundHandler.Idle();
 
             return;
         }
@@ -1052,6 +1094,27 @@ public class PlayerNetwork : NetworkBehaviour
         Vector3 nextPosition =
     rb.position + movement * speed * Time.fixedDeltaTime;
 
+        // Prevent throwers from crossing the base boundary
+        // until they have thrown their tsinelas.
+        if (throwerBase == null)
+            throwerBase = FindAnyObjectByType<ThrowerBase>();
+
+        bool blockedByThrowerBase =
+            throwerBase != null &&
+            throwerBase.ShouldBlockLeaving(
+                this,
+                rb.position,
+                nextPosition
+            );
+
+        if (!blockedByThrowerBase)
+        {
+            if (!taya.Value || lineDetector.IsOnLine(nextPosition))
+            {
+                rb.MovePosition(nextPosition);
+            }
+        }
+
         // Replace IsTaya with your existing role check.
         if (!taya.Value || lineDetector.IsOnLine(nextPosition))
         {
@@ -1090,19 +1153,23 @@ public class PlayerNetwork : NetworkBehaviour
 
         wasGrounded = isGrounded;
 
-        if (isSprinting == true && hasMovementInput == true)
-        {
-            soundHandler.Run();
-        }
-        else if (isSprinting == false && hasMovementInput == true)
-        {
-            soundHandler.Walk();
-        }
-        else if (isSprinting == false && hasMovementInput == false)
+        if (isSpectating.Value || hasBeenHit.Value)
         {
             soundHandler.Idle();
         }
-        
+        else if (isSprinting && hasMovementInput)
+        {
+            soundHandler.Run();
+        }
+        else if (hasMovementInput)
+        {
+            soundHandler.Walk();
+        }
+        else
+        {
+            soundHandler.Idle();
+        }
+
 
         float targetZ = isSprinting ? 1f : 0.35f;
 

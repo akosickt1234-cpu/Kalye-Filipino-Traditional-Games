@@ -13,9 +13,14 @@ public class PatinteroManager : NetworkBehaviour
     [SerializeField] private int minimumPlayers = 2;
     [SerializeField] private string gameMode = "Patintero";
 
+    [Header("Game Object Toggle")]
+    [SerializeField] private GameObject gameObjectToToggle;
+
     [Header("Spawn Points")]
-    [SerializeField] private Transform tayaSpawnPoint;
-    [SerializeField] private Transform runnerSpawnPoint;
+    [SerializeField] private Transform[] tayaSpawnPoints;
+    [SerializeField] private Transform[] runnerSpawnPoints;
+    [Header("Lobby Return Spawn Points")]
+    [SerializeField] private Transform[] lobbySpawnPoints;
     [SerializeField] private float spawnHeight = 1f;
 
     [Header("Scoring")]
@@ -27,7 +32,6 @@ public class PatinteroManager : NetworkBehaviour
 
     [Header("UI - Optional")]
     [SerializeField] private TextMeshProUGUI scoreText;
-    [SerializeField] private TextMeshProUGUI resultText;
     [SerializeField] private TextMeshProUGUI teamText;
 
     [Header("End Game UI")]
@@ -65,6 +69,13 @@ public class PatinteroManager : NetworkBehaviour
     private readonly Dictionary<ulong, Quaternion> lobbyRotations = new();
     private bool isEndingMatch;
 
+    [ClientRpc]
+    private void SetGameObjectActiveClientRpc(bool isActive)
+    {
+        if (gameObjectToToggle != null)
+            gameObjectToToggle.SetActive(isActive);
+    }
+
     public override void OnNetworkSpawn()
     {
         Instance = this;
@@ -100,9 +111,136 @@ public class PatinteroManager : NetworkBehaviour
     private void Update()
     {
         UpdateUI();
+
+        if (!IsServer || !gameStart.Value || isEndingMatch)
+            return;
+
+        int connectedPlayers = 0;
+
+        foreach (NetworkClient client in
+                 NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject != null)
+                connectedPlayers++;
+        }
+
+        if (connectedPlayers < minimumPlayers)
+        {
+            isEndingMatch = true;
+            roundEnded = true;
+
+            SetPatinteroUIClientRpc(false, false);
+
+            StartCoroutine(EndForInsufficientPlayers());
+        }
     }
 
+    [ClientRpc]
+    private void ShowInsufficientPlayersClientRpc()
+    {
+        if (patinteroEnd != null)
+            patinteroEnd.SetActive(true);
 
+        if (endScoreText != null)
+        {
+            endScoreText.text =
+                $"{runnerScore.Value}:{tayaScore.Value}";
+        }
+
+        if (messageNotifText != null)
+        {
+            messageNotifText.text =
+                "Round ended!\nNot enough players left.";
+        }
+
+        endGameUIShown = true;
+        endScreenDismissed = false;
+    }
+
+    private IEnumerator EndForInsufficientPlayers()
+    {
+        // Display the end message to everyone.
+        ShowInsufficientPlayersClientRpc();
+
+        // Give the remaining players time to read it.
+        yield return new WaitForSeconds(endScreenDuration);
+
+        if (!IsServer)
+            yield break;
+
+        int spawnIndex = 0;
+
+        // Teleport every remaining player to a lobby spawn point.
+        foreach (NetworkClient client in
+                 NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject == null)
+                continue;
+
+            PlayerNetwork player =
+                client.PlayerObject.GetComponent<PlayerNetwork>();
+
+            if (player == null)
+                continue;
+
+            if (lobbySpawnPoints == null ||
+                lobbySpawnPoints.Length == 0)
+            {
+                Debug.LogWarning(
+                    "No Lobby Spawn Points assigned in PatinteroManager!"
+                );
+                break;
+            }
+
+            Transform spawnPoint =
+                lobbySpawnPoints[spawnIndex % lobbySpawnPoints.Length];
+
+            spawnIndex++;
+
+            if (spawnPoint == null)
+            {
+                Debug.LogWarning("A lobby spawn point is missing!");
+                continue;
+            }
+
+            Vector3 position =
+                spawnPoint.position + Vector3.up * spawnHeight;
+
+            player.TeleportToAssignedSpawnRpc(
+                position,
+                spawnPoint.rotation,
+                RpcTarget.Single(
+                    client.ClientId,
+                    RpcTargetUse.Temp
+                )
+            );
+
+            // Restore the player's normal lobby state.
+            player.taya.Value = false;
+            player.canJump.Value = false;
+        }
+
+        // Reset the match and its UI.
+        gameStart.Value = false;
+
+        runnerScore.Value = 0;
+        tayaScore.Value = 0;
+        winnerTeam.Value = -1;
+
+        runnersAtCheckpoint.Clear();
+        caughtRunners.Clear();
+
+        roundEnded = false;
+        isEndingMatch = false;
+
+        lobbyPositions.Clear();
+        lobbyRotations.Clear();
+
+        ResetLobbyUIClientRpc();
+        SetPatinteroUIClientRpc(false, true);
+
+        Debug.Log("Patintero ended because too few players remained.");
+    }
 
 
     private void UpdateUI()
@@ -184,13 +322,6 @@ public class PatinteroManager : NetworkBehaviour
                 : "Natalo kayo!";
         }
 
-        if (resultText != null)
-        {
-            resultText.text = localTeamWon
-                ? "Nanalo kayo!"
-                : "Natalo kayo!";
-        }
-
         endGameUIShown = true;
     }
 
@@ -263,6 +394,7 @@ public class PatinteroManager : NetworkBehaviour
         isEndingMatch = false;
 
         gameStart.Value = true;
+        SetGameObjectActiveClientRpc(true);
         SetPatinteroUIClientRpc(true, false);
 
         endGameUIShown = false;
@@ -453,7 +585,7 @@ public class PatinteroManager : NetworkBehaviour
         // Continue with your existing lobby reset.
         ResetLobbyUIClientRpc();
         SetPatinteroUIClientRpc(false, true);
-
+        SetGameObjectActiveClientRpc(false);
         gameStart.Value = false;
         runnerScore.Value = 0;
         tayaScore.Value = 0;
@@ -517,37 +649,78 @@ public class PatinteroManager : NetworkBehaviour
         roundEnded = false;
     }
 
+
     private void TeleportPlayersToSpawnPoints()
     {
+        int tayaIndex = 0;
+        int runnerIndex = 0;
+
         foreach (NetworkClient client in
                  NetworkManager.Singleton.ConnectedClientsList)
         {
             if (client.PlayerObject == null)
                 continue;
 
-            PlayerNetwork plr =
+            PlayerNetwork player =
                 client.PlayerObject.GetComponent<PlayerNetwork>();
 
-            if (plr == null)
+            if (player == null)
                 continue;
 
-            Transform spawnPoint = plr.taya.Value
-                ? tayaSpawnPoint
-                : runnerSpawnPoint;
+            Transform[] spawnPoints;
+
+            if (player.taya.Value)
+            {
+                spawnPoints = tayaSpawnPoints;
+            }
+            else
+            {
+                spawnPoints = runnerSpawnPoints;
+            }
+
+            if (spawnPoints == null || spawnPoints.Length == 0)
+            {
+                Debug.LogWarning(
+                    $"No spawn points assigned for " +
+                    $"{(player.taya.Value ? "Taya" : "Runner")}!"
+                );
+                continue;
+            }
+
+            int spawnIndex;
+
+            if (player.taya.Value)
+            {
+                spawnIndex = tayaIndex % spawnPoints.Length;
+                tayaIndex++;
+            }
+            else
+            {
+                spawnIndex = runnerIndex % spawnPoints.Length;
+                runnerIndex++;
+            }
+
+            Transform spawnPoint = spawnPoints[spawnIndex];
 
             if (spawnPoint == null)
+            {
+                Debug.LogWarning(
+                    $"Spawn point at index {spawnIndex} is missing!"
+                );
                 continue;
+            }
 
             Vector3 position =
                 spawnPoint.position + Vector3.up * spawnHeight;
 
-            plr.TeleportToSpawnRpc(
+            player.TeleportToSpawnRpc(
                 position,
                 RpcTarget.Single(
-                    plr.OwnerClientId,
+                    player.OwnerClientId,
                     RpcTargetUse.Temp
                 )
             );
         }
     }
+
 }

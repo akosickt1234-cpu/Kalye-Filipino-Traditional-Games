@@ -3757,6 +3757,14 @@ MonoBehaviour:
   - {fileID: 1886528247}
   - {fileID: 1124732204}
   - {fileID: 487324547}
+  lobbySpawnPoints:
+  - {fileID: 1712802033}
+  - {fileID: 942202251}
+  - {fileID: 163483756}
+  - {fileID: 1205072654}
+  - {fileID: 377033485}
+  lobbySpawnHeight: 1
+  insufficientPlayersDisplayDuration: 3
 --- !u!4 &568310853
 Transform:
   m_ObjectHideFlags: 0
@@ -11870,14 +11878,29 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   minimumPlayers: 2
   gameMode: Patintero
-  tayaSpawnPoint: {fileID: 1899550354}
-  runnerSpawnPoint: {fileID: 589939864}
+  tayaSpawnPoints:
+  - {fileID: 2134060634}
+  - {fileID: 1479686629}
+  - {fileID: 1782541656}
+  - {fileID: 1442376508}
+  runnerSpawnPoints:
+  - {fileID: 283337733}
+  - {fileID: 1417583863}
+  - {fileID: 287269303}
+  - {fileID: 1517611303}
+  - {fileID: 1476631383}
+  - {fileID: 904975857}
+  lobbySpawnPoints:
+  - {fileID: 1712802033}
+  - {fileID: 942202251}
+  - {fileID: 163483756}
+  - {fileID: 1205072654}
+  - {fileID: 377033485}
   spawnHeight: 1
   tayaCatchThreshold: 0.6
   pointsToWin: 3
   resetDelay: 2
   scoreText: {fileID: 207147543}
-  resultText: {fileID: 1375737369}
   teamText: {fileID: 330503379}
   patinteroEnd: {fileID: 2047411048}
   endScoreText: {fileID: 1929108977}

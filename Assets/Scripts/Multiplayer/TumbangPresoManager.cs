@@ -19,6 +19,9 @@ public class TumbangPresoManager : NetworkBehaviour
     [SerializeField] private int safeReturnPoints = 6;
     [SerializeField] private int guardEliminationPoints = 15;
 
+    [Header("Game Object Toggle")]
+    [SerializeField] private GameObject gameObjectToToggle;
+
     [Header("UI")]
     [SerializeField] private Button startButton;
     [SerializeField] private TMP_Text timerText;
@@ -37,6 +40,13 @@ public class TumbangPresoManager : NetworkBehaviour
     [Header("Role Spawns")]
     [SerializeField] private Transform guardSpawnPoint;
     [SerializeField] private Transform[] throwerSpawnPoints;
+
+    [Header("Lobby Return Spawn Points")]
+    [SerializeField] private Transform[] lobbySpawnPoints;
+    [SerializeField] private float lobbySpawnHeight = 1f;
+
+    [Header("Insufficient Players")]
+    [SerializeField] private float insufficientPlayersDisplayDuration = 3f;
 
 
     private NetworkVariable<bool> matchActive = new(false);
@@ -68,7 +78,31 @@ public class TumbangPresoManager : NetworkBehaviour
     public bool IsMatchActive => matchActive.Value;
     public ulong GuardId => guardClientId.Value;
 
+    public bool ReturnThrowerToBase(PlayerNetwork player)
+    {
+        if (!IsServer || player == null)
+            return false;
 
+        ulong playerId = player.OwnerClientId;
+
+        if (!throwerSpawnPositions.TryGetValue(
+                playerId, out Vector3 position))
+            return false;
+
+        if (!throwerSpawnRotations.TryGetValue(
+                playerId, out Quaternion rotation))
+            return false;
+
+        player.SetInsideThrowerBase(true);
+
+        player.TeleportToAssignedSpawnRpc(
+            position,
+            rotation,
+            RpcTarget.Single(playerId, RpcTargetUse.Temp)
+        );
+
+        return true;
+    }
     private void TeleportPlayersToRoleSpawns(List<ulong> playerIds)
     {
         int throwerIndex = 0;
@@ -185,10 +219,26 @@ public class TumbangPresoManager : NetworkBehaviour
         }
     }
 
+
     private void Update()
     {
         if (!IsServer || !matchActive.Value || matchFinished)
             return;
+
+        int connectedPlayers = 0;
+
+        foreach (NetworkClient client in
+                 NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject != null)
+                connectedPlayers++;
+        }
+
+        if (connectedPlayers < minimumPlayers)
+        {
+            FinishForInsufficientPlayers();
+            return;
+        }
 
         timerAccumulator += Time.deltaTime;
 
@@ -197,9 +247,7 @@ public class TumbangPresoManager : NetworkBehaviour
             timerAccumulator -= 1f;
 
             if (timeRemaining.Value > 0)
-            {
                 timeRemaining.Value--;
-            }
 
             if (timeRemaining.Value <= 0)
             {
@@ -208,6 +256,141 @@ public class TumbangPresoManager : NetworkBehaviour
             }
         }
     }
+
+
+    private void FinishForInsufficientPlayers()
+    {
+        if (!IsServer || !matchActive.Value || matchFinished)
+            return;
+
+        matchFinished = true;
+        matchActive.Value = false;
+
+        ResetPresoCan();
+
+        SetTumbangPresoUIClientRpc(false, false);
+
+        ShowInsufficientPlayersClientRpc();
+
+        StartCoroutine(ReturnPlayersAfterInsufficientPlayers());
+    }
+
+    [ClientRpc]
+    private void ShowInsufficientPlayersClientRpc()
+    {
+        if (resultPanel != null)
+            resultPanel.SetActive(true);
+
+        if (rankText != null)
+            rankText.text = "";
+
+        if (totalPointsText != null)
+            totalPointsText.text = "";
+
+        if (messageNotifText != null)
+            messageNotifText.text =
+                "Match ended!\nNot enough players left.";
+    }
+
+    [ClientRpc]
+    private void SetGameObjectActiveClientRpc(bool isActive)
+    {
+        if (gameObjectToToggle != null)
+            gameObjectToToggle.SetActive(isActive);
+    }
+
+    private IEnumerator ReturnPlayersAfterInsufficientPlayers()
+    {
+        yield return new WaitForSeconds(
+            insufficientPlayersDisplayDuration
+        );
+
+        if (!IsServer)
+            yield break;
+
+        int spawnIndex = 0;
+
+        foreach (NetworkClient client in
+                 NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject == null)
+                continue;
+
+            PlayerNetwork player =
+                client.PlayerObject.GetComponent<PlayerNetwork>();
+
+            if (player == null)
+                continue;
+
+            // Restore the player's normal gameplay state.
+            player.SetSpectatingServer(false);
+            player.ResetForNewRound();
+
+            if (lobbySpawnPoints == null ||
+                lobbySpawnPoints.Length == 0)
+            {
+                Debug.LogWarning(
+                    "No Lobby Spawn Points assigned in TumbangPresoManager!"
+                );
+                break;
+            }
+
+            Transform spawnPoint =
+                lobbySpawnPoints[spawnIndex % lobbySpawnPoints.Length];
+
+            spawnIndex++;
+
+            if (spawnPoint == null)
+            {
+                Debug.LogWarning("A lobby spawn point is missing!");
+                continue;
+            }
+
+            Vector3 position =
+                spawnPoint.position + Vector3.up * lobbySpawnHeight;
+
+            player.TeleportToAssignedSpawnRpc(
+                position,
+                spawnPoint.rotation,
+                RpcTarget.Single(
+                    client.ClientId,
+                    RpcTargetUse.Temp
+                )
+            );
+        }
+
+        SetGameObjectActiveClientRpc(false);
+
+        HideResultPanelClientRpc();
+
+        playerScores.Clear();
+        throwers.Clear();
+        eliminatedPlayers.Clear();
+        canKnocked.Clear();
+        safelyReturned.Clear();
+
+        throwerSpawnPositions.Clear();
+        throwerSpawnRotations.Clear();
+        lobbyPositions.Clear();
+        lobbyRotations.Clear();
+
+        guardClientId.Value = ulong.MaxValue;
+        timeRemaining.Value = matchDuration;
+        timerAccumulator = 0f;
+
+        matchFinished = false;
+        matchActive.Value = false;
+
+        SetTumbangPresoUIClientRpc(false, true);
+        ResetLobbyUIClientRpc();
+
+        isReturningToLobby = false;
+
+        Debug.Log(
+            "Tumbang Preso ended because too few players remained."
+        );
+    }
+
 
     // Call this from the host's Start button.
     public void StartMatch()
@@ -259,6 +442,8 @@ public class TumbangPresoManager : NetworkBehaviour
             .Select(client => client.ClientId)
             .ToList();
 
+        StartCoroutine(ResetCanAfterSlippersDisappear());
+
         // Randomly select exactly one Guard for this match.
         guardClientId.Value =
             playerIds[Random.Range(0, playerIds.Count)];
@@ -272,10 +457,15 @@ public class TumbangPresoManager : NetworkBehaviour
     client.PlayerObject != null)
             {
                 PlayerNetwork player =
-                    client.PlayerObject.GetComponent<PlayerNetwork>();
+    client.PlayerObject.GetComponent<PlayerNetwork>();
 
-                if (player != null)
-                    player.SetSpectatingServer(false);
+                if (player == null)
+                    continue;
+
+                // Remove any leftover slipper and restore the player's state.
+                player.ResetForNewRound();
+
+                player.SetSpectatingServer(false);
             }
 
             if (id != guardClientId.Value)
@@ -292,6 +482,8 @@ public class TumbangPresoManager : NetworkBehaviour
         matchFinished = false;
         timeRemaining.Value = matchDuration;
         matchActive.Value = true;
+
+        SetGameObjectActiveClientRpc(true);
 
         if (startButton != null)
             startButton.gameObject.SetActive(false);
@@ -430,9 +622,9 @@ public class TumbangPresoManager : NetworkBehaviour
         if (eliminatedPlayers.Count >= throwers.Count)
         {
             FinishMatch(
-    "THE GUARD WINS!\nAll throwers were eliminated.",
-    new List<ulong> { guardClientId.Value }
-);
+            "THE GUARD WINS!\nAll throwers were eliminated.",
+            new List<ulong> { guardClientId.Value }
+            );
         }
     }
 
@@ -514,6 +706,8 @@ public class TumbangPresoManager : NetworkBehaviour
 
         matchFinished = true;
         matchActive.Value = false;
+
+        ResetPresoCan();
 
         int totalPlayers = playerScores.Count;
 
@@ -751,6 +945,43 @@ public class TumbangPresoManager : NetworkBehaviour
 
         if (startButton != null)
             startButton.gameObject.SetActive(showStartButtons && IsHost);
+    }
+    private void ResetPresoCan()
+    {
+        if (!IsServer)
+            return;
+
+        PresoCan can = FindAnyObjectByType<PresoCan>();
+
+        if (can != null)
+        {
+            can.ResetCan();
+            Debug.Log("Preso can reset after match!");
+        }
+        else
+        {
+            Debug.LogWarning("PresoCan was not found in the scene!");
+        }
+    }
+    private IEnumerator ResetCanAfterSlippersDisappear()
+    {
+        // Wait until all Tsinelas objects have disappeared.
+        while (FindAnyObjectByType<Tsinelas>() != null)
+        {
+            yield return null;
+        }
+
+        // Reset the can on the server.
+        if (!IsServer)
+            yield break;
+
+        PresoCan can = FindAnyObjectByType<PresoCan>();
+
+        if (can != null)
+        {
+            can.ResetCan();
+            Debug.Log("Can reset after all slippers disappeared.");
+        }
     }
     private void UpdateRoleUI()
     {
