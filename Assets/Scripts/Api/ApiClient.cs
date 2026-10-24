@@ -33,7 +33,14 @@ public static class ApiClient
         public string body;
     }
 
-    static readonly List<Action<bool>> refresh_waiting = new List<Action<bool>>();
+    enum RefreshResult
+    {
+        Ok,
+        Network,
+        Lost
+    }
+
+    static readonly List<Action<RefreshResult>> refresh_waiting = new List<Action<RefreshResult>>();
     static bool refresh_running;
 
     public static void get<T>(string path, Action<T> on_ok, Action<ApiError> on_fail) where T : class
@@ -98,17 +105,23 @@ public static class ApiClient
 
         if (is_session_failure(reply))
         {
-            var refreshed = false;
+            var outcome = RefreshResult.Lost;
             var finished = false;
-            refresh_session(call.token_used, ok =>
+            refresh_session(call.token_used, result =>
             {
-                refreshed = ok;
+                outcome = result;
                 finished = true;
             });
 
             while (!finished) yield return null;
 
-            if (!refreshed)
+            if (outcome == RefreshResult.Network)
+            {
+                report(call.on_fail, ApiError.network());
+                yield break;
+            }
+
+            if (outcome == RefreshResult.Lost)
             {
                 var ended = ApiError.from_reply(reply.status, reply.body);
                 ended.session_ended = true;
@@ -174,12 +187,12 @@ public static class ApiClient
         report(call.on_fail, ApiError.from_reply(reply.status, reply.body));
     }
 
-    static void refresh_session(string token_used, Action<bool> done)
+    static void refresh_session(string token_used, Action<RefreshResult> done)
     {
         var current = LoginSession.access_token;
         if (!string.IsNullOrEmpty(current) && current != token_used)
         {
-            done(true);
+            done(RefreshResult.Ok);
             return;
         }
 
@@ -188,22 +201,24 @@ public static class ApiClient
 
         if (LoginSession.is_guest || string.IsNullOrEmpty(LoginSession.refresh_token))
         {
-            finish_refresh(false);
+            finish_refresh(RefreshResult.Lost);
             return;
         }
 
         refresh_running = true;
-        LoginService.restore(() => finish_refresh(true), reason => finish_refresh(false));
+        LoginService.restore(
+            () => finish_refresh(RefreshResult.Ok),
+            reason => finish_refresh(LoginSession.is_logged_in ? RefreshResult.Network : RefreshResult.Lost));
     }
 
-    static void finish_refresh(bool ok)
+    static void finish_refresh(RefreshResult result)
     {
         refresh_running = false;
-        var pending = new List<Action<bool>>(refresh_waiting);
+        var pending = new List<Action<RefreshResult>>(refresh_waiting);
         refresh_waiting.Clear();
 
-        if (!ok) lose_session();
-        for (var i = 0; i < pending.Count; i++) pending[i](ok);
+        if (result == RefreshResult.Lost) lose_session();
+        for (var i = 0; i < pending.Count; i++) pending[i](result);
     }
 
     static void lose_session()
