@@ -994,7 +994,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimationController
   ShowTopMostFoldoutHeaderGroup: 1
-  animator: {fileID: 4000862811475512006}
+  animator: {fileID: 1420051881433700230}
   actionDuration: 1
 --- !u!114 &5632647675497591742
 MonoBehaviour:
@@ -1031,8 +1031,8 @@ MonoBehaviour:
   maxWidth: 200
   colorTransitionSpeed: 5
   animatorController: {fileID: 1257500209283897145}
-  player: {fileID: 3619135988846754672}
-  model: {fileID: 6528938553713596853}
+  player: {fileID: 5629206864617445190}
+  model: {fileID: 5983070143863516488}
   tsinelasPrefab: {fileID: 6807346094398842588, guid: 7a9922c40ac65a344b901bec81e747ad, type: 3}
   pickupDistance: 3
   throwSpeed: 12
@@ -1366,7 +1366,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7233867138446155668, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
       propertyPath: m_Enabled
@@ -1396,7 +1396,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3619135988846754672}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 4889bb3671cab47438196d2f29b8c676, type: 2}
   m_CullingMode: 0
@@ -1417,7 +1417,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3619135988846754672}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
   m_Name: 
@@ -1453,11 +1453,6 @@ MonoBehaviour:
 --- !u!4 &4139390443772879306 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
-  m_PrefabInstance: {fileID: 4537562236503705121}
-  m_PrefabAsset: {fileID: 0}
---- !u!137 &6528938553713596853 stripped
-SkinnedMeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 7233867138446155668, guid: 9d20707231e3de242aa56a5c1ad43309, type: 3}
   m_PrefabInstance: {fileID: 4537562236503705121}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4818741651880782359
@@ -1508,17 +1503,66 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -245955603384576492, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
+      propertyPath: m_Name
+      value: Model
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
       propertyPath: m_Name
       value: amy
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
+      propertyPath: m_Avatar
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: adf5fbbf5558ad647adbb6b9cd675ce1, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
+      propertyPath: m_WarningMessage
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2323104358486169767}
   m_SourcePrefab: {fileID: 100100000, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
+--- !u!95 &1420051881433700230 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
+  m_PrefabInstance: {fileID: 4818741651880782359}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4995940580808117756 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
+  m_PrefabInstance: {fileID: 4818741651880782359}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5629206864617445190 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
+  m_PrefabInstance: {fileID: 4818741651880782359}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2323104358486169767
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5629206864617445190}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b85ac7e44edc5a6458f5660588ea8f3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationController
+  ShowTopMostFoldoutHeaderGroup: 1
+  animator: {fileID: 1420051881433700230}
+  actionDuration: 1
+--- !u!137 &5983070143863516488 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1285705782834317151, guid: 662e618028b6a41c3a1e59f29ce98f51, type: 3}
   m_PrefabInstance: {fileID: 4818741651880782359}
   m_PrefabAsset: {fileID: 0}
