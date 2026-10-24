@@ -132,7 +132,7 @@ public static class LoginService
         {
             if (reply.network_failure)
             {
-                fail_restore(on_fail, NETWORK_MESSAGE);
+                report(on_fail, NETWORK_MESSAGE);
                 return;
             }
 
