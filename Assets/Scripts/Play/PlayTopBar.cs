@@ -36,7 +36,7 @@ public static class PlayTopBar
     private const float GLOW_SIZE = 150f * SCALE;
     private const float LINE_GAP = 8f;
     private const float LINE_HEIGHT = 3f;
-    private const string DEFAULT_NAME = "Guest";
+    private const string LEVEL_UNKNOWN_TEXT = "-";
 
     private static Sprite circle_sprite;
     private static Sprite glow_sprite;
@@ -52,10 +52,18 @@ public static class PlayTopBar
         RectTransform bar = PlayUi.rect("TopBar", root);
         place_top_left(bar, 0f, 0f, BAR_WIDTH, BAR_HEIGHT);
 
+        PlayProfile.load(false);
+
         build_container(bar);
-        build_avatar(bar);
-        build_name(bar);
+        PlayTopBarProfile profile_view = bar.gameObject.AddComponent<PlayTopBarProfile>();
+        build_avatar(bar, profile_view);
+        build_name(bar, profile_view);
         build_icons(bar);
+    }
+
+    internal static string level_label(int level)
+    {
+        return level > 0 ? level.ToString() : LEVEL_UNKNOWN_TEXT;
     }
 
     private static void build_container(RectTransform bar)
@@ -67,7 +75,7 @@ public static class PlayTopBar
         place_top_left(container.rectTransform, CONTAINER_X, AVATAR_Y, CONTAINER_END_X - CONTAINER_X, CONTAINER_HEIGHT);
     }
 
-    private static void build_avatar(RectTransform bar)
+    private static void build_avatar(RectTransform bar, PlayTopBarProfile profile_view)
     {
         RectTransform avatar = PlayUi.rect("Avatar", bar);
         place_top_left(avatar, AVATAR_X, AVATAR_Y, AVATAR_SIZE, AVATAR_SIZE);
@@ -75,6 +83,15 @@ public static class PlayTopBar
         Image fill = PlayUi.image("AvatarPlaceholderFill", avatar, get_circle_sprite());
         fill.color = PlayTheme.panel_dark;
         place_center(fill.rectTransform, AVATAR_FILL_SIZE);
+
+        Image mask_image = PlayUi.image("AvatarMask", avatar, get_circle_sprite());
+        place_center(mask_image.rectTransform, AVATAR_FILL_SIZE);
+        Mask mask = mask_image.gameObject.AddComponent<Mask>();
+        mask.showMaskGraphic = false;
+
+        Image picture = PlayUi.image("AvatarImage", mask_image.rectTransform, null);
+        picture.preserveAspect = false;
+        PlayUi.stretch(picture.rectTransform);
 
         Image ring = PlayUi.image("AvatarRing", avatar, PlayUi.sprite("Frames/Play/FrameAvatarRing"));
         ring.enabled = ring.sprite != null;
@@ -91,21 +108,25 @@ public static class PlayTopBar
         badge_ring.enabled = badge_ring.sprite != null;
         PlayUi.stretch(badge_ring.rectTransform);
 
-        Text level = PlayUi.text("LevelText", badge, Mathf.Max(0, PlayState.player_level).ToString(), BADGE_TEXT_SIZE, PlayTheme.text, TextAnchor.MiddleCenter);
+        Text level = PlayUi.text("LevelText", badge, level_label(PlayProfile.level), BADGE_TEXT_SIZE, PlayTheme.text, TextAnchor.MiddleCenter);
         level.raycastTarget = false;
         level.horizontalOverflow = HorizontalWrapMode.Overflow;
         level.verticalOverflow = VerticalWrapMode.Overflow;
         PlayUi.stretch(level.rectTransform);
+
+        profile_view.bind_avatar(picture);
+        profile_view.bind_level(level);
     }
 
-    private static void build_name(RectTransform bar)
+    private static void build_name(RectTransform bar, PlayTopBarProfile profile_view)
     {
-        string value = string.IsNullOrWhiteSpace(PlayState.player_name) ? DEFAULT_NAME : PlayState.player_name;
+        string value = PlayState.player_name;
 
         PlayMarquee name_marquee = PlayMarquee.create(bar, "PlayerName", NAME_TEXT_SIZE, PlayTheme.text, NAME_WIDTH, NAME_HEIGHT);
         place_top_left(name_marquee.rect, NAME_X, NAME_Y, NAME_WIDTH, NAME_HEIGHT);
         name_marquee.set_left_aligned(true);
         name_marquee.set_text(value);
+        profile_view.bind_name(name_marquee, value);
 
         RectTransform line = PlayOrnament.arrow_line(bar, "PlayerNameLine", NAME_LINE_WIDTH, PlayTheme.gold);
         PlayUi.place(line, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0.5f, 0.5f), new Vector2(NAME_X + NAME_WIDTH * 0.5f, -NAME_LINE_CENTER_Y), new Vector2(NAME_LINE_WIDTH, line.sizeDelta.y));
@@ -338,5 +359,120 @@ public class PlayTopBarIconHover : MonoBehaviour, IPointerEnterHandler, IPointer
     public void OnDeselect(BaseEventData event_data)
     {
         focused = false;
+    }
+}
+
+public class PlayTopBarProfile : MonoBehaviour
+{
+    private const float AVATAR_FADE_SECONDS = 0.25f;
+
+    private Image avatar_image;
+    private Text level_text;
+    private PlayMarquee name_marquee;
+    private string shown_name;
+    private string shown_avatar_key;
+    private float avatar_amount;
+    private bool avatar_visible;
+
+    public void bind_avatar(Image image)
+    {
+        avatar_image = image;
+        apply_avatar();
+    }
+
+    public void bind_level(Text text)
+    {
+        level_text = text;
+    }
+
+    public void bind_name(PlayMarquee marquee, string initial_name)
+    {
+        name_marquee = marquee;
+        shown_name = initial_name;
+    }
+
+    private void OnEnable()
+    {
+        PlayProfile.changed += refresh;
+        refresh();
+    }
+
+    private void OnDisable()
+    {
+        PlayProfile.changed -= refresh;
+    }
+
+    private void OnDestroy()
+    {
+        PlayProfile.changed -= refresh;
+    }
+
+    private void Update()
+    {
+        if (avatar_image == null)
+        {
+            return;
+        }
+
+        float target = avatar_visible ? 1f : 0f;
+        if (Mathf.Approximately(avatar_amount, target))
+        {
+            return;
+        }
+
+        avatar_amount = Mathf.MoveTowards(avatar_amount, target, Time.unscaledDeltaTime / AVATAR_FADE_SECONDS);
+        set_avatar_alpha(avatar_amount);
+    }
+
+    private void refresh()
+    {
+        string label = PlayTopBar.level_label(PlayProfile.level);
+        if (level_text != null && level_text.text != label)
+        {
+            level_text.text = label;
+        }
+
+        string current_name = PlayState.player_name;
+        if (name_marquee != null && current_name != shown_name)
+        {
+            shown_name = current_name;
+            name_marquee.set_text(current_name);
+        }
+
+        apply_avatar();
+    }
+
+    private void apply_avatar()
+    {
+        if (avatar_image == null)
+        {
+            return;
+        }
+
+        bool ready = !PlayProfile.is_loading || !string.IsNullOrEmpty(PlayProfile.avatar_id);
+        if (!ready)
+        {
+            avatar_visible = false;
+            return;
+        }
+
+        string key = PlayProfile.avatar_id ?? string.Empty;
+        if (key != shown_avatar_key || avatar_image.sprite == null)
+        {
+            Sprite sprite = PlayAvatar.avatar_sprite(key);
+            avatar_image.sprite = sprite;
+            shown_avatar_key = key;
+            avatar_amount = 0f;
+            set_avatar_alpha(0f);
+        }
+
+        avatar_visible = avatar_image.sprite != null;
+    }
+
+    private void set_avatar_alpha(float alpha)
+    {
+        Color color = PlayTheme.white;
+        color.a = avatar_image.sprite != null ? alpha : 0f;
+        avatar_image.color = color;
     }
 }

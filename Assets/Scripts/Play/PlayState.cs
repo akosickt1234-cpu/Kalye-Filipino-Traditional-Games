@@ -5,12 +5,22 @@ public static class PlayState
 {
     const string PLAYER_NAME_KEY = "player_name";
     const string DEFAULT_PLAYER_NAME = "Guest";
-    const int DEFAULT_PLAYER_LEVEL = 12;
 
     public static PlayGameData[] games = PlayGameData.create_defaults();
     public static int selected_index;
-    public static string player_name = DEFAULT_PLAYER_NAME;
-    public static int player_level = DEFAULT_PLAYER_LEVEL;
+
+    public static string player_name
+    {
+        get
+        {
+            if (LoginSession.is_logged_in && !string.IsNullOrWhiteSpace(PlayProfile.username)) return PlayProfile.username;
+
+            var saved_name = PlayerPrefs.GetString(PLAYER_NAME_KEY, string.Empty);
+            return string.IsNullOrWhiteSpace(saved_name) ? DEFAULT_PLAYER_NAME : saved_name;
+        }
+    }
+
+    public static int player_level => PlayProfile.level;
 
     public static event Action<int> selection_changed;
 
@@ -36,9 +46,5 @@ public static class PlayState
         selection_changed = null;
         games = PlayGameData.create_defaults();
         selected_index = 0;
-        player_level = DEFAULT_PLAYER_LEVEL;
-
-        var saved_name = PlayerPrefs.GetString(PLAYER_NAME_KEY, string.Empty);
-        player_name = string.IsNullOrWhiteSpace(saved_name) ? DEFAULT_PLAYER_NAME : saved_name;
     }
 }
