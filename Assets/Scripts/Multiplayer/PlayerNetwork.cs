@@ -115,6 +115,7 @@ public class PlayerNetwork : NetworkBehaviour
 
 
     [Header("Catch")]
+
     [SerializeField] private BoxCollider hitbox;
     private bool catchRequestSent;
     private NetworkVariable<bool> hasBeenHit = new NetworkVariable<bool>(
@@ -144,6 +145,7 @@ public class PlayerNetwork : NetworkBehaviour
 
     [Header("PatinteroLineDetector")]
     [SerializeField] private PatinteroLineDetector lineDetector;
+    [SerializeField] private float tayaLineReturnDistance = 0.12f;
 
     [Header("SoundHandler")]
     [SerializeField] private SoundHandler soundHandler;
@@ -441,8 +443,17 @@ public class PlayerNetwork : NetworkBehaviour
         
 
         Debug.Log("this is not the target and it isnt null");
-        if (target.taya.Value == true) return;
+        if (target.taya.Value) return;
+        if (target.IsSpectating) return;
         if (target.hasBeenHit.Value) return;
+
+        // Only process catches during an active Patintero match.
+        PatinteroManager patintero =
+            FindAnyObjectByType<PatinteroManager>();
+
+        if (patintero == null || !patintero.gameStart.Value)
+            return;
+
         Debug.Log("target has value");
 
         Collider targetCollider = target.GetComponent<Collider>();
@@ -530,7 +541,26 @@ public class PlayerNetwork : NetworkBehaviour
     }
 
 
+    private bool tayaOffLineTeleportRequested;
 
+    [Rpc(SendTo.Server)]
+    private void RequestTayaLineReturnRpc(
+        RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        if (!taya.Value || IsSpectating)
+            return;
+
+        PatinteroManager manager =
+            PatinteroManager.Instance;
+
+        if (manager == null)
+            return;
+
+        manager.ReturnTayaToRandomSpawn(OwnerClientId);
+    }
     private IEnumerator ResetHitAfterDelay()
     {
         Debug.Log($"Reset coroutine started for {OwnerClientId}");
@@ -783,6 +813,22 @@ public class PlayerNetwork : NetworkBehaviour
         if (manager.GuardId != OwnerClientId)
             return;
 
+        // The Guard must reset the can before tagging throwers.
+        PresoCan can = FindAnyObjectByType<PresoCan>();
+
+        if (can == null || !can.IsReadyForGuardTag)
+        {
+            ShowErrorClientRpc(
+                "Reset the can first! Press F near the can.",
+                RpcTarget.Single(
+                    rpcParams.Receive.SenderClientId,
+                    RpcTargetUse.Temp
+                )
+            );
+
+            return;
+        }
+
         PlayerNetwork closestThrower = null;
         float closestDistance = 2.5f;
 
@@ -833,7 +879,34 @@ public class PlayerNetwork : NetworkBehaviour
     {
         if (!IsOwner || !IsClient) return;
 
-        if (isSpectating.Value || hasBeenHit.Value)
+        if (isSpectating.Value)
+        {
+            // Spectators cannot move, sprint, or jump.
+            sprintRequested = false;
+            jumpRequested = false;
+            highJumpRequested = false;
+
+            // Still allow spectators to unlock/lock their mouse.
+            if (Input.GetKeyDown(KeyCode.LeftControl))
+            {
+                if (Cursor.lockState == CursorLockMode.Locked)
+                {
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
+                }
+                else
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                }
+            }
+
+            // Allow camera rotation while movement remains frozen.
+            UpdateCameraLook();
+            return;
+        }
+
+        if (hasBeenHit.Value)
         {
             sprintRequested = false;
             jumpRequested = false;
@@ -970,6 +1043,11 @@ public class PlayerNetwork : NetworkBehaviour
 
 
         // Camera rotation
+        UpdateCameraLook();
+    }
+
+    private void UpdateCameraLook()
+    {
         float mouseX =
             Input.GetAxis("Mouse X") * mouseSensitivity;
 
@@ -984,8 +1062,6 @@ public class PlayerNetwork : NetworkBehaviour
         cameraPivot.localRotation =
             Quaternion.Euler(xRotation, 0f, 0f);
     }
-
-    
 
     private void FixedUpdate()
     {
@@ -1013,6 +1089,27 @@ public class PlayerNetwork : NetworkBehaviour
             soundHandler.Idle();
 
             return;
+        }
+
+        // Return Taya only when pushed sufficiently far from the line.
+        if (taya.Value && lineDetector != null)
+        {
+            float distanceToLine = lineDetector.DistanceToLine(
+                rb.position,
+                tayaLineReturnDistance
+            );
+
+            if (distanceToLine > tayaLineReturnDistance &&
+                !tayaOffLineTeleportRequested)
+            {
+                tayaOffLineTeleportRequested = true;
+
+                RequestTayaLineReturnRpc();
+            }
+            else if (lineDetector.IsOnLine(rb.position))
+            {
+                tayaOffLineTeleportRequested = false;
+            }
         }
 
         float horizontal = Input.GetAxisRaw("Horizontal");
@@ -1107,15 +1204,7 @@ public class PlayerNetwork : NetworkBehaviour
                 nextPosition
             );
 
-        if (!blockedByThrowerBase)
-        {
-            if (!taya.Value || lineDetector.IsOnLine(nextPosition))
-            {
-                rb.MovePosition(nextPosition);
-            }
-        }
-
-        // Replace IsTaya with your existing role check.
+        
         if (!taya.Value || lineDetector.IsOnLine(nextPosition))
         {
             rb.MovePosition(nextPosition);

@@ -10,6 +10,28 @@ public class PresoCan : NetworkBehaviour
     private Vector3 startingPosition;
     private Quaternion startingRotation;
 
+    [SerializeField] private float positionTolerance = 0.15f;
+    [SerializeField] private float uprightTolerance = 8f;
+
+    public bool IsAtStartingPose
+    {
+        get
+        {
+            bool atStartingPosition =
+                Vector3.Distance(transform.position, startingPosition)
+                <= positionTolerance;
+
+            bool isUpright =
+                Vector3.Angle(transform.up, Vector3.up)
+                <= uprightTolerance;
+
+            return atStartingPosition && isUpright;
+        }
+    }
+
+    public bool IsReadyForGuardTag =>
+        !hasBeenKnockedDown && IsAtStartingPose;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();

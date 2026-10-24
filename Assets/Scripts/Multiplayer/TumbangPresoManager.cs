@@ -213,6 +213,10 @@ public class TumbangPresoManager : NetworkBehaviour
         timeRemaining.OnValueChanged -= OnTimeChanged;
         guardClientId.OnValueChanged -= OnGuardChanged;
 
+        // Local fallback: hide the object when this manager despawns.
+        if (gameObjectToToggle != null)
+            gameObjectToToggle.SetActive(false);
+
         if (startButton != null)
         {
             startButton.onClick.RemoveListener(StartMatch);
@@ -265,6 +269,9 @@ public class TumbangPresoManager : NetworkBehaviour
 
         matchFinished = true;
         matchActive.Value = false;
+
+        // Hide the object immediately when the match ends.
+        SetGameObjectActiveClientRpc(false);
 
         ResetPresoCan();
 
@@ -707,6 +714,9 @@ public class TumbangPresoManager : NetworkBehaviour
         matchFinished = true;
         matchActive.Value = false;
 
+        // Hide the object as soon as the match ends.
+        SetGameObjectActiveClientRpc(false);
+
         ResetPresoCan();
 
         int totalPlayers = playerScores.Count;
@@ -779,6 +789,8 @@ public class TumbangPresoManager : NetworkBehaviour
                 RpcTarget.Single(id, RpcTargetUse.Temp)
             );
         }
+        // Ensure the object is hidden when returning to the lobby.
+        SetGameObjectActiveClientRpc(false);
         HideResultPanelClientRpc();
         // Clear the completed match.
         playerScores.Clear();

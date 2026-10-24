@@ -1051,6 +1051,7 @@ MonoBehaviour:
   gotHitDisplay: 0
   textLabel: {fileID: 3350002234521050231}
   lineDetector: {fileID: 838174640154054096}
+  tayaLineReturnDistance: 0.13
   soundHandler: {fileID: 7280999098390212357}
   inGamePanel: {fileID: 0}
   managerPanel: {fileID: 0}
@@ -1112,7 +1113,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9191364300320882001}
   serializedVersion: 5
-  m_Mass: 100
+  m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}

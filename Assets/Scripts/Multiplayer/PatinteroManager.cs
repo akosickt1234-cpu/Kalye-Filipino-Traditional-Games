@@ -69,6 +69,10 @@ public class PatinteroManager : NetworkBehaviour
     private readonly Dictionary<ulong, Quaternion> lobbyRotations = new();
     private bool isEndingMatch;
 
+    private readonly Dictionary<ulong, Vector3> matchSpawnPositions = new();
+    private readonly Dictionary<ulong, Quaternion> matchSpawnRotations = new();
+    private int totalRunnersAtRoundStart;
+
     [ClientRpc]
     private void SetGameObjectActiveClientRpc(bool isActive)
     {
@@ -104,6 +108,9 @@ public class PatinteroManager : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        if (gameObjectToToggle != null)
+            gameObjectToToggle.SetActive(false);
+
         if (Instance == this)
             Instance = null;
     }
@@ -129,6 +136,7 @@ public class PatinteroManager : NetworkBehaviour
             isEndingMatch = true;
             roundEnded = true;
 
+            SetGameObjectActiveClientRpc(false); // Disable fake walls immediately.
             SetPatinteroUIClientRpc(false, false);
 
             StartCoroutine(EndForInsufficientPlayers());
@@ -216,6 +224,7 @@ public class PatinteroManager : NetworkBehaviour
             );
 
             // Restore the player's normal lobby state.
+            player.SetSpectatingServer(false);
             player.taya.Value = false;
             player.canJump.Value = false;
         }
@@ -235,6 +244,9 @@ public class PatinteroManager : NetworkBehaviour
 
         lobbyPositions.Clear();
         lobbyRotations.Clear();
+
+        matchSpawnPositions.Clear();
+        matchSpawnRotations.Clear();
 
         ResetLobbyUIClientRpc();
         SetPatinteroUIClientRpc(false, true);
@@ -268,9 +280,16 @@ public class PatinteroManager : NetworkBehaviour
 
                     if (localPlayer != null)
                     {
-                        teamText.text = localPlayer.taya.Value
-                            ? "Team: Taya"
-                            : "Team: Runner";
+                        if (localPlayer.IsSpectating)
+                        {
+                            teamText.text = "Team: Spectator";
+                        }
+                        else
+                        {
+                            teamText.text = localPlayer.taya.Value
+                                ? "Team: Taya"
+                                : "Team: Runner";
+                        }
                     }
                 }
             }
@@ -377,6 +396,8 @@ public class PatinteroManager : NetworkBehaviour
 
         lobbyPositions.Clear();
         lobbyRotations.Clear();
+        matchSpawnPositions.Clear();
+        matchSpawnRotations.Clear();
 
         foreach (NetworkClient client in
                  NetworkManager.Singleton.ConnectedClientsList)
@@ -411,7 +432,8 @@ public class PatinteroManager : NetworkBehaviour
         runnersAtCheckpoint.Clear();
         caughtRunners.Clear();
 
-        bool assignTaya = true;
+        // Collect all players who will participate in the match.
+        List<PlayerNetwork> playersToAssignRoles = new List<PlayerNetwork>();
 
         foreach (NetworkClient client in
                  NetworkManager.Singleton.ConnectedClientsList)
@@ -422,15 +444,47 @@ public class PatinteroManager : NetworkBehaviour
             PlayerNetwork plr =
                 client.PlayerObject.GetComponent<PlayerNetwork>();
 
-            if (plr == null)
-                continue;
-
-            plr.UiGameStartClientRpc();
-            plr.canJump.Value = false;
-            plr.taya.Value = assignTaya;
-            assignTaya = !assignTaya;
+            if (plr != null)
+                playersToAssignRoles.Add(plr);
         }
 
+        // Shuffle the players so role assignment isn't tied to
+        // host status or connection order.
+        for (int i = playersToAssignRoles.Count - 1; i > 0; i--)
+        {
+            int randomIndex = Random.Range(0, i + 1);
+
+            PlayerNetwork temp = playersToAssignRoles[i];
+            playersToAssignRoles[i] = playersToAssignRoles[randomIndex];
+            playersToAssignRoles[randomIndex] = temp;
+        }
+
+        // Keep team sizes as balanced as possible.
+        int tayaCount = playersToAssignRoles.Count / 2;
+
+        // If the player count is odd, randomly choose which team
+        // gets the extra player.
+        if (playersToAssignRoles.Count % 2 != 0 &&
+            Random.Range(0, 2) == 0)
+        {
+            tayaCount++;
+        }
+
+        // Assign the shuffled players to their roles.
+        for (int i = 0; i < playersToAssignRoles.Count; i++)
+        {
+            PlayerNetwork plr = playersToAssignRoles[i];
+
+            plr.SetSpectatingServer(false);
+            plr.UiGameStartClientRpc();
+            plr.canJump.Value = false;
+
+            // First tayaCount shuffled players become Taya.
+            plr.taya.Value = i < tayaCount;
+        }
+
+        
+        totalRunnersAtRoundStart = GetRunnerCount();
         TeleportPlayersToSpawnPoints();
     }
 
@@ -456,21 +510,60 @@ public class PatinteroManager : NetworkBehaviour
 
     public void RegisterCaughtRunner(ulong runnerId)
     {
-        if (!IsServer || roundEnded || !IsRunner(runnerId))
+        if (!IsServer || !gameStart.Value || roundEnded)
             return;
 
-        // HashSet prevents the same runner counting twice this round.
-        caughtRunners.Add(runnerId);
-
-        int totalRunners = GetRunnerCount();
-        if (totalRunners <= 0)
+        if (!IsRunner(runnerId))
             return;
 
-        int requiredCatches =
-            Mathf.CeilToInt(totalRunners * tayaCatchThreshold);
+        // Don't eliminate or count the same Runner twice.
+        if (!caughtRunners.Add(runnerId))
+            return;
+
+        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(
+                runnerId, out NetworkClient client))
+            return;
+
+        if (client.PlayerObject == null)
+            return;
+
+        PlayerNetwork player =
+            client.PlayerObject.GetComponent<PlayerNetwork>();
+
+        if (player == null)
+            return;
+
+        // Return the caught Runner to their original match spawn.
+        if (matchSpawnPositions.TryGetValue(
+                runnerId, out Vector3 spawnPosition) &&
+            matchSpawnRotations.TryGetValue(
+                runnerId, out Quaternion spawnRotation))
+        {
+            player.TeleportToAssignedSpawnRpc(
+                spawnPosition,
+                spawnRotation,
+                RpcTarget.Single(runnerId, RpcTargetUse.Temp)
+            );
+        }
+
+        // Eliminate them for the rest of the match.
+        // They remain frozen even after the temporary hit timer ends.
+        player.SetSpectatingServer(true);
+
+        Debug.Log(
+            $"Patintero: Runner {runnerId} was caught and is now spectating."
+        );
+
+        // Use the original number of Runners for this match,
+        // not the reduced count after someone is caught.
+        int requiredCatches = Mathf.CeilToInt(
+            totalRunnersAtRoundStart * tayaCatchThreshold
+        );
 
         if (caughtRunners.Count >= requiredCatches)
-            ScorePoint(true); // Taya score.
+        {
+            ScorePoint(true);
+        }
     }
 
     private bool IsRunner(ulong clientId)
@@ -485,7 +578,9 @@ public class PatinteroManager : NetworkBehaviour
         PlayerNetwork plr =
             client.PlayerObject.GetComponent<PlayerNetwork>();
 
-        return plr != null && !plr.taya.Value;
+        return plr != null
+            && !plr.taya.Value
+            && !plr.IsSpectating;
     }
 
     private int GetRunnerCount()
@@ -536,6 +631,7 @@ public class PatinteroManager : NetworkBehaviour
             isEndingMatch = true;
 
             SetPatinteroUIClientRpc(false, false);
+            SetGameObjectActiveClientRpc(false); // Match winner: disable fake walls.
 
             StartCoroutine(ReturnPlayersToLobby());
         }
@@ -578,6 +674,7 @@ public class PatinteroManager : NetworkBehaviour
                 RpcTarget.Single(id, RpcTargetUse.Temp)
             );
 
+            player.SetSpectatingServer(false);
             player.taya.Value = false;
             player.canJump.Value = false;
         }
@@ -642,13 +739,72 @@ public class PatinteroManager : NetworkBehaviour
                 client.PlayerObject.GetComponent<PlayerNetwork>();
 
             if (plr != null)
+            {
+                // Everyone can participate in the next round again.
+                plr.SetSpectatingServer(false);
                 plr.ResetForNewRound();
+            }
         }
 
         TeleportPlayersToSpawnPoints();
         roundEnded = false;
     }
 
+
+    public void ReturnTayaToRandomSpawn(ulong clientId)
+    {
+        if (!IsServer || !gameStart.Value)
+            return;
+
+        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(
+                clientId, out NetworkClient client))
+            return;
+
+        if (client.PlayerObject == null)
+            return;
+
+        PlayerNetwork player =
+            client.PlayerObject.GetComponent<PlayerNetwork>();
+
+        if (player == null ||
+            !player.taya.Value ||
+            player.IsSpectating)
+            return;
+
+        if (tayaSpawnPoints == null || tayaSpawnPoints.Length == 0)
+        {
+            Debug.LogWarning("No Taya spawn points assigned!");
+            return;
+        }
+
+        // Build a list of valid Taya spawn points.
+        List<Transform> validSpawns = new List<Transform>();
+
+        foreach (Transform spawn in tayaSpawnPoints)
+        {
+            if (spawn != null)
+                validSpawns.Add(spawn);
+        }
+
+        if (validSpawns.Count == 0)
+        {
+            Debug.LogWarning("All Taya spawn points are missing!");
+            return;
+        }
+
+        // Select a random Taya spawn.
+        Transform spawnPoint =
+            validSpawns[Random.Range(0, validSpawns.Count)];
+
+        Vector3 spawnPosition =
+            spawnPoint.position + Vector3.up * spawnHeight;
+
+        player.TeleportToAssignedSpawnRpc(
+            spawnPosition,
+            spawnPoint.rotation,
+            RpcTarget.Single(clientId, RpcTargetUse.Temp)
+        );
+    }
 
     private void TeleportPlayersToSpawnPoints()
     {
@@ -712,6 +868,14 @@ public class PatinteroManager : NetworkBehaviour
 
             Vector3 position =
                 spawnPoint.position + Vector3.up * spawnHeight;
+
+            // Remember this player's original Patintero spawn.
+            // Don't overwrite it during later round resets.
+            if (!matchSpawnPositions.ContainsKey(client.ClientId))
+            {
+                matchSpawnPositions[client.ClientId] = position;
+                matchSpawnRotations[client.ClientId] = spawnPoint.rotation;
+            }
 
             player.TeleportToSpawnRpc(
                 position,
