@@ -29,7 +29,7 @@ public static class LobbyPlayerSlots
     const float CREST_BOTTOM = 0.32f;
     const float CREST_TOP = 0.68f;
     const float RING_ALPHA = 0.9f;
-    const float YOU_GLOW_ALPHA = 0.25f;
+    const float YOU_GLOW_ALPHA = 0.15f;
     const float PLUS_MIN = 0.30f;
     const float PLUS_MAX = 0.70f;
     const float PLUS_HALF_THICKNESS = 0.025f;
@@ -57,7 +57,7 @@ public static class LobbyPlayerSlots
     const float RHOMBUS_RIGHT = 0.72f;
     const float RHOMBUS_BOTTOM = 0.77f;
     const float RHOMBUS_TOP = 0.935f;
-    const float CARD_GLOW_ALPHA = 0.18f;
+    const float CARD_GLOW_ALPHA = 0.15f;
     const float EMPTY_CARD_ALPHA = 0.55f;
     const float SPIN_SPEED = 0.9f;
     const float SPIN_PHASE_STEP = 1.1f;

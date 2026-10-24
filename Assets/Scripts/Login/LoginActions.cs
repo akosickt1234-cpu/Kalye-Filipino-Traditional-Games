@@ -36,28 +36,28 @@ public class LoginActionsView : MonoBehaviour
     const string FORM_NOT_READY = "The login form is not ready.";
     const string GENERIC_FAIL = "Login failed. Please try again.";
 
-    const float SUBMIT_LEFT = 0.025f;
-    const float SUBMIT_RIGHT = 0.975f;
-    const float SUBMIT_BOTTOM = 0.379f;
-    const float SUBMIT_TOP = 0.509f;
+    const float SUBMIT_LEFT = 0.2575f;
+    const float SUBMIT_RIGHT = 0.7425f;
+    const float SUBMIT_BOTTOM = 0.286f;
+    const float SUBMIT_TOP = 0.381f;
     const float SUBMIT_STAR_LEFT = 0.215f;
     const float SUBMIT_STAR_RIGHT = 0.285f;
     const float SUBMIT_STAR_BOTTOM = 0.26f;
     const float SUBMIT_STAR_TOP = 0.74f;
     const float SUBMIT_LABEL_LEFT = 0.3f;
     const float SUBMIT_LABEL_RIGHT = 0.7f;
-    const float SUBMIT_LABEL_RATIO = 0.42f;
+    const float SUBMIT_LABEL_RATIO = 0.5f;
     const float SUBMIT_NORMAL_TINT = 0.94f;
     const float SPIN_DEGREES = 240f;
 
     const float FORGOT_LEFT = 0.3f;
     const float FORGOT_RIGHT = 0.7f;
-    const float FORGOT_BOTTOM = 0.298f;
-    const float FORGOT_TOP = 0.352f;
-    const float FORGOT_RATIO = 0.68f;
+    const float FORGOT_BOTTOM = 0.231f;
+    const float FORGOT_TOP = 0.269f;
+    const float FORGOT_RATIO = 0.8f;
 
-    const float DIVIDER_BOTTOM = 0.205f;
-    const float DIVIDER_TOP = 0.25f;
+    const float DIVIDER_BOTTOM = 0.182f;
+    const float DIVIDER_TOP = 0.215f;
     const float DIVIDER_LINE_LEFT_START = 0f;
     const float DIVIDER_LINE_LEFT_END = 0.225f;
     const float DIVIDER_LINE_RIGHT_START = 0.775f;
@@ -67,12 +67,12 @@ public class LoginActionsView : MonoBehaviour
     const float DIVIDER_MARK_HALF = 0.014f;
     const float DIVIDER_LABEL_LEFT = 0.29f;
     const float DIVIDER_LABEL_RIGHT = 0.71f;
-    const float DIVIDER_RATIO = 0.7f;
+    const float DIVIDER_RATIO = 0.85f;
 
     const float GUEST_LEFT = 0.109f;
     const float GUEST_RIGHT = 0.887f;
-    const float GUEST_BOTTOM = 0.069f;
-    const float GUEST_TOP = 0.171f;
+    const float GUEST_BOTTOM = 0.091f;
+    const float GUEST_TOP = 0.165f;
     const float GUEST_BORDER = 2f;
     const float GUEST_ICON_LEFT = 0.23f;
     const float GUEST_ICON_RIGHT = 0.33f;
@@ -80,10 +80,11 @@ public class LoginActionsView : MonoBehaviour
     const float GUEST_ICON_TOP = 0.8f;
     const float GUEST_LABEL_LEFT = 0.36f;
     const float GUEST_LABEL_RIGHT = 0.76f;
-    const float GUEST_LABEL_RATIO = 0.46f;
+    const float GUEST_LABEL_RATIO = 0.55f;
 
-    const float NEW_BOTTOM = -0.04f;
-    const float NEW_TOP = 0.04f;
+    // Lifted off the card's bottom border so the row has its own margin.
+    const float NEW_BOTTOM = 0.016f;
+    const float NEW_TOP = 0.072f;
     const float NEW_LINE_LEFT_START = 0.12f;
     const float NEW_LINE_LEFT_END = 0.172f;
     const float NEW_LINE_RIGHT_START = 0.826f;
@@ -95,7 +96,7 @@ public class LoginActionsView : MonoBehaviour
     const float NEW_LABEL_SPLIT = 0.47f;
     const float NEW_LABEL_GAP = 0.0075f;
     const float NEW_LABEL_RIGHT = 0.78f;
-    const float NEW_RATIO = 0.4f;
+    const float NEW_RATIO = 0.62f;
 
     const float LINE_THICKNESS = 2f;
     const float LINE_ALPHA = 0.8f;
@@ -178,13 +179,14 @@ public class LoginActionsView : MonoBehaviour
         face.preserveAspect = false;
         place(face.rectTransform, SUBMIT_LEFT, SUBMIT_BOTTOM, SUBMIT_RIGHT, SUBMIT_TOP);
 
-        var glow = LobbyUi.rim_glow("login_submit_glow", face.rectTransform, LoginTheme.clear);
+        var glow = LobbyUi.rim_glow("login_submit_glow", face.rectTransform, LoginTheme.clear, 0f);
         glow.rectTransform.SetAsFirstSibling();
 
         spinners.Add(build_star("login_submit_star_left", face.rectTransform, SUBMIT_STAR_LEFT, SUBMIT_STAR_RIGHT));
         spinners.Add(build_star("login_submit_star_right", face.rectTransform, 1f - SUBMIT_STAR_RIGHT, 1f - SUBMIT_STAR_LEFT));
 
         submit_label = PlayUi.text("login_submit_label", face.rectTransform, LOGIN_TEXT, LoginTheme.LOADING_TEXT_SIZE, PlayTheme.label_brown, TextAnchor.MiddleCenter);
+        submit_label.fontStyle = FontStyle.Bold;
         LobbyUi.place_fraction(submit_label.rectTransform, SUBMIT_LABEL_LEFT, 0.1f, SUBMIT_LABEL_RIGHT, 0.9f);
         track(submit_label, SUBMIT_LABEL_RATIO, 0f);
 
@@ -266,20 +268,19 @@ public class LoginActionsView : MonoBehaviour
         label.raycastTarget = true;
         place(label.rectTransform, left, bottom, right, top);
 
-        var glow = LobbyUi.rim_glow(name + "_glow", label.rectTransform, LoginTheme.clear);
-        glow.rectTransform.SetAsFirstSibling();
-
-        var line = PlayUi.image(name + "_underline", label.rectTransform, null);
-        line.color = color;
+        var underline = PlayUi.image(name + "_underline", label.rectTransform, null);
+        underline.color = color;
 
         var button = label.gameObject.AddComponent<Button>();
         button.targetGraphic = label;
         LobbyUi.no_transition(button);
         button.onClick.AddListener(on_click);
-        LoginFocusGlow.attach(button, label, color, LoginTheme.gold_soft, glow, PlayTheme.with_alpha(LoginTheme.gold, GLOW_ALPHA));
+        // Hover feedback is the tint + underline; no rectangle glow (it would wash
+        // over the text's padding and the card background).
+        LoginFocusGlow.attach(button, label, color, LoginTheme.gold_soft, null, LoginTheme.clear);
 
         track(label, ratio, align);
-        fit_items[fit_items.Count - 1].underline = line.rectTransform;
+        fit_items[fit_items.Count - 1].underline = underline.rectTransform;
         return label;
     }
 
@@ -421,32 +422,22 @@ public class LoginActionsView : MonoBehaviour
 
         var ticket = ++request_ticket;
         begin();
-        LoginService.login(identifier, password, () => finish_ok(ticket, identifier, false), reason => finish_fail(ticket, reason));
+        LoginService.login(identifier, password, () => finish_ok(ticket, identifier), reason => finish_fail(ticket, reason));
     }
 
     void try_guest()
     {
         if (!can_act()) return;
 
-        LoginFeedback.ask_guest_name(name =>
-        {
-            if (!can_act()) return;
-
-            var clean = LobbyUi.sanitize(name);
-            if (clean.Length == 0) return;
-
-            var ticket = ++request_ticket;
-            begin();
-            LoginService.guest(clean, () => finish_ok(ticket, clean, true), reason => finish_fail(ticket, reason));
-        });
+        LoginGuest.open(LoginMode.SignIn);
     }
 
-    void finish_ok(int ticket, string name, bool guest)
+    void finish_ok(int ticket, string name)
     {
         if (!is_current(ticket)) return;
 
         end();
-        if (!LoginSession.is_logged_in) LoginSession.set(name, string.Empty, string.Empty, guest);
+        if (!LoginSession.is_logged_in) LoginSession.set(name, string.Empty, string.Empty, false);
         LoginOverlay.succeed();
     }
 

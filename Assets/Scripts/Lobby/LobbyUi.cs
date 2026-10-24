@@ -171,15 +171,17 @@ public static class LobbyUi
         selectable.transition = Selectable.Transition.None;
     }
 
-    public static Image rim_glow(string name, Transform parent, Color color)
+    public static Image rim_glow(string name, Transform parent, Color color, float expand = RIM_GLOW_FEATHER)
     {
         var picture = PlayUi.image(name, parent, rim_glow_art());
         picture.type = Image.Type.Sliced;
         picture.fillCenter = false;
         picture.color = color;
         PlayUi.stretch(picture.rectTransform);
-        picture.rectTransform.offsetMin = new Vector2(-RIM_GLOW_FEATHER, -RIM_GLOW_FEATHER);
-        picture.rectTransform.offsetMax = new Vector2(RIM_GLOW_FEATHER, RIM_GLOW_FEATHER);
+        // A positive expand grows the rect (outer halo); zero or negative keeps the glow
+        // inside the element's own bounds so it never paints across padding/background.
+        picture.rectTransform.offsetMin = new Vector2(-expand, -expand);
+        picture.rectTransform.offsetMax = new Vector2(expand, expand);
         return picture;
     }
 

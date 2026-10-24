@@ -5,15 +5,27 @@ public static class LoginHeader
 {
     const string LOGO_PATH = "Background/Menu/MenuLogo";
 
-    const float LOGO_BOTTOM = -0.3f;
-    const float LOGO_TOP = 0.85f;
+    // MenuLogo art stacks a tagline row under the brush wordmark. The card only needs the
+    // wordmark row, so crop it (texture fractions, measured from the bottom edge).
+    const float WORDMARK_ART_LEFT = 0.02f;
+    const float WORDMARK_ART_BOTTOM = 0.27f;
+    const float WORDMARK_ART_WIDTH = 0.96f;
+    const float WORDMARK_ART_HEIGHT = 0.55f;
 
-    const float EYEBROW_BOTTOM = 0.78f;
-    const float EYEBROW_TOP = 0.98f;
+    // Slot fractions of the 0.35-tall header slot. The wordmark sits tight under the
+    // eyebrow row; the only wide spacing is below it, before the input fields.
+    const float LOGO_BOTTOM = 0.3286f;
+    const float LOGO_TOP = 0.62f;
+
+    static Sprite wordmark;
+
+    const float EYEBROW_BOTTOM = 0.7286f;
+    const float EYEBROW_TOP = 0.8571f;
     const float LINE_LEFT_START = 0.02f;
     const float LINE_LEFT_END = 0.2f;
+    // The right line stops short of the close button, which owns the top-right corner.
     const float LINE_RIGHT_START = 0.8f;
-    const float LINE_RIGHT_END = 0.98f;
+    const float LINE_RIGHT_END = 0.85f;
     const float DIAMOND_LEFT_X = 0.225f;
     const float DIAMOND_RIGHT_X = 0.775f;
     const float DIAMOND_HALF_HEIGHT = 0.14f;
@@ -35,10 +47,46 @@ public static class LoginHeader
 
     static void build_logo(RectTransform view)
     {
-        var logo = PlayUi.image("login_logo", view, PlayUi.sprite(LOGO_PATH));
+        var logo = PlayUi.image("login_logo", view, wordmark_sprite());
         logo.preserveAspect = true;
         logo.raycastTarget = false;
         LobbyUi.place_fraction(logo.rectTransform, 0f, LOGO_BOTTOM, 1f, LOGO_TOP);
+
+        // The wordmark is brush art, so "bold" is staged as dark offset copies that
+        // thicken the glyph silhouettes.
+        embolden(logo);
+    }
+
+    static void embolden(Image logo)
+    {
+        add_bold_pass(logo, new Vector2(2.2f, -2.2f));
+        add_bold_pass(logo, new Vector2(-2.2f, -2.2f));
+    }
+
+    static void add_bold_pass(Graphic logo, Vector2 distance)
+    {
+        var ghost = logo.gameObject.AddComponent<Shadow>();
+        ghost.effectColor = PlayTheme.shadow;
+        ghost.effectDistance = distance;
+        ghost.useGraphicAlpha = true;
+    }
+
+    static Sprite wordmark_sprite()
+    {
+        if (wordmark != null) return wordmark;
+
+        var source = PlayUi.sprite(LOGO_PATH);
+        if (source == null) return null;
+
+        var tex = source.texture;
+        var region = new Rect(
+            WORDMARK_ART_LEFT * tex.width,
+            WORDMARK_ART_BOTTOM * tex.height,
+            WORDMARK_ART_WIDTH * tex.width,
+            WORDMARK_ART_HEIGHT * tex.height);
+        wordmark = Sprite.Create(tex, region, new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+        wordmark.name = "login_wordmark";
+        return wordmark;
     }
 
     static void build_eyebrow(RectTransform view)
@@ -56,6 +104,7 @@ public static class LoginHeader
         label.resizeTextForBestFit = true;
         label.resizeTextMinSize = TEXT_MIN_SIZE;
         label.resizeTextMaxSize = TEXT_SIZE;
+        label.fontStyle = FontStyle.Bold;
         LobbyUi.place_fraction(label.rectTransform, TEXT_LEFT, 0f, TEXT_RIGHT, 1f);
         LoginHeaderEyebrow.attach(label);
     }
@@ -95,6 +144,7 @@ public class LoginHeaderEyebrow : MonoBehaviour
         {
             case LoginMode.Register: return "CREATE ACCOUNT";
             case LoginMode.Forgot: return "FORGOT PASSWORD";
+            case LoginMode.Guest: return "GUEST LOGIN";
             default: return "WELCOME BACK";
         }
     }

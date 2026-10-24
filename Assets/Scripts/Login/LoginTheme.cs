@@ -3,6 +3,7 @@ using UnityEngine;
 public static class LoginTheme
 {
     public const string FRAME_PATH = "Frames/Login/LoginFrame";
+    public const string INPUT_FRAME_PATH = "Buttons/Menu/InputFieldFrameClear";
     public const string BUTTON_GOLD_PATH = "Buttons/Play/TabSelectedGold";
     public const string ICON_EMAIL_PATH = "Icons/Login/IconEmail";
     public const string ICON_LOCK_PATH = "Icons/Login/IconLock";
@@ -19,13 +20,14 @@ public static class LoginTheme
     public const float INNER_RIGHT = 0.917f;
     public const float INNER_BOTTOM = 0.065f;
     public const float INNER_TOP = 0.865f;
-    public const float HEADER_RATIO = 0.28f;
+    public const float HEADER_RATIO = 0.35f;
 
-    public const float CLOSE_LEFT = 0.855f;
-    public const float CLOSE_RIGHT = 0.935f;
-    public const float CLOSE_CENTER_Y = 0.897f;
-    public const float CLOSE_BORDER = 2f;
-    public const float CLOSE_ICON_INSET = 0.28f;
+    // The close button is a small bare icon tucked into the top-right corner.
+    public const float CLOSE_LEFT = 0.8536f;
+    public const float CLOSE_RIGHT = 0.9086f;
+    public const float CLOSE_CENTER_Y = 0.8360f;
+    public const float CLOSE_BORDER = 0f;
+    public const float CLOSE_ICON_INSET = 0.14f;
     public const float CLOSE_GLOW_ALPHA = 0.55f;
 
     public const float CORNER_SCALE = 4f;
@@ -44,11 +46,16 @@ public static class LoginTheme
     public const float FIELD_EYE_BOTTOM = 0.2f;
     public const float FIELD_EYE_TOP = 0.8f;
     public const float FIELD_ERROR_HEIGHT = 30f;
-    public const float FIELD_ERROR_GAP = 4f;
+    public const float FIELD_ERROR_GAP = 10f;
+    // Reserved band below every field so validation hints never collide with the
+    // next row (gap + text height, in slot pixels).
+    public const float FIELD_HINT_GAP = 5f;
+    public const float FIELD_HINT_HEIGHT = 20f;
     public const float FIELD_DISABLED_ALPHA = 0.5f;
     public const int FIELD_MAX_CHARS = 128;
     public const int FIELD_TEXT_SIZE = 26;
     public const int FIELD_ERROR_SIZE = 20;
+    public const int FIELD_HINT_SIZE = 17;
 
     public const float LOADING_WIDTH = 0.26f;
     public const float LOADING_HEIGHT = 0.075f;
