@@ -16,7 +16,7 @@ var url = ApiConfig.BASE_URL + "/me";
 
 ## ApiClient
 
-static class. the bearer token comes from `LoginSession`. callbacks run on the main thread. on `UNAUTHENTICATED`, `TOKEN_EXPIRED` or `INVALID_TOKEN` it tries one refresh through `LoginService.restore`, retries once, and if that fails it signs out and opens the login overlay. guests have no refresh token, so they go straight to the login overlay. when a refresh is already running, other calls wait for it.
+static class. the bearer token comes from `LoginSession`. callbacks run on the main thread. on `UNAUTHENTICATED`, `TOKEN_EXPIRED` or `INVALID_TOKEN` it tries one refresh through `LoginService.restore` and retries once. if the refresh is rejected, or the retry fails the same way, it signs out and opens the login overlay. if the refresh fails only because the network is down, the saved session is kept, the login overlay does not open, and the caller gets a normal network failure (`is_network_failure` true, `session_ended` false), so show the retry toast. guests have no refresh token, so they go straight to the login overlay. when a refresh is already running, other calls wait for it.
 
 | member | use |
 | --- | --- |
@@ -49,7 +49,7 @@ reaches every `on_fail`. never show raw backend text. use `message`.
 | `code` | backend error code, or `NETWORK_FAILURE`, `BAD_REPLY`, `UNKNOWN` |
 | `status` | http status, 0 when there was none |
 | `message` | friendly text, safe to show |
-| `session_ended` | true when the user was sent to the login overlay. do not toast in that case |
+| `session_ended` | true only when the session was lost and the user was sent to the login overlay (rejected refresh, guest token expired, or a second auth failure after a retry). do not toast in that case. false for network failures, even during a refresh |
 | `is_network_failure` | true for connection errors and timeouts |
 | `ApiError.friendly(code)` | friendly text for a code. unknown codes get a generic text |
 
@@ -123,7 +123,3 @@ registered only. guests get `FORBIDDEN`, so never call it for a guest (`LoginSes
 ```
 
 total played is `total.played`. read from `match_routes.ts`.
-
-## known limits
-
-- `LoginService.restore` clears the saved session when a refresh fails for any reason, including a network failure. a network drop during a refresh therefore signs the user out and opens the login overlay. fixing this needs a change in `LoginService`, which is outside agent 1's scope.
