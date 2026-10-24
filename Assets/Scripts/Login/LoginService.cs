@@ -5,7 +5,6 @@ using UnityEngine.Networking;
 
 public static class LoginService
 {
-    const string BASE_URL = "http://localhost:2567";
     const string PATH_LOGIN = "/auth/login";
     const string PATH_GUEST = "/auth/guest";
     const string PATH_REGISTER = "/auth/register";
@@ -240,7 +239,7 @@ public static class LoginService
 
     static void send(string path, string json, Action<Reply> on_done)
     {
-        var request = new UnityWebRequest(BASE_URL + path, UnityWebRequest.kHttpVerbPOST);
+        var request = new UnityWebRequest(ApiConfig.BASE_URL + path, UnityWebRequest.kHttpVerbPOST);
         request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", JSON_TYPE);
