@@ -5,7 +5,6 @@ public static class LoginFeedback
 {
     static RectTransform holder;
     static LoginToast toast_view;
-    static LoginGuestModal guest_modal;
 
     public static void build(RectTransform root)
     {
@@ -20,13 +19,6 @@ public static class LoginFeedback
     public static void toast_retry(string message, Action retry)
     {
         show_toast(message, LoginTheme.error, retry);
-    }
-
-    public static void ask_guest_name(Action<string> on_name)
-    {
-        if (holder == null || guest_modal != null) return;
-
-        guest_modal = LoginGuestModal.open(holder, on_name);
     }
 
     static void show_toast(string message, Color accent, Action retry)

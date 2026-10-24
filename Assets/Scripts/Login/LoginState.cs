@@ -4,7 +4,8 @@ public enum LoginMode
 {
     SignIn,
     Register,
-    Forgot
+    Forgot,
+    Guest
 }
 
 public static class LoginState

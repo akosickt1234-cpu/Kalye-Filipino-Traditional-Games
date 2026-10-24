@@ -41,6 +41,10 @@ public class LobbyFrameSpin : MonoBehaviour
         var size = rect.rect.size;
         material.SetVector("_Size", new Vector4(size.x, size.y, 0f, 0f));
         material.SetFloat("_Angle", phase + Time.unscaledTime * speed);
+
+        // Material uniforms alone don't repaint an idle UI canvas; dirty the graphic
+        // so the beam keeps sweeping even when nothing else animates.
+        if (target != null) target.SetAllDirty();
     }
 
     void OnDestroy()

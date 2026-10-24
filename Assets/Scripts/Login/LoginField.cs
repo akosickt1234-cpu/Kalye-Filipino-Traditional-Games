@@ -13,7 +13,7 @@ public static class LoginField
     {
         if (parent == null) return null;
 
-        var ring = LoginUi.rounded_box("login_field", parent, LoginTheme.field_border, LoginTheme.field_fill, LoginTheme.FIELD_BORDER, true);
+        var ring = LoginUi.input_box("login_field", parent, true);
         PlayUi.stretch(ring.rectTransform);
 
         var symbol = LoginUi.icon("login_field_icon", ring.rectTransform, icon_path, LoginTheme.icon);
@@ -50,8 +50,10 @@ public static class LoginField
         input.onValidateInput = reject_control;
         input.onEndEdit.AddListener(on_end_edit);
 
-        var error = PlayUi.text("login_field_error", ring.rectTransform, string.Empty, LoginTheme.FIELD_ERROR_SIZE, LoginTheme.error, TextAnchor.UpperLeft);
-        PlayUi.place(error.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 1f), new Vector2(0f, -LoginTheme.FIELD_ERROR_GAP), new Vector2(0f, LoginTheme.FIELD_ERROR_HEIGHT));
+        var error = PlayUi.text("login_field_error", ring.rectTransform, string.Empty, LoginTheme.FIELD_HINT_SIZE, LoginTheme.error, TextAnchor.UpperLeft);
+        error.horizontalOverflow = HorizontalWrapMode.Overflow;
+        error.verticalOverflow = VerticalWrapMode.Overflow;
+        PlayUi.place(error.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 1f), new Vector2(0f, -LoginTheme.FIELD_HINT_GAP), new Vector2(0f, LoginTheme.FIELD_HINT_HEIGHT));
 
         Button eye = null;
         Image eye_icon = null;
@@ -74,7 +76,7 @@ public static class LoginField
         }
 
         var view = ring.gameObject.AddComponent<LoginFieldView>();
-        view.setup(ring.rectTransform, ring, input, error, eye, eye_icon, is_password);
+        view.setup(ring.rectTransform, input, error, hint, eye, eye_icon, is_password);
 
         if (eye != null && eye_label != null)
         {

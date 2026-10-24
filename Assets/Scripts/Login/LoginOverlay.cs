@@ -99,7 +99,8 @@ public static class LoginOverlay
         LoginActions.build(body_slot);
         LoginRegister.build(body_slot);
         LoginForgot.build(body_slot);
-        build_close(LoginFrame.card);
+        LoginGuest.build(body_slot);
+        LoginUi.close_button(LoginFrame.card, close);
         LoginFeedback.build(overlay);
 
         PlayFocus.default_target = first_selectable(overlay);
@@ -149,36 +150,6 @@ public static class LoginOverlay
         label.resizeTextMinSize = LoginTheme.LOADING_TEXT_MIN_SIZE;
         label.resizeTextMaxSize = LoginTheme.LOADING_TEXT_SIZE;
         PlayUi.stretch(label.rectTransform);
-    }
-
-    static void build_close(RectTransform card)
-    {
-        if (card == null) return;
-
-        var ring = LoginUi.rounded_box("login_close", card, LoginTheme.gold, LoginTheme.close_fill, LoginTheme.CLOSE_BORDER, true);
-        var rect = ring.rectTransform;
-        rect.anchorMin = new Vector2(LoginTheme.CLOSE_LEFT, LoginTheme.CLOSE_CENTER_Y);
-        rect.anchorMax = new Vector2(LoginTheme.CLOSE_RIGHT, LoginTheme.CLOSE_CENTER_Y);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = Vector2.zero;
-
-        var fitter = ring.gameObject.AddComponent<AspectRatioFitter>();
-        fitter.aspectMode = AspectRatioFitter.AspectMode.WidthControlsHeight;
-        fitter.aspectRatio = 1f;
-
-        var glow = LobbyUi.rim_glow("login_close_glow", rect, LoginTheme.clear);
-        glow.rectTransform.SetAsFirstSibling();
-
-        var symbol = LoginUi.icon("login_close_icon", rect, LoginTheme.ICON_CLOSE_PATH, PlayTheme.icon);
-        LobbyUi.place_fraction(symbol.rectTransform, LoginTheme.CLOSE_ICON_INSET, LoginTheme.CLOSE_ICON_INSET, 1f - LoginTheme.CLOSE_ICON_INSET, 1f - LoginTheme.CLOSE_ICON_INSET);
-
-        var button = ring.gameObject.AddComponent<Button>();
-        button.targetGraphic = ring;
-        LobbyUi.no_transition(button);
-        button.onClick.AddListener(close);
-
-        LoginFocusGlow.attach(button, ring, LoginTheme.gold, LoginTheme.gold_soft, glow, PlayTheme.with_alpha(LoginTheme.gold, LoginTheme.CLOSE_GLOW_ALPHA));
     }
 
     static RectTransform create_root(string name, Canvas canvas)

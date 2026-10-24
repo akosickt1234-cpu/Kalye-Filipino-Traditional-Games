@@ -3,9 +3,9 @@ using UnityEngine.UI;
 
 public class LoginFieldView : MonoBehaviour
 {
-    Image border;
     InputField input;
     Text error_text;
+    Text placeholder;
     Button eye_button;
     Image eye_icon;
     CanvasGroup group;
@@ -14,12 +14,12 @@ public class LoginFieldView : MonoBehaviour
 
     public RectTransform root { get; private set; }
 
-    public void setup(RectTransform field_root, Image field_border, InputField field_input, Text field_error, Button eye, Image eye_image, bool password)
+    public void setup(RectTransform field_root, InputField field_input, Text field_error, Text field_placeholder, Button eye, Image eye_image, bool password)
     {
         root = field_root;
-        border = field_border;
         input = field_input;
         error_text = field_error;
+        placeholder = field_placeholder;
         eye_button = eye;
         eye_icon = eye_image;
         is_password = password;
@@ -65,11 +65,11 @@ public class LoginFieldView : MonoBehaviour
 
     void Update()
     {
-        if (border == null) return;
-
-        var has_error = error_text != null && error_text.gameObject.activeSelf;
         var focused = input != null && input.isFocused;
-        border.color = has_error ? LoginTheme.error : focused ? LoginTheme.gold : LoginTheme.field_border;
+        // The field frame is baked art, so focus feedback lives in the placeholder;
+        // it follows the gold accent while the field is clicked.
+        var placeholder_color = focused ? LoginTheme.gold_soft : LoginTheme.text_placeholder;
+        if (placeholder != null && placeholder.color != placeholder_color) placeholder.color = placeholder_color;
     }
 
     void toggle_reveal()

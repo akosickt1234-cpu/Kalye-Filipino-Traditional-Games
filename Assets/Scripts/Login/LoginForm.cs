@@ -5,10 +5,11 @@ using UnityEngine.UI;
 
 public class LoginForm : MonoBehaviour
 {
-    const float EMAIL_TOP = 0.81f;
-    const float EMAIL_BOTTOM = 0.7025f;
-    const float PASSWORD_TOP = 0.6646f;
-    const float PASSWORD_BOTTOM = 0.5585f;
+    const float EMAIL_TOP = 0.690f;
+    const float EMAIL_BOTTOM = 0.587f;
+    // Password sits below the email field's reserved hint band.
+    const float PASSWORD_TOP = 0.535f;
+    const float PASSWORD_BOTTOM = 0.432f;
     const string EMAIL_PLACEHOLDER = "Email or username";
     const string PASSWORD_PLACEHOLDER = "Password";
     const string EMAIL_MISSING = "Enter your email or username.";

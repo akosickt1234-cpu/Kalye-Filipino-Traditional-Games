@@ -32,6 +32,9 @@ public static class LoginFrame
             picture.color = LoginTheme.card_fill;
         }
 
+        // Sweep the card with the same spinning frame light the lobby player cards use.
+        LobbyFrameSpin.attach(picture, new Color(1f, 0.74f, 0.2f, 1f), 0.9f, 0f, 0.6f, false);
+
         area.gameObject.AddComponent<LoginFrameFit>().setup(card_rect, ratio);
         card = card_rect;
 
@@ -43,9 +46,9 @@ public static class LoginFrame
 
 public class LoginFrameFit : MonoBehaviour
 {
-    const float WIDTH_FRACTION = 0.37f;
+    const float WIDTH_FRACTION = 0.415f;
     const float MIN_WIDTH = 340f;
-    const float MAX_WIDTH = 680f;
+    const float MAX_WIDTH = 720f;
 
     RectTransform bounds;
     RectTransform target;

@@ -9,23 +9,28 @@ public static class LoginForgot
         var holder = LoginUi.view("login_forgot", root, LoginMode.Forgot);
         if (holder == null) return;
 
+        // Stretch to full inner height (matching LoginForm) for consistent spacing with header
+        LobbyUi.place_fraction(holder, 0f, 0f, 1f, 1f / (1f - LoginTheme.HEADER_RATIO));
+
         holder.gameObject.AddComponent<LoginForgotView>().setup(holder);
     }
 }
 
 public class LoginForgotView : MonoBehaviour
 {
-    const string SUBMIT_TEXT = "SEND RESET LINK";
-    const string BUSY_TEXT = "SENDING";
-    const string LINK_TEXT = "Back to login";
-    const string SENT_TEXT = "If that email has an account, a reset link is on its way.";
-    const string FAIL_TEXT = "Could not send the reset link. Try again.";
-    const float FIELD_HEIGHT = 0.15f;
-    const float FIELD_TOP = 0.80f;
-    const float SUBMIT_BOTTOM = 0.34f;
-    const float SUBMIT_TOP = 0.56f;
-    const float LINK_BOTTOM = 0.2f;
-    const float LINK_TOP = 0.30f;
+        const string SUBMIT_TEXT = "SEND RESET LINK";
+        const string BUSY_TEXT = "SENDING";
+        const string LINK_TEXT = "Back to login";
+        const string SENT_TEXT = "If that email has an account, a reset link is on its way.";
+        const string FAIL_TEXT = "Could not send the reset link. Try again.";
+        // Match LoginForm email field position for visual consistency
+        const float FIELD_TOP = 0.690f;      // Matches LoginForm email top
+        const float FIELD_BOTTOM = 0.587f;   // Matches LoginForm email bottom
+        // Submit and link positions adjusted for the field's hint band.
+        const float SUBMIT_BOTTOM = 0.440f;
+        const float SUBMIT_TOP = 0.540f;
+        const float LINK_BOTTOM = 0.300f;
+        const float LINK_TOP = 0.350f;
 
     LoginFieldView email_field;
     LoginSubmitButton submit_button;
@@ -36,7 +41,7 @@ public class LoginForgotView : MonoBehaviour
     public void setup(RectTransform holder)
     {
         var field_slot = PlayUi.rect("login_forgot_email", holder);
-        LobbyUi.place_fraction(field_slot, 0f, FIELD_TOP - FIELD_HEIGHT, 1f, FIELD_TOP);
+        LobbyUi.place_fraction(field_slot, 0f, FIELD_BOTTOM, 1f, FIELD_TOP);
         email_field = LoginField.create(field_slot, "EMAIL", LoginTheme.ICON_EMAIL_PATH, false);
         var input = email_field.root.GetComponent<InputField>();
         if (input != null) input.onValueChanged.AddListener(value => email_field.set_error(null));

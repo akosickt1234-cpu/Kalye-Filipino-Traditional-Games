@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class LoginModeToggle : MonoBehaviour
 {
-    public static readonly LoginMode[] ALL_MODES = { LoginMode.SignIn, LoginMode.Register, LoginMode.Forgot };
+    public static readonly LoginMode[] ALL_MODES = { LoginMode.SignIn, LoginMode.Register, LoginMode.Forgot, LoginMode.Guest };
 
     LoginMode[] visible_modes = ALL_MODES;
 
