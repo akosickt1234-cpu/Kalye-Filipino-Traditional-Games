@@ -22,8 +22,22 @@ public static class AvatarBaker
     const string HEAD_NAME_SUFFIX = "head";
     const string HEAD_EXCLUDE_TOP = "top";
     const string HEAD_EXCLUDE_END = "end";
+    const string BASE_MAP_PROPERTY = "_BaseMap";
+    const string MAIN_TEX_PROPERTY = "_MainTex";
+    const string BUMP_MAP_PROPERTY = "_BumpMap";
+    const string SPEC_GLOSS_MAP_PROPERTY = "_SpecGlossMap";
+    const string METALLIC_GLOSS_MAP_PROPERTY = "_MetallicGlossMap";
+    const string BASE_COLOR_PROPERTY = "_BaseColor";
+    const string EMISSION_COLOR_PROPERTY = "_EmissionColor";
+    const string METALLIC_PROPERTY = "_Metallic";
+    const string SMOOTHNESS_PROPERTY = "_Smoothness";
+    static readonly string[] SLOT_PROPERTIES = { BASE_MAP_PROPERTY, MAIN_TEX_PROPERTY, BUMP_MAP_PROPERTY, SPEC_GLOSS_MAP_PROPERTY, METALLIC_GLOSS_MAP_PROPERTY };
+    static readonly string[] REPAIR_DISABLED_KEYWORDS = { "_NORMALMAP", "_METALLICSPECGLOSSMAP", "_SPECGLOSSMAP", "_EMISSION" };
 
     const bool USE_STANDARD_SHADER_FALLBACK = false;
+    const bool BOY_REPAIR_MATERIALS = false;
+    const bool GIRL_REPAIR_MATERIALS = true;
+    const float REPAIR_SMOOTHNESS = 0.3f;
     const int IMAGE_SIZE = 1024;
     const int DEPTH_BITS = 24;
     const int ANTI_ALIASING = 4;
@@ -46,13 +60,13 @@ public static class AvatarBaker
     public static void bake_avatars()
     {
         var baked = 0;
-        baked += bake_one(BOY_MODEL_PATH, BOY_FILE_NAME, BOY_IDLE_CLIP_PATH, BOY_FALLBACK_TEXTURE_PATH) ? 1 : 0;
-        baked += bake_one(GIRL_MODEL_PATH, GIRL_FILE_NAME, GIRL_IDLE_CLIP_PATH, GIRL_FALLBACK_TEXTURE_PATH) ? 1 : 0;
+        baked += bake_one(BOY_MODEL_PATH, BOY_FILE_NAME, BOY_IDLE_CLIP_PATH, BOY_FALLBACK_TEXTURE_PATH, BOY_REPAIR_MATERIALS) ? 1 : 0;
+        baked += bake_one(GIRL_MODEL_PATH, GIRL_FILE_NAME, GIRL_IDLE_CLIP_PATH, GIRL_FALLBACK_TEXTURE_PATH, GIRL_REPAIR_MATERIALS) ? 1 : 0;
         AssetDatabase.Refresh();
         Debug.Log("avatar baker: " + baked + " of 2 avatars baked into " + OUTPUT_FOLDER);
     }
 
-    static bool bake_one(string model_path, string file_name, string idle_clip_path, string fallback_texture_path)
+    static bool bake_one(string model_path, string file_name, string idle_clip_path, string fallback_texture_path, bool repair_materials)
     {
         var model = AssetDatabase.LoadAssetAtPath<GameObject>(model_path);
         if (model == null)
@@ -94,6 +108,12 @@ public static class AvatarBaker
                 return false;
             }
 
+            log_slots(renderers, "before");
+            if (repair_materials)
+            {
+                repair_slots(renderers, fallback_texture_path, temp_materials);
+                log_slots(renderers, "after");
+            }
             if (USE_STANDARD_SHADER_FALLBACK) apply_standard_fallback(renderers, fallback_texture_path, temp_materials);
             log_renderers(renderers);
 
@@ -236,6 +256,75 @@ public static class AvatarBaker
             }
             Debug.Log("avatar baker: renderer " + renderer.name + " | " + string.Join(" | ", parts));
         }
+    }
+
+    static void log_slots(Renderer[] renderers, string stage)
+    {
+        foreach (var renderer in renderers)
+        {
+            foreach (var material in renderer.sharedMaterials)
+            {
+                if (material == null) continue;
+                var parts = new List<string>();
+                foreach (var property in SLOT_PROPERTIES) parts.Add(property + "=" + describe_slot(material, property));
+                parts.Add(BASE_COLOR_PROPERTY + "=" + describe_color(material, BASE_COLOR_PROPERTY));
+                parts.Add(EMISSION_COLOR_PROPERTY + "=" + describe_color(material, EMISSION_COLOR_PROPERTY));
+                var shader_name = material.shader != null ? material.shader.name : "none";
+                Debug.Log("avatar baker: slots " + stage + " | renderer " + renderer.name + " | material " + material.name + " | shader " + shader_name + " | " + string.Join(", ", parts));
+            }
+        }
+    }
+
+    static string describe_slot(Material material, string property)
+    {
+        if (!material.HasProperty(property)) return "missing";
+        var texture = material.GetTexture(property);
+        return texture != null ? texture.name : "none";
+    }
+
+    static string describe_color(Material material, string property)
+    {
+        if (!material.HasProperty(property)) return "missing";
+        return material.GetColor(property).ToString();
+    }
+
+    static void repair_slots(Renderer[] renderers, string diffuse_texture_path, List<Material> temp_materials)
+    {
+        var diffuse = AssetDatabase.LoadAssetAtPath<Texture2D>(diffuse_texture_path);
+        if (diffuse == null)
+        {
+            Debug.LogError("avatar baker: diffuse texture not found at " + diffuse_texture_path + ", skipping repair");
+            return;
+        }
+
+        foreach (var renderer in renderers)
+        {
+            var originals = renderer.sharedMaterials;
+            var replacements = new Material[originals.Length];
+            for (var i = 0; i < originals.Length; i++)
+            {
+                if (originals[i] == null) continue;
+                var repaired = new Material(originals[i]);
+                set_texture_if_present(repaired, BASE_MAP_PROPERTY, diffuse);
+                set_texture_if_present(repaired, MAIN_TEX_PROPERTY, diffuse);
+                set_texture_if_present(repaired, BUMP_MAP_PROPERTY, null);
+                set_texture_if_present(repaired, SPEC_GLOSS_MAP_PROPERTY, null);
+                set_texture_if_present(repaired, METALLIC_GLOSS_MAP_PROPERTY, null);
+                if (repaired.HasProperty(BASE_COLOR_PROPERTY)) repaired.SetColor(BASE_COLOR_PROPERTY, Color.white);
+                if (repaired.HasProperty(EMISSION_COLOR_PROPERTY)) repaired.SetColor(EMISSION_COLOR_PROPERTY, Color.black);
+                if (repaired.HasProperty(METALLIC_PROPERTY)) repaired.SetFloat(METALLIC_PROPERTY, 0f);
+                if (repaired.HasProperty(SMOOTHNESS_PROPERTY)) repaired.SetFloat(SMOOTHNESS_PROPERTY, REPAIR_SMOOTHNESS);
+                foreach (var keyword in REPAIR_DISABLED_KEYWORDS) repaired.DisableKeyword(keyword);
+                temp_materials.Add(repaired);
+                replacements[i] = repaired;
+            }
+            renderer.sharedMaterials = replacements;
+        }
+    }
+
+    static void set_texture_if_present(Material material, string property, Texture texture)
+    {
+        if (material.HasProperty(property)) material.SetTexture(property, texture);
     }
 
     static void apply_standard_fallback(Renderer[] renderers, string fallback_texture_path, List<Material> temp_materials)
