@@ -12,11 +12,11 @@ TagManager:
   - Ignore
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
-  - 
+  - PatinteroLine
+  - StartFinish
+  - Checkpoint
+  - PlayerBody
+  - PlayerHitbox
   - 
   - 
   - 
