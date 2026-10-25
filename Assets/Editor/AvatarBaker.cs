@@ -35,6 +35,10 @@ public static class AvatarBaker
     static readonly string[] REPAIR_DISABLED_KEYWORDS = { "_NORMALMAP", "_METALLICSPECGLOSSMAP", "_SPECGLOSSMAP", "_EMISSION" };
 
     const bool USE_STANDARD_SHADER_FALLBACK = false;
+    const bool BOY_FACE_FRONT = true;
+    const bool GIRL_FACE_FRONT = false;
+    const string LEFT_ARM_SUFFIX = "leftarm";
+    const string RIGHT_ARM_SUFFIX = "rightarm";
     const bool BOY_REPAIR_MATERIALS = false;
     const bool GIRL_REPAIR_MATERIALS = true;
     const float REPAIR_SMOOTHNESS = 0.3f;
@@ -60,13 +64,13 @@ public static class AvatarBaker
     public static void bake_avatars()
     {
         var baked = 0;
-        baked += bake_one(BOY_MODEL_PATH, BOY_FILE_NAME, BOY_IDLE_CLIP_PATH, BOY_FALLBACK_TEXTURE_PATH, BOY_REPAIR_MATERIALS) ? 1 : 0;
-        baked += bake_one(GIRL_MODEL_PATH, GIRL_FILE_NAME, GIRL_IDLE_CLIP_PATH, GIRL_FALLBACK_TEXTURE_PATH, GIRL_REPAIR_MATERIALS) ? 1 : 0;
+        baked += bake_one(BOY_MODEL_PATH, BOY_FILE_NAME, BOY_IDLE_CLIP_PATH, BOY_FALLBACK_TEXTURE_PATH, BOY_REPAIR_MATERIALS, BOY_FACE_FRONT) ? 1 : 0;
+        baked += bake_one(GIRL_MODEL_PATH, GIRL_FILE_NAME, GIRL_IDLE_CLIP_PATH, GIRL_FALLBACK_TEXTURE_PATH, GIRL_REPAIR_MATERIALS, GIRL_FACE_FRONT) ? 1 : 0;
         AssetDatabase.Refresh();
         Debug.Log("avatar baker: " + baked + " of 2 avatars baked into " + OUTPUT_FOLDER);
     }
 
-    static bool bake_one(string model_path, string file_name, string idle_clip_path, string fallback_texture_path, bool repair_materials)
+    static bool bake_one(string model_path, string file_name, string idle_clip_path, string fallback_texture_path, bool repair_materials, bool face_front_enabled)
     {
         var model = AssetDatabase.LoadAssetAtPath<GameObject>(model_path);
         if (model == null)
@@ -99,6 +103,7 @@ public static class AvatarBaker
 
             var animator = instance.GetComponentInChildren<Animator>();
             apply_idle_pose(instance, idle_clip_path);
+            if (face_front_enabled) face_front(instance);
             if (animator != null) animator.enabled = false;
 
             var renderers = instance.GetComponentsInChildren<Renderer>();
@@ -167,6 +172,39 @@ public static class AvatarBaker
     static void set_layer_recursive(GameObject root, int layer)
     {
         foreach (var child in root.GetComponentsInChildren<Transform>(true)) child.gameObject.layer = layer;
+    }
+
+    static void face_front(GameObject instance)
+    {
+        var left_arm = find_bone_by_suffix(instance, LEFT_ARM_SUFFIX);
+        var right_arm = find_bone_by_suffix(instance, RIGHT_ARM_SUFFIX);
+        if (left_arm == null || right_arm == null)
+        {
+            Debug.LogWarning("avatar baker: arm bones not found in " + instance.name + ", skipping front facing");
+            return;
+        }
+
+        var side = right_arm.position - left_arm.position;
+        side.y = 0f;
+        if (side.sqrMagnitude < 0.000001f)
+        {
+            Debug.LogWarning("avatar baker: arm bones overlap in " + instance.name + ", skipping front facing");
+            return;
+        }
+
+        var forward = Vector3.Cross(side, Vector3.up);
+        var angle = Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
+        instance.transform.RotateAround(instance.transform.position, Vector3.up, -angle + MODEL_YAW);
+        Debug.Log("avatar baker: facing " + instance.name + ", turned " + (-angle + MODEL_YAW) + " degrees using " + left_arm.name + " and " + right_arm.name);
+    }
+
+    static Transform find_bone_by_suffix(GameObject instance, string suffix)
+    {
+        foreach (var candidate in instance.GetComponentsInChildren<Transform>(true))
+        {
+            if (candidate.name.ToLowerInvariant().EndsWith(suffix)) return candidate;
+        }
+        return null;
     }
 
     static void apply_idle_pose(GameObject instance, string idle_clip_path)
