@@ -112,3 +112,40 @@ InitTestScene*.unity*
 
 # macos
 .DS_Store
+
+# ---------------------------------------------------------------
+# Project-specific additions
+# ---------------------------------------------------------------
+
+# Unity crash-recovery scenes (auto-created after an editor crash)
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta
+
+# UI iteration snapshots kept for local reference only
+/[Aa]ssets/[Ss]creenshots/
+/[Aa]ssets/[Ss]creenshots.meta
+
+# Local AI assistant config (machine-specific, e.g. localhost MCP URLs)
+opencode.json
+
+# Backend / Node.js (Backend/.gitignore also covers these; safety net at repo root)
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+
+# JetBrains Rider
+.idea/
+
+# windows
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# linux
+*~
+.swp
