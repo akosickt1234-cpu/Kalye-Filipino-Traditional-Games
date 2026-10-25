@@ -10,6 +10,8 @@ public static class AvatarBaker
 {
     const string BOY_MODEL_PATH = "Assets/Resources/Characters/timmy/timmy.fbx";
     const string GIRL_MODEL_PATH = "Assets/Resources/Characters/amy/amy.fbx";
+    const string BOY_IDLE_CLIP_PATH = "Assets/Resources/Characters/timmy/Idle.anim";
+    const string GIRL_IDLE_CLIP_PATH = "Assets/Resources/Characters/amy/Idle.anim";
     const string BOY_FALLBACK_TEXTURE_PATH = "Assets/Resources/Characters/char_texture/Ch09_1001_Diffuse.png";
     const string GIRL_FALLBACK_TEXTURE_PATH = "Assets/Resources/Characters/char_texture/Ch46_1001_Diffuse 4.png";
     const string OUTPUT_FOLDER = "Assets/Resources/Avatars";
@@ -26,10 +28,11 @@ public static class AvatarBaker
     const int DEPTH_BITS = 24;
     const int ANTI_ALIASING = 4;
     const int RENDER_LAYER = 31;
-    const float FACE_FILL = 0.7f;
-    const float HEAD_HEIGHT_RATIO = 0.14f;
-    const float HEAD_CENTER_OFFSET = 0.4f;
-    const float MODEL_YAW = -15f;
+    const float HEAD_FALLBACK_RATIO = 0.3f;
+    const float FRAME_HEIGHT_IN_HEADS = 1.8f;
+    const float HEAD_CENTER_OFFSET = 0.35f;
+    const float IDLE_SAMPLE_TIME = 0f;
+    const float MODEL_YAW = 0f;
     const float CAMERA_DISTANCE = 10f;
     const float KEY_LIGHT_INTENSITY = 1.1f;
     const float RIM_LIGHT_INTENSITY = 1.4f;
@@ -43,13 +46,13 @@ public static class AvatarBaker
     public static void bake_avatars()
     {
         var baked = 0;
-        baked += bake_one(BOY_MODEL_PATH, BOY_FILE_NAME, BOY_FALLBACK_TEXTURE_PATH) ? 1 : 0;
-        baked += bake_one(GIRL_MODEL_PATH, GIRL_FILE_NAME, GIRL_FALLBACK_TEXTURE_PATH) ? 1 : 0;
+        baked += bake_one(BOY_MODEL_PATH, BOY_FILE_NAME, BOY_IDLE_CLIP_PATH, BOY_FALLBACK_TEXTURE_PATH) ? 1 : 0;
+        baked += bake_one(GIRL_MODEL_PATH, GIRL_FILE_NAME, GIRL_IDLE_CLIP_PATH, GIRL_FALLBACK_TEXTURE_PATH) ? 1 : 0;
         AssetDatabase.Refresh();
         Debug.Log("avatar baker: " + baked + " of 2 avatars baked into " + OUTPUT_FOLDER);
     }
 
-    static bool bake_one(string model_path, string file_name, string fallback_texture_path)
+    static bool bake_one(string model_path, string file_name, string idle_clip_path, string fallback_texture_path)
     {
         var model = AssetDatabase.LoadAssetAtPath<GameObject>(model_path);
         if (model == null)
@@ -77,11 +80,12 @@ public static class AvatarBaker
             var instance = Object.Instantiate(model);
             set_layer_recursive(instance, RENDER_LAYER);
 
-            var animator = instance.GetComponentInChildren<Animator>();
-            if (animator != null) animator.enabled = false;
-
             instance.transform.position = Vector3.zero;
             instance.transform.rotation = Quaternion.Euler(0f, MODEL_YAW, 0f);
+
+            var animator = instance.GetComponentInChildren<Animator>();
+            apply_idle_pose(instance, idle_clip_path);
+            if (animator != null) animator.enabled = false;
 
             var renderers = instance.GetComponentsInChildren<Renderer>();
             if (renderers.Length == 0)
@@ -96,10 +100,17 @@ public static class AvatarBaker
             var bounds = renderers[0].bounds;
             for (var i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
 
-            var head_size = bounds.size.y * HEAD_HEIGHT_RATIO;
-            var head_center = find_head_center(instance, animator, bounds, head_size);
+            var head = find_head_transform(instance, animator);
+            var head_height = head != null ? bounds.max.y - head.position.y : bounds.size.y * HEAD_FALLBACK_RATIO;
+            var head_base_y = head != null ? head.position.y : bounds.max.y - head_height;
+            var center_x = head != null ? head.position.x : bounds.center.x;
+            var center_z = head != null ? head.position.z : bounds.center.z;
+            var center = new Vector3(center_x, head_base_y + head_height * HEAD_CENTER_OFFSET, center_z);
+            var orthographic_size = head_height * FRAME_HEIGHT_IN_HEADS * 0.5f;
 
-            var camera = create_camera(head_center, head_size);
+            Debug.Log("avatar baker: framing " + instance.name + ", head bone " + (head != null ? head.name : "none (bounds fallback)") + ", bounds height " + bounds.size.y + ", head height " + head_height + ", orthographic size " + orthographic_size);
+
+            var camera = create_camera(center, orthographic_size);
             create_lights();
 
             render_texture = new RenderTexture(IMAGE_SIZE, IMAGE_SIZE, DEPTH_BITS, RenderTextureFormat.ARGB32);
@@ -138,7 +149,18 @@ public static class AvatarBaker
         foreach (var child in root.GetComponentsInChildren<Transform>(true)) child.gameObject.layer = layer;
     }
 
-    static Camera create_camera(Vector3 head_center, float head_size)
+    static void apply_idle_pose(GameObject instance, string idle_clip_path)
+    {
+        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(idle_clip_path);
+        if (clip == null)
+        {
+            Debug.LogWarning("avatar baker: idle clip not found at " + idle_clip_path + ", using bind pose");
+            return;
+        }
+        clip.SampleAnimation(instance, IDLE_SAMPLE_TIME);
+    }
+
+    static Camera create_camera(Vector3 center, float orthographic_size)
     {
         var camera_object = new GameObject("avatar_baker_camera");
         var camera = camera_object.AddComponent<Camera>();
@@ -149,14 +171,14 @@ public static class AvatarBaker
         camera_data.renderPostProcessing = false;
 
         camera.orthographic = true;
-        camera.orthographicSize = head_size / FACE_FILL * 0.5f;
+        camera.orthographicSize = orthographic_size;
         camera.nearClipPlane = 0.01f;
         camera.farClipPlane = CAMERA_DISTANCE * 4f;
         camera.clearFlags = CameraClearFlags.SolidColor;
-        camera.backgroundColor = new Color(0f, 0f, 0f, 0f);
+        camera.backgroundColor = PlayTheme.panel_blue;
         camera.allowHDR = false;
         camera.cullingMask = 1 << RENDER_LAYER;
-        camera.transform.position = head_center + Vector3.forward * CAMERA_DISTANCE;
+        camera.transform.position = center + Vector3.forward * CAMERA_DISTANCE;
         camera.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
         return camera;
     }
@@ -176,19 +198,6 @@ public static class AvatarBaker
         light.intensity = intensity;
         light.shadows = LightShadows.None;
         light.transform.rotation = Quaternion.Euler(angles);
-    }
-
-    static Vector3 find_head_center(GameObject instance, Animator animator, Bounds bounds, float head_size)
-    {
-        var head = find_head_transform(instance, animator);
-        if (head != null)
-        {
-            Debug.Log("avatar baker: head transform " + head.name + " in " + instance.name);
-            return head.position + Vector3.up * head_size * HEAD_CENTER_OFFSET;
-        }
-
-        Debug.Log("avatar baker: head transform not found in " + instance.name + ", using bounds fallback");
-        return new Vector3(bounds.center.x, bounds.max.y - head_size * 0.5f, bounds.center.z);
     }
 
     static Transform find_head_transform(GameObject instance, Animator animator)
